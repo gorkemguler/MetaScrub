@@ -77,14 +77,18 @@ def main() -> None:
 @click.option("--keep-orientation/--no-keep-orientation", default=True, show_default=True)
 @click.option("--overwrite", is_flag=True, default=False,
               help="Allow a cleaned copy to overwrite an existing file at the output path.")
+@click.option("--password", "pdf_password", default=None,
+              help="Password to open encrypted PDFs (the cleaned copy is written unencrypted).")
+@click.option("--strip-pdf-id", is_flag=True, default=False,
+              help="Give each scrubbed PDF a fresh random /ID so copies can't be correlated by it.")
 @click.option("--json-report/--no-json-report", default=True, show_default=True)
 @click.option("--html-report/--no-html-report", default=True, show_default=True)
 @click.option("--report-lang", type=click.Choice(["en", "tr"]), default="en", show_default=True,
               envvar="METASCRUB_REPORT_LANG")
 @click.option("--yes", "-y", is_flag=True, default=False, help="Skip the --in-place confirmation.")
 def clean(paths, filetypes, recursive, in_place, output_dir, keep_fields, dry_run, verify,
-          keep_color_profile, keep_orientation, overwrite, json_report, html_report,
-          report_lang, yes):
+          keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
+          json_report, html_report, report_lang, yes):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -99,7 +103,7 @@ def clean(paths, filetypes, recursive, in_place, output_dir, keep_fields, dry_ru
         filetypes=ft_list, recursive=recursive, in_place=in_place, output_dir=output_dir,
         keep_fields=list(keep_fields), dry_run=dry_run, verify=verify,
         keep_color_profile=keep_color_profile, keep_orientation=keep_orientation,
-        overwrite=overwrite,
+        overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
     )
 
     _banner()
@@ -180,13 +184,15 @@ def _print_table(report, base_dir) -> None:
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option("--filetypes", default=",".join(DEFAULT_FILETYPES), show_default=True)
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
+@click.option("--password", "pdf_password", default=None, help="Password for encrypted PDFs.")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Emit JSON instead of tables.")
-def inspect(paths, filetypes, recursive, as_json):
+def inspect(paths, filetypes, recursive, pdf_password, as_json):
     """Show the metadata each file in PATHS currently carries. Read-only —
     writes nothing. Use this on the files MetaScout flagged to see exactly
     what's in them before scrubbing.
     """
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
+    insp_cfg = CleanConfig(pdf_password=pdf_password)
     files = iter_files([os.fspath(p) for p in paths], ft_list, recursive=recursive)
 
     if not files:
@@ -200,7 +206,7 @@ def inspect(paths, filetypes, recursive, as_json):
         if engine is not None:
             try:
                 rows = [{"namespace": c.namespace, "field": c.field, "value": c.before}
-                        for c in engine.probe(path)]
+                        for c in engine.probe(path, insp_cfg)]
             except Exception as exc:  # noqa: BLE001
                 rows = [{"namespace": "!", "field": "error", "value": str(exc)}]
         out[path] = rows

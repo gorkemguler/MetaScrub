@@ -50,6 +50,58 @@ def dirty_pdf(tmp_path):
 
 
 @pytest.fixture
+def annotated_pdf(tmp_path):
+    path = tmp_path / "reviewed.pdf"
+    pdf = pikepdf.new()
+    page = pdf.add_blank_page(page_size=(300, 300))
+    annot = pdf.make_indirect(pikepdf.Dictionary(
+        Type=pikepdf.Name.Annot, Subtype=pikepdf.Name.Text,
+        Rect=[10, 10, 30, 30], Contents="Please revise this section",
+        T="Reviewer Rachel", M="D:20240501120000Z", CreationDate="D:20240501100000Z",
+    ))
+    widget = pdf.make_indirect(pikepdf.Dictionary(
+        Type=pikepdf.Name.Annot, Subtype=pikepdf.Name.Widget,
+        Rect=[40, 40, 60, 60], T="signature_field", FT=pikepdf.Name.Tx,
+    ))
+    page.Annots = pdf.make_indirect(pikepdf.Array([annot, widget]))
+    pdf.Root.AcroForm = pdf.make_indirect(pikepdf.Dictionary(Fields=pikepdf.Array([widget])))
+    pdf.save(str(path))
+    return path
+
+
+@pytest.fixture
+def attachment_pdf(tmp_path):
+    path = tmp_path / "with_attachment.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    ef_stream = pikepdf.Stream(pdf, b"quarterly numbers, do not share")
+    ef_stream.Params = pikepdf.Dictionary(
+        CreationDate="D:20240101000000Z", ModDate="D:20240102000000Z", Size=30,
+    )
+    filespec = pdf.make_indirect(pikepdf.Dictionary(
+        Type=pikepdf.Name.Filespec, F="q3.xlsx", UF="q3.xlsx",
+        Desc="Original at /home/bob/finance/q3.xlsx",
+        EF=pikepdf.Dictionary(F=ef_stream),
+    ))
+    pdf.Root.Names = pdf.make_indirect(pikepdf.Dictionary(
+        EmbeddedFiles=pikepdf.Dictionary(Names=pikepdf.Array(["q3.xlsx", filespec])),
+    ))
+    pdf.save(str(path))
+    return path
+
+
+@pytest.fixture
+def encrypted_pdf(tmp_path):
+    path = tmp_path / "locked.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    pdf.docinfo["/Author"] = "Alice Example"
+    pdf.docinfo["/Title"] = "Sealed Bid"
+    pdf.save(str(path), encryption=pikepdf.Encryption(user="s3cret", owner="s3cret"))
+    return path
+
+
+@pytest.fixture
 def signed_pdf(tmp_path):
     path = tmp_path / "signed.pdf"
     pdf = pikepdf.new()

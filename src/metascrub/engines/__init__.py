@@ -22,7 +22,7 @@ class _UnsupportedEngine:
         self.extensions = extensions
         self._reason = reason
 
-    def probe(self, path: str) -> list[FieldChange]:
+    def probe(self, path: str, cfg=None) -> list[FieldChange]:
         return []
 
     def strip(self, src: str, dst: str, cfg):

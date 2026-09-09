@@ -44,7 +44,7 @@ signature) is never modified.
 
 | Format | Engine | Removed |
 | --- | --- | --- |
-| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. |
+| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revision, timestamps), `docProps/app.xml` (Company, Manager, Template path), `docProps/custom.xml`, the embedded thumbnail, and Word revision-save-id fingerprints (`w:rsids`) from `settings.xml`. Dangling relationships and content-type overrides are pruned; per-member zip timestamps are normalised. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields. |
 | **Images** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | All EXIF / IPTC / XMP / GPS / MakerNotes and PNG/WebP text chunks. The ICC colour profile and EXIF orientation are kept by default so the picture still renders correctly (`--no-keep-color-profile` / `--no-keep-orientation` to drop those too). |
@@ -106,7 +106,9 @@ metascrub clean a.pdf b.docx c.jpg --out ./clean
 ```
 
 Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
-`--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`.
+`--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
+`--password` (encrypted PDFs — the cleaned copy is written unencrypted),
+`--strip-pdf-id` (fresh random `/ID` per run).
 
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
 still carried metadata on the verify re-scan.
@@ -169,8 +171,11 @@ Or `docker compose up --build` (web UI); `docker compose --profile api up metasc
 ## How thorough is it?
 
 - **PDF** — a full QPDF rewrite, not an incremental update, so the removed `/Info` and XMP
-  aren't left behind in an old xref section. **Signed PDFs are skipped, not broken** —
-  scrubbing would invalidate the signature; re-export an unsigned copy if you need it cleaned.
+  aren't left behind in an old xref section. Annotation authors/dates and embedded-file
+  metadata go too; the annotation's visible text and the attached file itself stay.
+  **Signed PDFs are skipped, not broken** — scrubbing would invalidate the signature;
+  re-export an unsigned copy if you need it cleaned. **Encrypted PDFs** without `--password`
+  are skipped; with it, the cleaned copy is written unencrypted (the result says so).
 - **Office / ODF** — the metadata parts are deleted from the package (or, for ODF, emptied),
   not merely blanked, and the references to them are pruned so nothing dangles.
 - **Images** — `exiftool -all=`, which is the reference tool for this.

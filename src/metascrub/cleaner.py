@@ -81,7 +81,7 @@ def _clean_one(
 
     try:
         if cfg.dry_run:
-            rows = engine.probe(path)
+            rows = engine.probe(path, cfg)
             log(f"{path}: {len(rows)} metadata field(s) (dry-run)")
             return CleanResult(
                 src_path=path, filetype=ext, engine=engine.name, status="skipped",
@@ -98,7 +98,7 @@ def _clean_one(
 
         if result.status == "cleaned" and result.out_path:
             if cfg.verify:
-                result.residual = [f"{r.namespace}:{r.field}" for r in engine.probe(result.out_path)]
+                result.residual = [f"{r.namespace}:{r.field}" for r in engine.probe(result.out_path, cfg)]
             if cfg.in_place:
                 os.replace(result.out_path, path)
                 result.out_path = path

@@ -63,7 +63,7 @@ class _Leftover:
         self._e = e
         self.name = e.name
 
-    def probe(self, p):
+    def probe(self, p, cfg=None):
         from metascrub.models import FieldChange
 
         return [FieldChange("XMP", "leftover", "x")]

@@ -61,7 +61,7 @@ def test_verify_populates_residual(monkeypatch, dirty_docx, tmp_path):
             self._e = e
             self.name = e.name
 
-        def probe(self, p):
+        def probe(self, p, cfg=None):
             return [FieldChange("XMP", "leftover", "x")]
 
         def strip(self, s, d, c):

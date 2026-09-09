@@ -2,13 +2,35 @@
 
 # MetaScrub yol haritası
 
-v0.1 nerede duruyor ve sırada ne var. Temaya göre gruplandı; her grup
+Proje nerede duruyor ve sırada ne var. Temaya göre gruplandı; her grup
 içinde kabaca öncelik sırasında. Buradaki hiçbir şey söz değil — çalışan
 bir yapılacaklar listesi.
 
 ---
 
-## v0.1'deki bilinen sınırlamalar
+## v0.1'den bu yana eklenenler
+
+- **Şifreli PDF'ler** — `metascrub clean --password …` / `inspect --password`.
+  Parola yoksa şifreli PDF temiz bir `skipped` (ham hata değil); yanlış
+  parola net bir `error`; temizlenmiş kopya şifresiz yazılır ve sonuç
+  bunu belirtir. *(L4'ü kapatır)*
+- **PDF annotation'ları** — her markup annotation'ından (ve `/Popup`'ından)
+  yorumcu adı (`/T`), `/M` ve `/CreationDate` silinir; form-alanı
+  widget'ları ve annotation'ın görünür `/Contents`'i korunur.
+  *(L3'ün bir kısmı)*
+- **PDF gömülü dosyaları** — her ekin dosya spec'indeki açıklama ve
+  orijinal zaman damgaları kaldırılır; ekli dosyanın kendisi korunur.
+  *(L3'ün bir kısmı)*
+- **`--strip-pdf-id`** — her çalıştırmada taze rastgele bir trailer `/ID`;
+  böylece bir dosyanın iki temizlenmiş kopyası bununla ilişkilendirilemez.
+  *(L3'ün bir kısmı)*
+
+L3'te artık yalnız AcroForm alan *değerleri* ve derin `xmpMM` geçmişi
+kaldı (belge/sayfa düzeyi XMP zaten toptan siliniyor).
+
+---
+
+## Bilinen sınırlamalar
 
 Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
@@ -16,8 +38,7 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 |---|-------|-----|
 | L1 | **Eski `.doc / .xls / .ppt` temizlenmiyor** | `unsupported` olarak raporlanıyor. OLE2 Compound File Binary için güvenli, yalnız-stdlib bir temizlik yok. |
 | L2 | **Belge içeriğine hiç dokunulmuyor** | Değişiklik takibi / yorumlardaki yazar adları, gövdeye yazılmış metin, görselin içine gömülü metin — tasarım gereği kapsam dışı. |
-| L3 | **PDF: yalnız `/Info` + XMP + `/PieceInfo` + sayfa metadata'sı** | Henüz yok: gömülü dosya ekleri, annotation yazar/tarihleri, AcroForm verisi, `xmpMM` düzenleme geçmişi, trailer `/ID`. |
-| L4 | **Şifreli / parolalı PDF'ler `error` düşüyor** | pikepdf parolasız açamıyor; henüz `--password` bayrağı yok. |
+| L3 | **PDF: AcroForm alan değerleri temizlenmiyor** | `/Info`, XMP, `/PieceInfo`, sayfa metadata'sı, annotation'lar ve gömülü-dosya metadata'sı artık hallediliyor; doldurulmuş bir form alanının *değeri* hâlâ olduğu gibi kalıyor (bu tartışmalı biçimde içerik). |
 | L5 | **Office: yalnız `docProps/*` + `w:rsids`** | Henüz yok: değişiklik-takibi/yorum yazarları, bazı düzenlerde `docProps/thumbnail`, dış-bağlantı yolları, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
 | L7 | **SVG / ses / video motoru yok** | `.svg` (editör yorumları, `<metadata>`), `.mp4/.mov/.mp3/.m4a` (exiftool yapabilir, bağlamadık). |
@@ -29,11 +50,9 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ## Şimdi — v0.2 (kapsam + güven)
 
-- **PDF derinliği** — gömülü dosya ekleri (`/Names /EmbeddedFiles`, `/AF`),
-  annotation `/T` `/M` `/CreationDate`, `xmpMM:History` / `xmpMM:DerivedFrom`,
-  trailer `/ID` için `--strip-id` bayrağı. (L3'ü kapatır)
-- **Şifreli PDF'ler** — ham hata yerine net rapor; `metascrub clean
-  --password …` eklenir. (L4'ü kapatır)
+- **AcroForm alan değerleri** — opt-in `--strip-form-values`: değeri
+  kullanıcı girişi PII olan doldurulmuş form alanlarını (`/V`, `/DV`)
+  boşalt. (L3'ü kapatır)
 - **Eski Office** — `olefile` ile `\x05SummaryInformation` /
   `\x05DocumentSummaryInformation` akışlarını sıfırlama; `soffice` varsa
   opsiyonel LibreOffice-headless dönüştür-geri-al yolu. (L1'i kapatır)

@@ -10,7 +10,7 @@ class ImageEngine:
     name = "image"
     extensions = IMAGE_EXTENSIONS
 
-    def probe(self, path: str) -> list[FieldChange]:
+    def probe(self, path: str, cfg: CleanConfig | None = None) -> list[FieldChange]:
         rows: list[FieldChange] = []
         for key, value in read_tags(path).items():
             group, _, tag = key.partition(":")

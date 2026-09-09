@@ -2,12 +2,34 @@
 
 # MetaScrub roadmap
 
-Where v0.1 stands and what's next. Grouped by theme; roughly ordered
-within each group. Nothing here is a promise — it's the working backlog.
+Where the project stands and what's next. Grouped by theme; roughly
+ordered within each group. Nothing here is a promise — it's the working
+backlog.
 
 ---
 
-## Known limitations in v0.1
+## Shipped since v0.1
+
+- **Encrypted PDFs** — `metascrub clean --password …` / `inspect --password`.
+  Without a password an encrypted PDF is a clean `skipped` (not a raw
+  error); a wrong password is a clear `error`; the scrubbed copy is
+  written unencrypted and the result says so. *(closes L4)*
+- **PDF annotations** — reviewer name (`/T`), `/M` and `/CreationDate` are
+  stripped from every markup annotation (and its `/Popup`); form-field
+  widgets and the annotation's visible `/Contents` are left intact.
+  *(part of L3)*
+- **PDF embedded files** — the description and original timestamps on each
+  attachment's file spec are removed; the attached file itself is kept.
+  *(part of L3)*
+- **`--strip-pdf-id`** — a fresh random trailer `/ID` on every run, so two
+  scrubbed copies of one file can't be correlated by it. *(part of L3)*
+
+L3 now only leaves AcroForm field *values* and deep `xmpMM` history
+(doc/page-level XMP is already deleted wholesale).
+
+---
+
+## Known limitations
 
 These are real gaps in the current release, not bugs:
 
@@ -15,8 +37,7 @@ These are real gaps in the current release, not bugs:
 |---|-----|-------|
 | L1 | **Legacy `.doc / .xls / .ppt` not scrubbed** | Reported as `unsupported`. No safe stdlib-only strip for OLE2 Compound File Binary. |
 | L2 | **Document content is never touched** | Author names in tracked changes / comments, text typed into the body, text baked into an image — all out of scope by design. |
-| L3 | **PDF: only `/Info` + XMP + `/PieceInfo` + page metadata** | Not yet handled: embedded-file attachments, annotation authors/dates, AcroForm data, `xmpMM` edit history, the trailer `/ID`. |
-| L4 | **Encrypted / password PDFs land as `error`** | pikepdf can't open them without the password; there's no `--password` flag yet. |
+| L3 | **PDF: AcroForm field values not scrubbed** | `/Info`, XMP, `/PieceInfo`, page metadata, annotations and embedded-file metadata are all handled now; a filled-in form field's *value* is still left as-is (it's arguably content). |
 | L5 | **Office: only `docProps/*` + `w:rsids`** | Not yet: tracked-change/comment authors, `docProps/thumbnail` in some layouts, external-link paths, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
 | L7 | **No SVG / audio / video engine** | `.svg` (editor comments, `<metadata>`), `.mp4/.mov/.mp3/.m4a` (exiftool can, we don't wire it up). |
@@ -28,11 +49,8 @@ These are real gaps in the current release, not bugs:
 
 ## Now — v0.2 (coverage + confidence)
 
-- **PDF depth** — embedded-file attachments (`/Names /EmbeddedFiles`, `/AF`),
-  annotation `/T` `/M` `/CreationDate`, `xmpMM:History` / `xmpMM:DerivedFrom`,
-  a `--strip-id` flag for the trailer `/ID`. (closes L3)
-- **Encrypted PDFs** — detect and report clearly instead of a raw error; add
-  `metascrub clean --password …`. (closes L4)
+- **AcroForm field values** — opt-in `--strip-form-values`: blank filled-in
+  form fields (`/V`, `/DV`) whose value is user-entered PII. (closes L3)
 - **Legacy Office** — `olefile`-based zeroing of `\x05SummaryInformation` /
   `\x05DocumentSummaryInformation`, with an optional LibreOffice-headless
   convert-and-back path when `soffice` is present. (closes L1)

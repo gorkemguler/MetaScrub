@@ -44,7 +44,7 @@ imza) asla değiştirilmez.
 
 | Biçim | Motor | Silinen |
 | --- | --- | --- |
-| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. |
+| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar. |
 | **Görseller** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes ve PNG/WebP metin blokları. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur ki görsel doğru görünsün (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). |
@@ -106,7 +106,9 @@ metascrub clean a.pdf b.docx c.jpg --out ./temiz
 ```
 
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
-`--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`.
+`--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
+`--password` (şifreli PDF'ler — temizlenmiş kopya şifresiz yazılır),
+`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`).
 
 **Çıkış kodları** (CI kapısı olarak kullanılabilsin diye): `0` temiz · `1` bir dosya hata
 verdi · `2` bir temizlenmiş dosya doğrulama taramasında hâlâ metadata taşıyordu.
@@ -168,8 +170,11 @@ Ya da `docker compose up --build` (web arayüzü); `docker compose --profile api
 ## Ne kadar kapsamlı?
 
 - **PDF** — incremental update değil, tam bir QPDF yeniden yazımı; böylece silinen `/Info` ve
-  XMP eski bir xref bölümünde geride kalmaz. **İmzalı PDF'ler bozulmadan atlanır** — temizlik
-  imzayı geçersiz kılardı; temizlenmiş hali gerekiyorsa imzasız bir kopya yeniden dışa aktarın.
+  XMP eski bir xref bölümünde geride kalmaz. Annotation yazar/tarihleri ve gömülü-dosya
+  metadata'sı da gider; annotation'ın görünür metni ve ekli dosyanın kendisi kalır.
+  **İmzalı PDF'ler bozulmadan atlanır** — temizlik imzayı geçersiz kılardı; temizlenmiş hali
+  gerekiyorsa imzasız bir kopya yeniden dışa aktarın. **Şifreli PDF'ler** `--password`
+  olmadan atlanır; onunla, temizlenmiş kopya şifresiz yazılır (sonuç bunu belirtir).
 - **Office / ODF** — metadata parçaları pakette yalnızca boşaltılmaz, silinir (ODF'de
   boşaltılır) ve onlara giden referanslar temizlenir ki hiçbir şey boşa sarkmasın.
 - **Görseller** — bu iş için referans araç olan `exiftool -all=`.

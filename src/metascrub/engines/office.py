@@ -62,7 +62,7 @@ class OfficeEngine:
     name = "office"
     extensions = OOXML_EXTENSIONS | ODF_EXTENSIONS
 
-    def probe(self, path: str) -> list[FieldChange]:
+    def probe(self, path: str, cfg: CleanConfig | None = None) -> list[FieldChange]:
         ext = _ext(path)
         try:
             with zipfile.ZipFile(path) as zf:

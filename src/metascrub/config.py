@@ -63,6 +63,15 @@ class CleanConfig:
     # Allow a cleaned copy to overwrite an existing file at the output path.
     overwrite: bool = False
 
+    # PDF: password to open an encrypted document. Without it an encrypted
+    # PDF is skipped (probe/inspect just reports "<encrypted>").
+    pdf_password: str | None = None
+
+    # PDF: don't carry a deterministic /ID forward — write a fresh random
+    # one on every scrub, so two scrubbed copies of the same file can't be
+    # correlated by their document identifier either.
+    strip_pdf_id: bool = False
+
     def wants_field(self, name: str) -> bool:
         """True if `name` should be preserved rather than stripped."""
         lowered = name.strip().lower()
