@@ -1,16 +1,21 @@
 <p align="center">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-6ea8fe.svg">
-  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-8b7dfb.svg">
-  <img alt="Platforms" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-7dd88f.svg">
-  <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f2a65a.svg">
+  <img src="assets/banner.svg" alt="MetaScrub" width="100%">
 </p>
 
-<h1 align="center">MetaScrub</h1>
+<p align="center">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-2dd4a7.svg">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-2dd4a7.svg">
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-7dd88f.svg">
+  <img alt="Status" src="https://img.shields.io/badge/status-active%20development-f6c454.svg">
+</p>
 
 <p align="center">
   Bulk metadata scrubbing for PDF, Office and image files.<br>
-  The <b>remediation</b> companion to <a href="https://github.com/gorkemguler/MetaScout">MetaScout</a>:
-  MetaScout finds documents that leak metadata, MetaScrub strips it and hands you a before/after proof report.
+  Strip the metadata, keep the document — with a before/after proof report.
+</p>
+
+<p align="center">
+  <sub>Pairs with <a href="https://github.com/gorkemguler/MetaScout">MetaScout</a>: MetaScout <i>finds</i> the leaks, MetaScrub <i>fixes</i> them.</sub>
 </p>
 
 <p align="center"><sub>🇬🇧 English · <a href="README.tr.md">🇹🇷 Türkçe</a></sub></p>
@@ -183,10 +188,10 @@ Or `docker compose up --build` (web UI); `docker compose --profile api up metasc
 
 ## Roadmap
 
-- macOS Finder **Quick Action** ("right-click → Clean metadata") and a drag-and-drop app
-- Windows Explorer context-menu entry
-- Linux **watch-daemon** — monitor an SFTP/FTP drop directory, scrub what lands, put it back
-- pre-commit hook + GitHub Action using the `clean --dry-run` gate
+See **[ROADMAP.md](ROADMAP.md)** for the full backlog and the known limitations of v0.1.
+Headlines: deeper PDF/Office coverage, legacy `.doc/.xls/.ppt`, API authentication,
+a `metascrub watch` daemon for SFTP/FTP drop directories, macOS Finder Quick Action,
+Windows Explorer entry, and a pre-commit hook + GitHub Action.
 
 ## License
 

@@ -4,99 +4,85 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ S.title }}</title>
-<style>
-  :root {
-    --bg: #0f1117; --panel: #161925; --border: #2a2f42; --text: #e6e8f0;
-    --muted: #9aa1b4; --accent: #6ea8fe; --good: #7dd88f; --warn: #f2a65a; --bad: #f26d6d;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; }
-  header { padding: 28px 40px; border-bottom: 1px solid var(--border); }
-  header .banner { color: #8bb4ff; font-weight: 800; font-size: 22px; }
-  header .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
-  main { padding: 24px 40px 64px; max-width: 900px; margin: 0 auto; }
-  .summary { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; }
-  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; min-width: 130px; }
-  .stat .n { font-size: 22px; font-weight: 800; }
-  .stat .l { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .stat.warn .n { color: var(--warn); }
-  .stat.bad .n { color: var(--bad); }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-    padding: 18px 20px; margin-bottom: 16px; }
-  .card h3 { margin: 0 0 4px; font-size: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    word-break: break-all; }
-  .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px;
-    border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
-  .pill.cleaned { background: rgba(125,216,143,.15); color: var(--good); }
-  .pill.skipped { background: rgba(242,166,90,.15); color: var(--warn); }
-  .pill.unsupported { background: rgba(154,161,180,.15); color: var(--muted); }
-  .pill.error { background: rgba(242,109,109,.15); color: var(--bad); }
-  .sub { color: var(--muted); font-size: 12px; margin: 6px 0 10px; word-break: break-all; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
-  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border);
-    vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; }
-  td.val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
-    word-break: break-word; }
-  .kept { color: var(--good); font-size: 12px; margin-top: 10px; }
-  .residual { color: var(--bad); font-size: 12px; margin-top: 10px; }
-  .empty { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+<style>{{ css | safe }}
+.msc-src { padding:0 22px 18px; color:var(--muted); font-size:12px; word-break:break-all; }
+h3.msc-h { font-size:13px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase;
+  margin:26px 0 10px; }
 </style>
 </head>
 <body>
-<header>
-  <div class="banner">MetaScrub</div>
-  <div class="meta">{{ S.tagline }}</div>
-  <div class="meta">{{ S.generated }}: {{ generated_at }} &nbsp;·&nbsp; {{ S.root }}: {{ report.root }}
-    &nbsp;·&nbsp; {{ S.mode }}:
-    {% if report.dry_run %}{{ S.mode_dryrun }}{% elif report.in_place %}{{ S.mode_inplace }}{% else %}{{ S.mode_copy }}{% endif %}
-  </div>
-</header>
-<main>
-  <div class="summary">
-    <div class="stat"><div class="n">{{ results | length }}</div><div class="l">{{ S.sum_files }}</div></div>
-    <div class="stat"><div class="n">{{ report.fields_removed }}</div><div class="l">{{ S.sum_removed }}</div></div>
-    <div class="stat {% if report.files_with_residual %}warn{% endif %}">
-      <div class="n">{{ report.files_with_residual | length }}</div><div class="l">{{ S.sum_residual }}</div></div>
-    <div class="stat {% if report.errored %}bad{% endif %}">
-      <div class="n">{{ report.errored | length }}</div><div class="l">{{ S.sum_errors }}</div></div>
+<div class="msc-header">
+  <div class="msc-mark">meta<b>scrub</b></div>
+  <div class="msc-tag">{{ S.tagline }}</div>
+</div>
+<div class="msc-main">
+
+  <div class="msc-hero">
+    <div class="msc-hero-band">
+      {% if report.dry_run %}
+        <span class="msc-hero-state">{{ S.hero_dry }}</span>
+      {% elif state == 'bad' %}
+        <span class="msc-hero-state bad">{{ S.hero_bad }}</span>
+        <span class="msc-hero-sub">{{ S.hero_sub_bad }}</span>
+      {% elif state == 'warn' %}
+        <span class="msc-hero-state warn">{{ S.hero_warn }}</span>
+        <span class="msc-hero-sub">{{ S.hero_sub_warn }}</span>
+      {% else %}
+        <span class="msc-hero-state ok">{{ S.hero_ok }}</span>
+        <span class="msc-hero-sub">{{ S.hero_sub_ok }}</span>
+      {% endif %}
+    </div>
+    <div class="msc-stats">
+      <div class="msc-stat"><div class="n">{{ results | length }}</div><div class="l">{{ S.sum_files }}</div></div>
+      <div class="msc-stat"><div class="n">{{ report.fields_removed }}</div><div class="l">{{ S.sum_removed }}</div></div>
+      <div class="msc-stat {% if report.files_with_residual %}warn{% endif %}">
+        <div class="n">{{ report.files_with_residual | length }}</div><div class="l">{{ S.sum_residual }}</div></div>
+      <div class="msc-stat {% if report.errored %}bad{% endif %}">
+        <div class="n">{{ report.errored | length }}</div><div class="l">{{ S.sum_errors }}</div></div>
+    </div>
+    <div class="msc-src">
+      {{ S.generated }}: {{ generated_at }} &nbsp;·&nbsp; {{ S.root }}: {{ report.root }} &nbsp;·&nbsp;
+      {{ S.mode }}:
+      {% if report.dry_run %}{{ S.mode_dryrun }}{% elif report.in_place %}{{ S.mode_inplace }}{% else %}{{ S.mode_copy }}{% endif %}
+      {% if report.tool_versions %} &nbsp;·&nbsp; {{ report.tool_versions.items() | map('join', ' ') | join('  ') }}{% endif %}
+    </div>
   </div>
 
+  <h3 class="msc-h">{{ S.res_title }}</h3>
+
   {% for r in results %}
-  <div class="card">
-    <h3>{{ r.src_path }}</h3>
-    <div>
-      <span class="pill {{ r.status }}">{{ S['status_' ~ r.status] }}</span>
-      <span class="sub">{{ r.engine }} · .{{ r.filetype }}
+  <div class="msc-card is-{{ r.status }}">
+    <div class="msc-file">{{ r.src_path }}</div>
+    <div style="margin:7px 0">
+      <span class="msc-pill {{ r.status }}">{{ S['status_' ~ r.status] }}</span>
+      <span class="msc-meta">&nbsp; {{ r.engine }} · .{{ r.filetype }}
         {% if r.bytes_before %}· {{ S.size }} {{ r.bytes_before }} → {{ r.bytes_after }} B{% endif %}
       </span>
     </div>
-    {% if r.reason %}<div class="sub">{{ r.reason }}</div>{% endif %}
-    {% if r.error %}<div class="residual">{{ r.error }}</div>{% endif %}
-    {% if r.out_path and not report.in_place %}<div class="sub">{{ S.out }}: {{ r.out_path }}</div>{% endif %}
+    {% if r.reason %}<div class="msc-meta">{{ r.reason }}</div>{% endif %}
+    {% if r.error %}<div class="msc-residual">{{ r.error }}</div>{% endif %}
+    {% if r.out_path and not report.in_place %}<div class="msc-meta">{{ S.out }}: {{ r.out_path }}</div>{% endif %}
 
     {% if r.removed %}
-    <table>
+    <table class="msc-diff">
       <thead><tr>
         <th>{{ S.col_namespace }}</th><th>{{ S.col_field }}</th>
         <th>{% if report.dry_run %}{{ S.would_remove }}{% else %}{{ S.col_before }}{% endif %}</th>
       </tr></thead>
       <tbody>
       {% for c in r.removed %}
-        <tr><td>{{ c.namespace }}</td><td>{{ c.field }}</td><td class="val">{{ c.before }}</td></tr>
+        <tr><td>{{ c.namespace }}</td><td>{{ c.field }}</td><td class="was">{{ c.before }}</td></tr>
       {% endfor %}
       </tbody>
     </table>
     {% elif r.status == 'cleaned' %}
-    <div class="empty">{{ S.no_meta }}</div>
+    <div class="msc-empty">{{ S.no_meta }}</div>
     {% endif %}
 
-    {% if r.kept %}<div class="kept">{{ S.kept }}: {{ r.kept | join(', ') }}</div>{% endif %}
-    {% if r.residual %}<div class="residual">⚠ {{ S.residual }}: {{ r.residual | join(', ') }}</div>{% endif %}
+    {% if r.kept %}<div class="msc-kept">✓ {{ S.kept }}: {{ r.kept | join(', ') }}</div>{% endif %}
+    {% if r.residual %}<div class="msc-residual">⚠ {{ S.residual }}: {{ r.residual | join(', ') }}</div>{% endif %}
   </div>
   {% endfor %}
-</main>
+</div>
 </body>
 </html>

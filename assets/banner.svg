@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 240" role="img" aria-label="MetaScrub">
+  <defs>
+    <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4a7" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#2dd4a7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1000" height="240" fill="#0c1110"/>
+  <rect width="1000" height="240" fill="url(#sweep)"/>
+
+  <!-- wipe strokes: metadata being swept away -->
+  <g stroke="#2dd4a7" stroke-linecap="round" fill="none" opacity="0.9">
+    <path d="M120 70 H240" stroke-width="10"/>
+    <path d="M120 108 H210" stroke-width="10" opacity="0.65"/>
+    <path d="M120 146 H185" stroke-width="10" opacity="0.4"/>
+    <path d="M120 184 H160" stroke-width="10" opacity="0.22"/>
+  </g>
+
+  <text x="300" y="150" font-family="'DejaVu Sans','Segoe UI',Helvetica,Arial,sans-serif"
+        font-size="96" font-weight="800" letter-spacing="-2">
+    <tspan fill="#e9efed">meta</tspan><tspan fill="url(#ink)">scrub</tspan>
+  </text>
+  <text x="302" y="196" font-family="'DejaVu Sans Mono','SF Mono',Menlo,monospace"
+        font-size="21" fill="#93a5a0" letter-spacing="1">
+    strip the metadata · keep the document
+  </text>
+</svg>

@@ -17,16 +17,19 @@ from .scanner import iter_files
 
 console = Console()
 
+# MetaScrub's own mark — "Slant" figlet, distinct from MetaScout's block
+# banner, with an emerald wipe rule underneath.
+_MARK = "#2dd4a7"
 _BANNER = r"""
- __  __      _        ____                _
-|  \/  | ___| |_ __ _/ ___|  ___ _ __ _   _| |__
-| |\/| |/ _ \ __/ _` \___ \ / __| '__| | | | '_ \
-| |  | |  __/ || (_| |___) | (__| |  | |_| | |_) |
-|_|  |_|\___|\__\__,_|____/ \___|_|   \__,_|_.__/
+   __  ___     __        _____                 __
+  /  |/  /__  / /_____ _/ ___/______  __ _____/ /
+ / /|_/ / -_)/ __/ _ `/\__ \/ __/ // / // / _  /
+/_/  /_/\__/ \__/\_,_/____/\__/\_,_/\_,_/\_,_/
+              ─ scrub ───────────────────────────
 """
 
 _STATUS_STYLE = {
-    "cleaned": "green",
+    "cleaned": _MARK,
     "skipped": "yellow",
     "unsupported": "dim",
     "error": "bold red",
@@ -34,15 +37,15 @@ _STATUS_STYLE = {
 
 
 def _banner() -> None:
-    console.print(f"[bold #8bb4ff]{_BANNER}[/bold #8bb4ff]")
-    console.print("[dim]Bulk metadata scrubbing — the remediation companion to MetaScout[/dim]\n")
+    console.print(f"[bold {_MARK}]{_BANNER}[/bold {_MARK}]")
+    console.print("[dim]Bulk metadata scrubbing for PDF, Office and image files.[/dim]\n")
 
 
 def _log(message: str) -> None:
     if message.startswith("!"):
         console.print(f"[yellow]{message}[/yellow]")
     else:
-        console.print(f"[bold cyan]›[/bold cyan] {message}")
+        console.print(f"[bold {_MARK}]›[/bold {_MARK}] {message}")
 
 
 @click.group()
@@ -208,7 +211,7 @@ def inspect(paths, filetypes, recursive, as_json):
 
     _banner()
     for path, rows in out.items():
-        console.print(f"[bold #8bb4ff]▸ {path}[/bold #8bb4ff]")
+        console.print(f"[bold {_MARK}]▸ {path}[/bold {_MARK}]")
         if not rows:
             console.print("[green]  No metadata found.[/green]\n")
             continue

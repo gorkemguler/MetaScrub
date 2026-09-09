@@ -6,6 +6,7 @@ from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from .._theme import full_css
 from ..models import BatchReport, CleanResult
 
 __all__ = ["render_json_report", "render_html_report"]
@@ -43,12 +44,20 @@ def render_html_report(report: BatchReport, *, lang: str = "en") -> str:
         lstrip_blocks=True,
     )
     template = env.get_template("report.html.jinja")
+    if report.errored:
+        state = "bad"
+    elif report.files_with_residual and not report.dry_run:
+        state = "warn"
+    else:
+        state = "ok"
     return template.render(
         report=report,
         results=_sorted(report.results),
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         S=_STRINGS.get(lang, _STRINGS["en"]),
         lang=lang if lang in _STRINGS else "en",
+        css=full_css(),
+        state=state,
     )
 
 
@@ -103,6 +112,14 @@ _STRINGS = {
         "status_unsupported": "unsupported",
         "status_error": "error",
         "would_remove": "Would remove",
+        "hero_ok": "SCRUBBED",
+        "hero_warn": "RESIDUAL METADATA",
+        "hero_bad": "ERRORS",
+        "hero_dry": "DRY RUN — NOTHING WRITTEN",
+        "hero_sub_ok": "every file re-scanned clean",
+        "hero_sub_warn": "some files still carry metadata — verify manually",
+        "hero_sub_bad": "some files could not be processed",
+        "res_title": "Per file",
     },
     "tr": {
         "title": "MetaScrub raporu",
@@ -130,5 +147,13 @@ _STRINGS = {
         "status_unsupported": "desteklenmiyor",
         "status_error": "hata",
         "would_remove": "Silinecek",
+        "hero_ok": "TEMİZLENDİ",
+        "hero_warn": "ARTIK METADATA VAR",
+        "hero_bad": "HATA VAR",
+        "hero_dry": "DENEME — HİÇBİR ŞEY YAZILMADI",
+        "hero_sub_ok": "her dosya yeniden tarandı, temiz",
+        "hero_sub_warn": "bazı dosyalarda hâlâ metadata var — elle doğrulayın",
+        "hero_sub_bad": "bazı dosyalar işlenemedi",
+        "res_title": "Dosya bazında",
     },
 }

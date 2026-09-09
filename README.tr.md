@@ -1,16 +1,21 @@
 <p align="center">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-6ea8fe.svg">
-  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-8b7dfb.svg">
-  <img alt="Platforms" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-7dd88f.svg">
-  <img alt="Status" src="https://img.shields.io/badge/status-aktif%20geli%C5%9Ftirme-f2a65a.svg">
+  <img src="assets/banner.svg" alt="MetaScrub" width="100%">
 </p>
 
-<h1 align="center">MetaScrub</h1>
+<p align="center">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-2dd4a7.svg">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-2dd4a7.svg">
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-7dd88f.svg">
+  <img alt="Status" src="https://img.shields.io/badge/status-aktif%20geli%C5%9Ftirme-f6c454.svg">
+</p>
 
 <p align="center">
   PDF, Office ve görsel dosyalarından toplu metadata temizliği.<br>
-  <a href="https://github.com/gorkemguler/MetaScout">MetaScout</a>'un <b>remediation</b> (temizleme) tamamlayıcısı:
-  MetaScout metadata sızdıran belgeleri bulur, MetaScrub onları temizler ve öncesi/sonrası kanıt raporu üretir.
+  Metadata'yı sil, belgeyi koru — öncesi/sonrası kanıt raporuyla.
+</p>
+
+<p align="center">
+  <sub><a href="https://github.com/gorkemguler/MetaScout">MetaScout</a> ile birlikte çalışır: MetaScout sızıntıyı <i>bulur</i>, MetaScrub <i>giderir</i>.</sub>
 </p>
 
 <p align="center"><sub><a href="README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
@@ -182,10 +187,10 @@ Ya da `docker compose up --build` (web arayüzü); `docker compose --profile api
 
 ## Yol haritası
 
-- macOS Finder **Quick Action** ("sağ tık → Clean metadata") ve bir drag-and-drop uygulaması
-- Windows Explorer sağ tık menüsü girdisi
-- Linux **watch-daemon** — bir SFTP/FTP bırakma dizinini izle, düşeni temizle, geri koy
-- `clean --dry-run` kapısını kullanan pre-commit hook + GitHub Action
+Tüm yapılacaklar listesi ve v0.1'in bilinen sınırlamaları için **[ROADMAP.tr.md](ROADMAP.tr.md)**.
+Başlıklar: daha derin PDF/Office kapsamı, eski `.doc/.xls/.ppt`, API kimlik doğrulaması,
+SFTP/FTP bırakma dizinleri için `metascrub watch` daemon'u, macOS Finder Quick Action,
+Windows Explorer girdisi, ve pre-commit hook + GitHub Action.
 
 ## Lisans
 

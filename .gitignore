@@ -10,3 +10,4 @@ metascrub_cleaned/
 metascrub_output/
 .pytest_cache/
 .DS_Store
+.claude/
