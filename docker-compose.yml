@@ -1,0 +1,28 @@
+# docker compose up --build
+#
+# The port is bound to 127.0.0.1 on the host on purpose — the web UI has
+# no authentication. Only widen "127.0.0.1:8770" if something that
+# authenticates users sits in front (reverse proxy with auth, a
+# Tailscale/WireGuard-only network, an SSO gateway). See the README.
+services:
+  metascrub:
+    build: .
+    image: metascrub:latest
+    ports:
+      - "127.0.0.1:8770:8770"
+    volumes:
+      - ./metascrub_cleaned:/data
+    restart: unless-stopped
+
+  # Job-based REST API instead of the web UI. Start with:
+  #   docker compose --profile api up --build metascrub-api
+  metascrub-api:
+    profiles: ["api"]
+    build: .
+    image: metascrub:latest
+    command: ["api", "--host", "0.0.0.0", "--port", "8000", "--output-dir", "/data"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./metascrub_cleaned:/data
+    restart: unless-stopped

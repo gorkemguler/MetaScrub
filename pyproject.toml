@@ -1,0 +1,72 @@
+[project]
+name = "metascrub"
+version = "0.1.0"
+description = "Bulk metadata scrubbing for PDF/Office/image files — the remediation companion to MetaScout."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Görkem Güler" }]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "click>=8.1",
+    "pikepdf>=9.0",
+    "rich>=13.7",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+    "flask>=3.0",
+]
+
+[project.optional-dependencies]
+# Opt-in REST API service (`metascrub api`): a separate, job-based HTTP
+# service (FastAPI + uvicorn) wrapping the same scan -> clean -> verify
+# pipeline as the CLI and local web UI, for programmatic/enterprise
+# integration — POST files, poll the job, pull the cleaned files + report
+# as a zip. Kept out of the core install: most users only need the CLI or
+# the local single-user web UI, not a network-facing service. No built-in
+# authentication (see api/app.py and the README) — put a reverse proxy in
+# front before exposing it.
+api = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "python-multipart>=0.0.9",
+]
+
+# Opt-in Pillow fallback for the image engine: only used when the
+# `exiftool` binary isn't on PATH. exiftool is the real requirement (it
+# strips EXIF/IPTC/XMP/GPS/MakerNotes across every format); Pillow can only
+# re-save jpg/png without their metadata blocks and is a strictly weaker
+# last resort.
+image-fallback = [
+    "Pillow>=10.0",
+]
+
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "python-multipart>=0.0.9",
+    "Pillow>=10.0",
+]
+
+[project.scripts]
+metascrub = "metascrub.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+metascrub = ["report/templates/*.jinja"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

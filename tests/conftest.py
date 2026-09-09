@@ -1,0 +1,171 @@
+from __future__ import annotations
+
+import base64
+import shutil
+import subprocess
+import zipfile
+
+import pikepdf
+import pytest
+
+# A 1x1 baseline JPEG, used as the carrier for EXIF/GPS test data.
+_JPEG_1PX = base64.b64decode(
+    "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a"
+    "HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIy"
+    "MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIA"
+    "AhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA"
+    "AAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3"
+    "ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWm"
+    "p6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEA"
+    "AwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSEx"
+    "BhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElK"
+    "U1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3"
+    "uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iii"
+    "gD//2Q=="
+)
+
+
+def exiftool_present() -> bool:
+    return shutil.which("exiftool") is not None
+
+
+needs_exiftool = pytest.mark.skipif(not exiftool_present(), reason="exiftool binary not installed")
+
+
+@pytest.fixture
+def dirty_pdf(tmp_path):
+    path = tmp_path / "forecast.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    pdf.docinfo["/Author"] = "Alice Example"
+    pdf.docinfo["/Title"] = "Q3 Internal Forecast"
+    pdf.docinfo["/Producer"] = "Acme PDF Writer 4.2"
+    pdf.docinfo["/Creator"] = "Acme Office 2021"
+    pdf.docinfo["/CreationDate"] = "D:20240115103000+03'00'"
+    with pdf.open_metadata() as m:
+        m["dc:creator"] = ["Alice Example"]
+        m["dc:title"] = "Q3 Internal Forecast"
+    pdf.save(str(path))
+    return path
+
+
+@pytest.fixture
+def signed_pdf(tmp_path):
+    path = tmp_path / "signed.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(200, 200))
+    pdf.docinfo["/Author"] = "Alice Example"
+    pdf.Root.AcroForm = pdf.make_indirect(pikepdf.Dictionary(SigFlags=3, Fields=pikepdf.Array()))
+    pdf.save(str(path))
+    return path
+
+
+_CT = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+<Override PartName="/docProps/custom.xml" ContentType="application/vnd.openxmlformats-officedocument.custom-properties+xml"/>
+</Types>"""
+_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties" Target="docProps/custom.xml"/>
+</Relationships>"""
+_CORE = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:creator>Bob Author</dc:creator>
+<cp:lastModifiedBy>Carol Reviewer</cp:lastModifiedBy>
+<dc:title>Confidential Merger Memo</dc:title>
+<cp:revision>7</cp:revision>
+<dcterms:created xsi:type="dcterms:W3CDTF">2024-02-01T09:00:00Z</dcterms:created>
+</cp:coreProperties>"""
+_APP = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">
+<Application>Microsoft Office Word</Application>
+<Company>Acme Corp</Company>
+<Manager>Dave Boss</Manager>
+<Template>C:\\Users\\bob\\Templates\\merger.dotx</Template>
+</Properties>"""
+_CUSTOM = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="Matter Number"><vt:lpwstr>PROJ-2024-0042</vt:lpwstr></property>
+</Properties>"""
+_DOC = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Hello</w:t></w:r></w:p></w:body></w:document>"""
+_SETTINGS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:proofState w:spelling="clean"/><w:rsids><w:rsidRoot w:val="00AB12CD"/><w:rsid w:val="00EF3456"/></w:rsids></w:settings>"""
+
+
+@pytest.fixture
+def dirty_docx(tmp_path):
+    path = tmp_path / "memo.docx"
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", _CT)
+        z.writestr("_rels/.rels", _RELS)
+        z.writestr("docProps/core.xml", _CORE)
+        z.writestr("docProps/app.xml", _APP)
+        z.writestr("docProps/custom.xml", _CUSTOM)
+        z.writestr("word/document.xml", _DOC)
+        z.writestr("word/settings.xml", _SETTINGS)
+    return path
+
+
+@pytest.fixture
+def dirty_odt(tmp_path):
+    path = tmp_path / "notes.odt"
+    meta = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+        'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" '
+        'xmlns:dc="http://purl.org/dc/elements/1.1/" office:version="1.3"><office:meta>'
+        "<meta:initial-creator>Erin Writer</meta:initial-creator>"
+        "<dc:creator>Frank Editor</dc:creator>"
+        "<meta:generator>LibreOffice/7.6</meta:generator>"
+        "<meta:editing-cycles>12</meta:editing-cycles>"
+        "<dc:title>Board Notes</dc:title>"
+        "</office:meta></office:document-meta>"
+    )
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("mimetype", "application/vnd.oasis.opendocument.text", compress_type=zipfile.ZIP_STORED)
+        z.writestr("content.xml", '<?xml version="1.0"?><doc/>')
+        z.writestr("meta.xml", meta)
+    return path
+
+
+@pytest.fixture
+def dirty_jpg(tmp_path):
+    path = tmp_path / "photo.jpg"
+    path.write_bytes(_JPEG_1PX)
+    if exiftool_present():
+        subprocess.run(
+            [
+                "exiftool", "-overwrite_original",
+                "-Artist=Alice Example", "-Copyright=Acme Corp",
+                "-Make=Canon", "-Model=Canon EOS R5", "-Software=Acme Photo 3.1",
+                "-GPSLatitude=41.015137", "-GPSLatitudeRef=N",
+                "-GPSLongitude=28.979530", "-GPSLongitudeRef=E",
+                "-DateTimeOriginal=2024:03:10 14:22:00",
+                str(path),
+            ],
+            check=True, capture_output=True,
+        )
+    return path
+
+
+@pytest.fixture
+def dirty_tree(tmp_path, dirty_pdf, dirty_docx, dirty_jpg):
+    """A directory with the three dirty files plus one in a subdirectory."""
+    root = tmp_path / "tree"
+    sub = root / "sub"
+    sub.mkdir(parents=True)
+    shutil.copy(dirty_pdf, root / "forecast.pdf")
+    shutil.copy(dirty_docx, root / "memo.docx")
+    shutil.copy(dirty_jpg, root / "photo.jpg")
+    shutil.copy(dirty_docx, sub / "memo2.docx")
+    (root / "notes.txt").write_text("not a supported type")
+    return root

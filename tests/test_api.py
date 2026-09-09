@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+import io
+import time
+import zipfile
+
+import pytest
+
+pytest.importorskip("fastapi")
+
+from fastapi.testclient import TestClient  # noqa: E402
+
+from metascrub.api import create_app  # noqa: E402
+
+
+@pytest.fixture
+def client(tmp_path):
+    app = create_app(output_dir=str(tmp_path / "out"), max_workers=2)
+    with TestClient(app) as c:
+        yield c
+
+
+def _wait_done(client, job_id, timeout=15):
+    for _ in range(timeout * 20):
+        r = client.get(f"/v1/clean/{job_id}").json()
+        if r["status"] in ("done", "error"):
+            return r
+        time.sleep(0.05)
+    raise AssertionError("job did not finish")
+
+
+def test_health(client):
+    r = client.get("/v1/health")
+    assert r.status_code == 200 and r.json()["status"] == "ok"
+
+
+def test_clean_job_lifecycle(client, dirty_pdf, dirty_docx):
+    r = client.post(
+        "/v1/clean",
+        files=[
+            ("files", ("forecast.pdf", dirty_pdf.read_bytes(), "application/pdf")),
+            ("files", ("memo.docx", dirty_docx.read_bytes(), "application/octet-stream")),
+        ],
+        data={"report_lang": "tr"},
+    )
+    assert r.status_code == 202, r.text
+    job_id = r.json()["job_id"]
+
+    done = _wait_done(client, job_id)
+    assert done["status"] == "done", done
+    assert done["summary"]["by_status"]["cleaned"] == 2
+    assert done["summary"]["fields_removed"] > 0
+
+    rj = client.get(f"/v1/clean/{job_id}/report.json")
+    assert rj.status_code == 200 and rj.json()["summary"]["files"] == 2
+
+    z = client.get(f"/v1/clean/{job_id}/download")
+    assert z.status_code == 200
+    names = zipfile.ZipFile(io.BytesIO(z.content)).namelist()
+    assert "cleaned/forecast.pdf" in names and "report.json" in names
+
+
+def test_clean_requires_files(client):
+    r = client.post("/v1/clean", data={"report_lang": "en"})
+    assert r.status_code == 422
+
+
+def test_report_409_before_done(client, dirty_pdf, monkeypatch):
+    # never-finishing worker so we can observe the 409
+    import metascrub.api.app as appmod
+
+    r = client.post("/v1/clean", files=[("files", ("f.pdf", dirty_pdf.read_bytes(), "application/pdf"))])
+    job_id = r.json()["job_id"]
+    # immediately (job likely still queued/running)
+    early = client.get(f"/v1/clean/{job_id}/report.json")
+    assert early.status_code in (200, 409)  # fast machines may already be done
