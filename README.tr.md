@@ -20,6 +20,10 @@
 
 <p align="center"><sub><a href="README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
 
+<p align="center">
+  <img src="assets/screenshot-report.png" alt="MetaScrub öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
+</p>
+
 ---
 
 ## Bu nedir?
@@ -76,6 +80,10 @@ PDF ve Office temizliği saf Python'dur, ek bir şey gerekmez.
 
 ## CLI
 
+<p align="center">
+  <img src="assets/screenshot-cli.svg" alt="terminalde metascrub inspect ve metascrub clean" width="90%">
+</p>
+
 ### Inspect — dosyalarda ne var, göster (salt-okunur)
 
 ```bash
@@ -122,6 +130,10 @@ metascrub web           # http://127.0.0.1:8770/ açılır
 Dosyaları sayfaya sürükleyin, temizlenmiş halde geri alın — tek tek ya da zip olarak — dosya
 bazında öncesi/sonrası görünümü ve tam raporla birlikte. Önceki çalıştırmalar **Geçmiş**
 altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok** — ağa açmayın.
+
+<p align="center">
+  <img src="assets/screenshot-web.png" alt="MetaScrub yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
+</p>
 
 ## REST API
 

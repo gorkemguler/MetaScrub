@@ -20,6 +20,10 @@
 
 <p align="center"><sub>🇬🇧 English · <a href="README.tr.md">🇹🇷 Türkçe</a></sub></p>
 
+<p align="center">
+  <img src="assets/screenshot-report.png" alt="MetaScrub before/after report — 3 files, 18 metadata fields removed, 0 residual" width="90%">
+</p>
+
 ---
 
 ## What is this?
@@ -76,6 +80,10 @@ PDF and Office scrubbing are pure Python and need nothing extra.
 
 ## CLI
 
+<p align="center">
+  <img src="assets/screenshot-cli.svg" alt="metascrub inspect and metascrub clean in a terminal" width="90%">
+</p>
+
 ### Inspect — see what's in the files (read-only)
 
 ```bash
@@ -122,6 +130,10 @@ metascrub web           # opens http://127.0.0.1:8770/
 Drag files onto the page, get them back scrubbed — individually or as a zip — with a
 per-file before/after view and the full report. Past runs are listed under **History**.
 Local, single-user, **no authentication** — don't expose it to a network.
+
+<p align="center">
+  <img src="assets/screenshot-web.png" alt="MetaScrub local web UI — drag-and-drop file drop zone" width="90%">
+</p>
 
 ## REST API
 

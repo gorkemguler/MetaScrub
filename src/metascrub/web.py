@@ -214,7 +214,11 @@ def _results(lang: str, run_id: str, report) -> str:
 
 class _WebApp:
     def __init__(self, output_dir: str) -> None:
-        self.output_dir = os.path.abspath(output_dir)
+        # realpath, not abspath: the traversal guard in run_dir() compares
+        # against a realpath'd candidate, so the base must be resolved too
+        # or a legitimate run under a symlinked dir (e.g. /tmp -> /private/tmp
+        # on macOS) is wrongly rejected.
+        self.output_dir = os.path.realpath(output_dir)
         os.makedirs(self.output_dir, exist_ok=True)
 
     def run_dir(self, run_id: str) -> str | None:

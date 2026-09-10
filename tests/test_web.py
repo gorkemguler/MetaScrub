@@ -61,6 +61,25 @@ def test_path_traversal_blocked(client):
     assert client.get("/file/nope/x.pdf").status_code == 404
 
 
+def test_report_reachable_when_output_dir_is_under_a_symlink(tmp_path, dirty_pdf):
+    # A run dir under a symlinked output_dir (like /tmp -> /private/tmp on
+    # macOS) must still resolve — the traversal guard compares realpaths.
+    real = tmp_path / "real_out"
+    real.mkdir()
+    link = tmp_path / "linked_out"
+    link.symlink_to(real)
+
+    app = create_app(output_dir=str(link))
+    app.config["TESTING"] = True
+    c = app.test_client()
+
+    c.post("/clean", data={"lang": "en", "files": [(io.BytesIO(dirty_pdf.read_bytes()), "f.pdf")]},
+           content_type="multipart/form-data")
+    run_id = next(p.name for p in real.iterdir() if p.name.startswith("web-"))
+    assert c.get(f"/report/{run_id}").status_code == 200
+    assert c.get(f"/zip/{run_id}").status_code == 200
+
+
 def _latest_run(client) -> str:
     h = client.get("/history").data.decode()
     start = h.index("web-")
