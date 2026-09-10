@@ -142,11 +142,15 @@ Sıralı batch'ler, her biri kendi commit'i:
    `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; uid/gid/uname/mtime üye
    başlıklarını da normalize eder), `.7z` (`metascrub[archive]`), `.msg`
    (`metascrub[msg]`, salt-okunur — yalnız `inspect`).
-7. **Yerel drop uygulamaları** —
-   - macOS: `osacompile` droplet `MetaScrub.app` (Xcode yok) + Quick Action.
-   - Windows: WinForms sürükle-bırak `.ps1` GUI + `SendTo` kısayolu +
-     `winget` manifesti; sağ-tık girdisi zaten var.
-   - Linux: `.desktop` MIME handler + `zenity` drop diyaloğu + Nautilus betiği.
+7. ~~**Yerel drop uygulamaları**~~ **Bitti.**
+   - macOS: `platform/macos/build-app.sh` → `MetaScrub.app`, bir
+     `osacompile` droplet'i (Xcode yok); Quick Action kalıyor.
+   - Windows: `MetaScrub-drop.ps1` (WinForms bırakma penceresi),
+     `install-sendto.ps1` (*Gönder* girdisi), `platform/windows/winget/`
+     altında bir `winget` manifest şablonu; sağ-tık girdisi kalıyor.
+   - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
+     başlatıcı / *Birlikte Aç* işleyici, `zenity` seçici),
+     `install-desktop.sh`; Nautilus betiği kalıyor.
 8. **Web/API eşitliği** — web formunda ve API'de `--recurse` / `--media`;
    `GET /v1/formats` endpoint'i; yenilenmiş ekran görüntüleri.
 9. **Yayın hattı** — `.github/workflows/docker.yml` tag'de
@@ -161,14 +165,18 @@ Sıralı batch'ler, her biri kendi commit'i:
 - *Hâlâ yapılacak:* Linux'ta inotify hızlı-yolu, ve uzak bırakma
   dizininden çekip temizlenmiş dosyayı geri iten bir SFTP modu.
 
-### Platform sarmalayıcıları ("sağ tık / eklenti" senaryosu)
-- **macOS** — bir Quick Action (`.workflow`); *Finder → sağ tık → Clean
-  metadata* ve Servisler menüsü CLI'yi çağırsın; küçük bir SwiftUI
-  sürükle-bırak `.app`'i; Homebrew formülü.
-- **Windows** — Explorer sağ-tık girdisi (`IExplorerCommand` shell
-  eklentisi), `winget` paketi, PowerShell modülü.
-- **Linux** — Nautilus / Dolphin / Thunar özel-eylem betikleri; `.deb` /
-  `.rpm` / AUR.
+### Platform sarmalayıcıları ("sağ tık / eklenti" senaryosu) — **tamam**
+- **macOS** — sürükle-bırak `MetaScrub.app` (`build-app.sh`,
+  `osacompile`, Xcode yok) + Finder Quick Action. *Yapılacak:*
+  Developer-ID imzası + noterleme, Homebrew formülü.
+- **Windows** — WinForms bırakma penceresi (`MetaScrub-drop.ps1`),
+  *Gönder* girdisi (`install-sendto.ps1`), HKCU sağ-tık girdisi
+  (`install-context-menu.ps1`), `winget` manifest şablonu. *Yapılacak:*
+  winget manifestinin arkasında gerçek bir yayın artefaktı,
+  `IExplorerCommand` shell eklentisi.
+- **Linux** — `zenity` seçicili `.desktop` başlatıcı / *Birlikte Aç*
+  işleyici (`install-desktop.sh`) + Nautilus betiği. *Yapılacak:*
+  `.deb` / `.rpm` / AUR, Dolphin servis menüsü.
 
 ### CI / DevSecOps entegrasyonu
 - `metascrub clean --dry-run` çalıştırıp kirli belgelerde commit'i düşüren

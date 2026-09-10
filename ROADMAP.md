@@ -145,12 +145,15 @@ Ordered batches, each landing as its own commit:
    `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; also normalises the
    uid/gid/uname/mtime member headers), `.7z` (`metascrub[archive]`),
    `.msg` (`metascrub[msg]`, read-only — `inspect` only).
-7. **Native drop apps** —
-   - macOS: `osacompile` droplet `MetaScrub.app` (no Xcode) + the Quick Action.
-   - Windows: a WinForms drag-drop `.ps1` GUI + `SendTo` shortcut +
-     a `winget` manifest; context-menu entry already shipped.
-   - Linux: a `.desktop` MIME handler + a `zenity` drop dialog + the
-     Nautilus script.
+7. ~~**Native drop apps**~~ **Done.**
+   - macOS: `platform/macos/build-app.sh` → `MetaScrub.app`, an
+     `osacompile` droplet (no Xcode); the Quick Action stays.
+   - Windows: `MetaScrub-drop.ps1` (WinForms drop window),
+     `install-sendto.ps1` (*Send to* entry), a `winget` manifest template
+     in `platform/windows/winget/`; the context-menu entry stays.
+   - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
+     launcher / *Open With* handler, `zenity` picker),
+     `install-desktop.sh`; the Nautilus script stays.
 8. **Web/API parity** — `--recurse` / `--media` on the web form and the
    API; a `GET /v1/formats` endpoint; refreshed screenshots.
 9. **Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
@@ -165,14 +168,19 @@ Ordered batches, each landing as its own commit:
 - *Still to do:* inotify fast-path on Linux, and an SFTP mode that pulls
   from a remote drop dir and pushes the cleaned file back.
 
-### Platform wrappers (the "right-click / plugin" story) — **first cut done**
-- **macOS** — `platform/macos/install-quick-action.sh` builds a Finder
-  Quick Action. *To do:* a signed drop-target `.app`, a Homebrew formula.
-- **Windows** — `platform/windows/install-context-menu.ps1` adds an
-  HKCU right-click entry. *To do:* an `IExplorerCommand` shell extension
-  (for the Win11 top-level menu), a `winget` package.
-- **Linux** — `platform/linux/nautilus-scrub-metadata.sh`. *To do:*
-  Dolphin `.desktop` service menu, `.deb` / `.rpm` / AUR.
+### Platform wrappers (the "right-click / plugin" story) — **done**
+- **macOS** — a drag-and-drop `MetaScrub.app` (`build-app.sh`,
+  `osacompile`, no Xcode) + the Finder Quick Action
+  (`install-quick-action.sh`). *To do:* Developer-ID signing +
+  notarisation, a Homebrew formula.
+- **Windows** — a WinForms drop window (`MetaScrub-drop.ps1`), a *Send
+  to* entry (`install-sendto.ps1`), an HKCU right-click entry
+  (`install-context-menu.ps1`), and a `winget` manifest template. *To
+  do:* a real release artifact behind the winget manifest, an
+  `IExplorerCommand` shell extension for the Win11 top-level menu.
+- **Linux** — a `.desktop` launcher / *Open With* handler with a
+  `zenity` picker (`install-desktop.sh`) + the Nautilus script. *To do:*
+  `.deb` / `.rpm` / AUR, a Dolphin service menu.
 
 ### CI / DevSecOps integration — **done**
 - `metascrub clean --check` (exit 3 on metadata), a `.pre-commit-hooks.yaml`

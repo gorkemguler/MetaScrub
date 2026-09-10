@@ -6,6 +6,15 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **Native drop apps** in `platform/`:
+  - macOS: `MetaScrub.app`, a drag-and-drop droplet built with
+    `osacompile` (no Xcode) — `platform/macos/build-app.sh`.
+  - Windows: `MetaScrub-drop.ps1` (a WinForms drop window),
+    `install-sendto.ps1` (a *Send to* menu entry), and a `winget`
+    manifest template under `platform/windows/winget/`.
+  - Linux: `metascrub.desktop` + `metascrub-drop.sh` (a `.desktop`
+    launcher / *Open With* handler with a `zenity` picker) —
+    `platform/linux/install-desktop.sh`.
 - **More `--recurse` containers**: `.tar` and its compressed forms
   (`.tar.gz` / `.tgz` / `.tar.bz2` / `.tar.xz`, via stdlib `tarfile`) —
   members are scrubbed and the per-member `uid` / `gid` / `uname` /

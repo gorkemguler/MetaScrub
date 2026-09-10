@@ -271,10 +271,17 @@ Ya da `docker compose up --build` (web arayüzü); `docker compose --profile api
 - Sertifikalı bir sanitizasyon aracı değildir. Kritik işlerde çıktıyı kendiniz doğrulayın —
   `metascrub inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
 
-## Sağ tık entegrasyonu
+## Masaüstü entegrasyonu
 
-Finder Quick Action (macOS), Explorer sağ tık (Windows) ve bir dosya-yöneticisi betiği
-(Linux) **[`platform/`](platform/)** altında — her biri için tek kurulum komutu.
+Hepsi **[`platform/`](platform/)** altında, her biri için tek kurulum komutu — hepsi
+yerinde temizler:
+
+- **macOS** — sürükle-bırak `MetaScrub.app` (`osacompile` ile, Xcode yok) ve bir Finder
+  **Quick Action**.
+- **Windows** — bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
+  Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
+- **Linux** — bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
+  Nautilus/Nemo/Caja **betiği** ve bir `systemd` **watch** unit'i.
 
 ## CI / hook'lar
 

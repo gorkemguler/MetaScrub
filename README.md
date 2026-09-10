@@ -277,10 +277,16 @@ Or `docker compose up --build` (web UI); `docker compose --profile api up metasc
 - Not a certified sanitisation tool. Verify anything high-stakes yourself — that's what
   `metascrub inspect` on the output, or a second pass with MetaScout, is for.
 
-## Right-click integration
+## Desktop integration
 
-Finder Quick Action (macOS), Explorer right-click (Windows), and a file-manager script
-(Linux) all live in **[`platform/`](platform/)** — one install command each.
+All in **[`platform/`](platform/)**, one install command each — everything scrubs in place:
+
+- **macOS** — a drag-and-drop `MetaScrub.app` (built with `osacompile`, no Xcode), plus a
+  Finder **Quick Action**.
+- **Windows** — a WinForms **drop window**, a **Send to** menu entry, an Explorer
+  **right-click** entry, and a `winget` manifest (template).
+- **Linux** — a `.desktop` launcher / *Open With* handler (with a `zenity` picker), a
+  Nautilus/Nemo/Caja **script**, and a `systemd` **watch** unit.
 
 ## CI / hooks
 

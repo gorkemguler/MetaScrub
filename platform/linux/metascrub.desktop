@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=MetaScrub
+GenericName=Metadata scrubber
+Comment=Strip metadata from PDF, Office, image, SVG, audio and video files (in place)
+Exec=metascrub-drop.sh %F
+Icon=edit-clear-all
+Terminal=false
+Categories=Utility;Security;
+Keywords=metadata;privacy;exif;pdf;redaction;scrub;
+NoDisplay=false
+MimeType=application/pdf;image/jpeg;image/png;image/tiff;image/gif;image/heif;image/webp;image/svg+xml;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/msword;application/vnd.ms-excel;application/vnd.ms-powerpoint;application/vnd.oasis.opendocument.text;application/vnd.oasis.opendocument.spreadsheet;application/vnd.oasis.opendocument.presentation;application/zip;audio/mpeg;audio/flac;audio/ogg;video/mp4;video/x-matroska;video/webm;video/x-msvideo;
