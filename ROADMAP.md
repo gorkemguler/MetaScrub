@@ -46,6 +46,15 @@ backlog.
   `comments.xml`, headers/footers, and the `people.xml` / `authors.xml` /
   `persons` registries (Word / PowerPoint / Excel); the change and
   comment *text* is kept so accept/reject still works. *(part of L5)*
+- **`metascrub diff <runA> <runB>`** — compares two run reports (or run
+  dirs): files added / removed, and — the point — files where metadata
+  *reappeared* between runs (someone re-saved the document). Exit code 1
+  when any file regained metadata, for monitoring a tree over time.
+- **Golden corpus** — `tests/test_corpus.py` generates one deliberately
+  dirty file per format (pdf/docx/xlsx/pptx/odt/ods/svg/jpg/doc) and
+  asserts each scrubs to zero residual. *(closes L8)* It already caught a
+  real bug — the ODF `probe` looked for `<meta>` in the wrong namespace,
+  so `inspect` / dry-run / verify were blind to `.odt/.ods` metadata.
 
 ---
 
@@ -60,7 +69,7 @@ These are real gaps in the current release, not bugs:
 | L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
 | L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
 | L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
-| L8 | **Verify pass is heuristic** | The "ignore structural tags" list in `engines/exiftool.py` is hand-maintained; no golden corpus asserts `residual == []` broadly yet. |
+| L8 | **exiftool ignore-list is hand-maintained** | `engines/exiftool.py`'s "structural tag" allow-list is still curated by hand; the golden corpus now guards the common cases but an exotic camera tag could slip through. |
 | L9 | **API/web have no authentication** | Documented, but there's no built-in token/key — you must front it with a proxy. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
 
@@ -68,13 +77,10 @@ These are real gaps in the current release, not bugs:
 
 ## Now — v0.2 (coverage + confidence)
 
-- **Golden corpus** — a curated, license-clean set of real PDFs / Office
-  docs / images checked into `tests/corpus/`, with a test that asserts every
-  cleaned file re-scans to zero identifying metadata. (closes L8)
-- **`metascrub diff <runA> <runB>`** — compare two run reports, like
-  MetaScout's `diff`, to track a directory over time.
 - CI: GitHub Actions matrix (Python 3.10–3.13 × macOS/Linux/Windows,
   with and without exiftool / LibreOffice), `ruff`, `mypy`.
+- Mark the LibreOffice-dependent tests `slow` so the default `pytest` run
+  stays fast.
 
 ## Next — v0.3–v0.5 (make it a service, make it fit in)
 

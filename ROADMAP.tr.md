@@ -47,6 +47,17 @@ bir yapılacaklar listesi.
   kayıtlarında (Word / PowerPoint / Excel) değişiklik-takibi ve yorum
   **yazar adları + tarihlerini** boşaltır; değişiklik ve yorum *metni*
   korunur ki kabul/ret hâlâ çalışsın. *(L5'in bir kısmı)*
+- **`metascrub diff <runA> <runB>`** — iki çalıştırma raporunu (ya da
+  dizinini) karşılaştırır: eklenen/silinen dosyalar ve — asıl mesele —
+  iki çalıştırma arasında metadata *yeniden ortaya çıkan* dosyalar
+  (birisi belgeyi tekrar kaydetmiş). Herhangi bir dosya metadata
+  geri kazandıysa çıkış kodu 1.
+- **Altın külliyat** — `tests/test_corpus.py` her biçim için
+  (pdf/docx/xlsx/pptx/odt/ods/svg/jpg/doc) kasıtlı kirli bir dosya üretir
+  ve her birinin sıfır artık'a temizlendiğini doğrular. *(L8'i kapatır)*
+  Daha şimdiden gerçek bir bug yakaladı — ODF `probe` `<meta>`'yı yanlış
+  ad-alanında arıyordu, yani `inspect` / dry-run / verify `.odt/.ods`
+  metadata'sına kördü.
 
 ---
 
@@ -61,7 +72,7 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 | L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
 | L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
 | L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
-| L8 | **Doğrulama geçişi sezgisel** | `engines/exiftool.py`'daki "yapısal etiketleri yok say" listesi elle tutuluyor; henüz `residual == []`'i geniş çapta doğrulayan bir altın külliyat yok. |
+| L8 | **exiftool yok-say listesi elle tutuluyor** | `engines/exiftool.py`'nin "yapısal etiket" izin listesi hâlâ elle tutuluyor; altın külliyat sık durumları koruyor ama egzotik bir kamera etiketi sızabilir. |
 | L9 | **API/web'de kimlik doğrulama yok** | Belgelendi ama yerleşik token/anahtar yok — önüne proxy koymanız gerekir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
 
@@ -69,13 +80,10 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ## Şimdi — v0.2 (kapsam + güven)
 
-- **Altın külliyat** — `tests/corpus/` içine eklenen, lisansı temiz gerçek
-  PDF / Office / görsel seti; her temizlenmiş dosyanın sıfır kimlik
-  metadata'sına indiğini doğrulayan test. (L8'i kapatır)
-- **`metascrub diff <runA> <runB>`** — iki çalıştırma raporunu karşılaştır
-  (MetaScout'un `diff`'i gibi), bir dizini zaman içinde izle.
 - CI: GitHub Actions matrisi (Python 3.10–3.13 × macOS/Linux/Windows,
   exiftool'lu/exiftool'suz ve LibreOffice'li/siz), `ruff`, `mypy`.
+- LibreOffice'e bağımlı testleri `slow` işaretle ki varsayılan `pytest`
+  hızlı kalsın.
 
 ## Sırada — v0.3–v0.5 (servisleştir, ortama otur)
 

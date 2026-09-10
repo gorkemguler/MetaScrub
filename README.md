@@ -129,6 +129,18 @@ Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--d
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
 still carried metadata on the verify re-scan.
 
+### Diff — track a directory over time
+
+```bash
+metascrub clean ./published --out ./scan-jan     # once a month, into dated dirs
+metascrub clean ./published --out ./scan-feb
+metascrub diff ./scan-jan ./scan-feb             # what changed?
+```
+
+Shows files added/removed between the two runs and, the useful part, files where metadata
+**reappeared** (someone re-saved the document in an editor). Exit code `1` if anything
+regained metadata — drop it in a cron job.
+
 ## Web UI
 
 ```bash

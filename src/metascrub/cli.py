@@ -244,6 +244,49 @@ def inspect(paths, filetypes, recursive, pdf_password, strip_form_values, strip_
         console.print()
 
 
+# --------------------------------------------------------------------------- diff
+
+
+@main.command()
+@click.argument("run_a", type=click.Path(exists=True))
+@click.argument("run_b", type=click.Path(exists=True))
+@click.option("--json", "as_json", is_flag=True, default=False)
+def diff(run_a, run_b, as_json):
+    """Compare two `metascrub clean` runs (report.json files or run dirs).
+
+    Shows files added/removed between the two, and — the useful bit for
+    monitoring a directory over time — files where metadata *reappeared*
+    (someone re-saved the document in an editor). Exit code 1 if any file
+    regained metadata.
+    """
+    from .diff import diff_reports, load_report
+
+    d = diff_reports(load_report(os.fspath(run_a)), load_report(os.fspath(run_b)))
+
+    if as_json:
+        console.print_json(json.dumps({
+            "new_files": d.new_files, "removed_files": d.removed_files,
+            "regained": d.regained, "cleared": d.cleared, "residual_new": d.residual_new,
+        }))
+    else:
+        _banner()
+        if not d.any_changes:
+            console.print("[green]No changes between the two runs.[/green]")
+        if d.new_files:
+            console.print(f"[bold]New files[/bold] ({len(d.new_files)}): " + ", ".join(d.new_files))
+        if d.removed_files:
+            console.print(f"[dim]Gone[/dim] ({len(d.removed_files)}): " + ", ".join(d.removed_files))
+        for name, fields in d.regained.items():
+            console.print(f"[bold red]⚠ {name}[/bold red] regained metadata: " + ", ".join(fields))
+        for name, fields in d.residual_new.items():
+            console.print(f"[yellow]⚠ {name}[/yellow] new residual: " + ", ".join(fields))
+        for name, fields in d.cleared.items():
+            console.print(f"[dim]{name} no longer carried: " + ", ".join(fields) + "[/dim]")
+
+    if d.regained or d.residual_new:
+        sys.exit(1)
+
+
 # --------------------------------------------------------------------------- web / api
 
 

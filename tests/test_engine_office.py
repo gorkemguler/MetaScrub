@@ -67,6 +67,9 @@ def test_rsids_stripped_from_settings(dirty_docx, tmp_path):
 
 
 def test_odf_meta_emptied(dirty_odt, tmp_path):
+    before = {r.field for r in OfficeEngine().probe(str(dirty_odt))}
+    assert {"initial-creator", "creator", "generator"} <= before   # probe actually reads <office:meta>
+
     dst = tmp_path / "clean.odt"
     result = OfficeEngine().strip(str(dirty_odt), str(dst), CleanConfig())
     assert result.status == "cleaned"

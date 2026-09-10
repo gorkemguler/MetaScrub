@@ -129,6 +129,18 @@ Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`
 **Çıkış kodları** (CI kapısı olarak kullanılabilsin diye): `0` temiz · `1` bir dosya hata
 verdi · `2` bir temizlenmiş dosya doğrulama taramasında hâlâ metadata taşıyordu.
 
+### Diff — bir dizini zaman içinde izle
+
+```bash
+metascrub clean ./yayin --out ./tarama-ocak     # ayda bir, tarihli dizinlere
+metascrub clean ./yayin --out ./tarama-subat
+metascrub diff ./tarama-ocak ./tarama-subat     # ne değişti?
+```
+
+İki çalıştırma arasında eklenen/silinen dosyaları ve — asıl faydalı kısım — metadata'sı
+**yeniden ortaya çıkan** dosyaları (birisi belgeyi editörde tekrar kaydetmiş) gösterir.
+Bir şey metadata geri kazandıysa çıkış kodu `1` — bir cron işine koyun.
+
 ## Web arayüzü
 
 ```bash

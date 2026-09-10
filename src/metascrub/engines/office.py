@@ -373,7 +373,8 @@ def _odf_meta_fields(data: bytes) -> list[FieldChange]:
         root = ET.fromstring(data)
     except ET.ParseError:
         return rows
-    meta = root.find(f"{{{_ODF_META_NS}}}meta")
+    # <office:meta> lives in the office namespace, not the meta one.
+    meta = root.find(f"{{{_ODF_OFFICE_NS}}}meta")
     if meta is None:
         return rows
     for el in meta:
