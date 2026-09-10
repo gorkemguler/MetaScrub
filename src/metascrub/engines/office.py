@@ -173,6 +173,13 @@ def _plan_ooxml(zf: zipfile.ZipFile, names: set[str], cfg: CleanConfig):
                 rewrites[settings_part] = cleaned
                 removed.append(FieldChange(settings_part, "w:rsids", "<revision save IDs>"))
 
+    # Macro-enabled files: we don't rewrite vbaProject.bin (breaking macros
+    # is worse than the small chance an author name hides in it) — flag it
+    # so the report says the file was only partly scrubbed.
+    if any(n.endswith("vbaProject.bin") for n in names):
+        removed.append(FieldChange("OOXML", "vbaProject.bin",
+                                   "<macro project>", after="<kept — not scrubbed>"))
+
     # Opt-in: blank tracked-change / comment author names + dates.
     if cfg.strip_office_authors:
         for part, cleaned, names_found in _plan_office_authors(zf, names):
@@ -343,27 +350,49 @@ def _strip_rsids(data: bytes) -> tuple[bytes, bool]:
 # --- ODF helpers ---------------------------------------------------------
 
 
+def _odf_thumbnails(names: set[str]) -> set[str]:
+    return {n for n in names if n.startswith("Thumbnails/")}
+
+
 def _probe_odf(zf: zipfile.ZipFile, names: set[str]) -> list[FieldChange]:
-    if _ODF_META_PART not in names:
-        return []
-    return _odf_meta_fields(zf.read(_ODF_META_PART))
+    rows: list[FieldChange] = []
+    if _ODF_META_PART in names:
+        rows += _odf_meta_fields(zf.read(_ODF_META_PART))
+    if _odf_thumbnails(names):
+        rows.append(FieldChange("ODF", "thumbnail", "<embedded preview image>"))
+    return rows
+
+
+_ODF_MANIFEST = "META-INF/manifest.xml"
+_MANIFEST_THUMB_RE = re.compile(rb'<manifest:file-entry[^>]*full-path="Thumbnails/[^"]*"[^>]*/>')
 
 
 def _plan_odf(zf: zipfile.ZipFile, names: set[str], cfg: CleanConfig):
     removed: list[FieldChange] = []
     rewrites: dict[str, bytes] = {}
-    if _ODF_META_PART not in names:
-        return removed, rewrites, set()
+    drops: set[str] = set()
 
-    kept_xml: list[str] = []
-    for fc in _odf_meta_fields(zf.read(_ODF_META_PART)):
-        if cfg.wants_field(fc.field):
-            removed.append(FieldChange(fc.namespace, fc.field, fc.before, after=fc.before))
-            kept_xml.append(f"<dc:{fc.field}>{_xml_escape(fc.before)}</dc:{fc.field}>")
-        else:
-            removed.append(fc)
-    rewrites[_ODF_META_PART] = _ODF_EMPTY_META.format(kept="".join(kept_xml)).encode("utf-8")
-    return removed, rewrites, set()
+    if _ODF_META_PART in names:
+        kept_xml: list[str] = []
+        for fc in _odf_meta_fields(zf.read(_ODF_META_PART)):
+            if cfg.wants_field(fc.field):
+                removed.append(FieldChange(fc.namespace, fc.field, fc.before, after=fc.before))
+                kept_xml.append(f"<dc:{fc.field}>{_xml_escape(fc.before)}</dc:{fc.field}>")
+            else:
+                removed.append(fc)
+        rewrites[_ODF_META_PART] = _ODF_EMPTY_META.format(kept="".join(kept_xml)).encode("utf-8")
+
+    thumbs = _odf_thumbnails(names)
+    if thumbs:
+        drops |= thumbs
+        removed.append(FieldChange("ODF", "thumbnail", "<embedded preview image>"))
+        if _ODF_MANIFEST in names:
+            manifest = zf.read(_ODF_MANIFEST)
+            pruned = _MANIFEST_THUMB_RE.sub(b"", manifest)
+            if pruned != manifest:
+                rewrites[_ODF_MANIFEST] = pruned
+
+    return removed, rewrites, drops
 
 
 def _odf_meta_fields(data: bytes) -> list[FieldChange]:

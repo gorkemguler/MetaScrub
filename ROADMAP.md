@@ -90,8 +90,8 @@ These are real gaps in the current release, not bugs:
 | # | Gap | Notes |
 |---|-----|-------|
 | L2 | **Document *body* content is never touched** | Text typed into the document body, a comment's or tracked change's actual text, text baked into an image — out of scope by design (`--strip-form-values` / `--strip-office-authors` are the opt-in exceptions for the identity bits). |
-| L5 | **Office: some parts still not covered** | `--strip-office-authors` now handles tracked-change / comment authors; still not touched: `docProps/thumbnail` in unusual layouts, external-link target paths, `.docm/.xlsm` `vbaProject.bin`. |
-| L6 | **Images: Pillow fallback is weak** | Only jpg/png/webp/heic (heic via `pillow-heif`), can break animated formats. exiftool is still the real path. |
+| L5 | **Office: some parts still not covered** | `--strip-office-authors` handles tracked-change / comment authors; macro-enabled / template files scrub and flag `vbaProject.bin`. Still not touched: the *contents* of `vbaProject.bin` (kept on purpose), external-link target paths, and `docProps/thumbnail` in unusual layouts. |
+| L6 | **Images: Pillow fallback is weak** | exiftool handles jpg/png/gif/webp/heic/tiff thoroughly. The Pillow fallback (no exiftool) is only jpg/png/webp/heic (heic via `pillow-heif`) and can break animated formats. |
 | L7 | **Video scrub is best-effort** | Audio (`mutagen`) is thorough; for video only the metadata atoms are cleared — a container exiftool can't write (`.mkv`/`.avi`/`.webm` in places) may not be fully covered, and playback should be spot-checked. |
 | L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
 | L8 | **exiftool ignore-list is hand-maintained** | `engines/exiftool.py`'s "structural tag" allow-list is still curated by hand; the golden corpus now guards the common cases but an exotic camera tag could slip through. |
@@ -99,11 +99,46 @@ These are real gaps in the current release, not bugs:
 
 ---
 
-## Now — v0.3 (make it a service)
+## Now — v0.3 plan (gap-closing sweep)
 
-### Service hardening (the "run it on a Linux server / FTP box" story)
-- Publish versioned images to GHCR from CI; optional `/metrics`.
-- A documented nginx/Caddy reverse-proxy recipe next to `--api-key`.
+Ordered batches, each landing as its own commit:
+
+1. ~~**Format coverage** — GIF (comment/XMP blocks); `.docm/.xlsm/.pptm` +
+   `.dotx/.xltx/.potx` (OOXML engine already fits); ODF `Thumbnails/`.
+   Extend `DEFAULT_FILETYPES`.~~ **Done.** GIF now scrubs (EXIF/XMP + the
+   comment extension) and the `GIF` exiftool group is treated as
+   structural so a scrubbed GIF no longer trips the exit-code gate; the
+   JPEG/GIF `Comment` block is tracked as a real leak. Macro-enabled and
+   template OOXML flow through the office engine — `vbaProject.bin` is
+   kept but the report flags the file as partly scrubbed. ODF
+   `Thumbnails/` preview + its manifest entry are dropped.
+   `DEFAULT_FILETYPES` is 29 extensions. *(narrows L5, L6)*
+2. **XFA form data** — with `--strip-form-values`, blank the
+   `/AcroForm/XFA` `datasets` packet (`<xfa:data>` contents). *(closes the
+   XFA hole in L2's opt-in exception)*
+3. **`watch` hardening** — lockfile (one watcher per dir), `--pattern`
+   glob filter, prune state entries for vanished files, `--jobs`
+   pass-through.
+4. **Consistency + packaging** — `inspect --recurse/--media`; `py.typed`;
+   `--exclude GLOB`; `--no-follow-symlinks`; `--progress` (rich bar);
+   full `tool_versions()` (mutagen/olefile/soffice); `--debug` re-raise;
+   `.editorconfig` / `CODEOWNERS` / issue+PR templates; `ruff format` in CI.
+5. **Video EBML/RIFF** — a minimal `.mkv/.webm` EBML `Tags` stripper and
+   `.avi` RIFF `LIST/INFO` + `IDIT` stripper (exiftool can't write these).
+   *(closes L7)*
+6. **More containers** — `.tar`/`.tar.gz` (stdlib), `.msg` (optional
+   `extract-msg`), `.7z` (optional `py7zr`).
+7. **Native drop apps** —
+   - macOS: `osacompile` droplet `MetaScrub.app` (no Xcode) + the Quick Action.
+   - Windows: a WinForms drag-drop `.ps1` GUI + `SendTo` shortcut +
+     a `winget` manifest; context-menu entry already shipped.
+   - Linux: a `.desktop` MIME handler + a `zenity` drop dialog + the
+     Nautilus script.
+8. **Web/API parity** — `--recurse` / `--media` on the web form and the
+   API; a `GET /v1/formats` endpoint; refreshed screenshots.
+9. **Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
+   `ghcr.io/gorkemguler/metascrub` on a tag; document the nginx/Caddy
+   reverse-proxy recipe next to `--api-key`.
 
 ### `metascrub watch` — the FTP/SFTP drop-box daemon — **done**
 - `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`

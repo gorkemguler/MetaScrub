@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 
 import pytest
 
@@ -42,3 +43,35 @@ def test_source_not_modified(dirty_jpg, tmp_path):
     before = dirty_jpg.read_bytes()
     ImageEngine().strip(str(dirty_jpg), str(tmp_path / "c.jpg"), CleanConfig())
     assert dirty_jpg.read_bytes() == before
+
+
+# canonical 43-byte 1x1 GIF89a (see tests/test_corpus.py for the layout)
+_GIF_1PX = bytes.fromhex(
+    "474946383961" "0100" "0100" "80" "00" "00" "000000" "ffffff"
+    "21f9" "04" "01" "0000" "00" "00" "2c" "0000" "0000" "0100" "0100" "00"
+    "02" "02" "4401" "00" "3b"
+)
+
+
+@needs_exiftool
+def test_gif_comment_and_xmp_stripped(tmp_path):
+    src = tmp_path / "banner.gif"
+    src.write_bytes(_GIF_1PX)
+    subprocess.run(
+        ["exiftool", "-overwrite_original", "-Comment=Made by Secret Sam",
+         "-XMP:Creator=Secret Sam", str(src)],
+        check=True, capture_output=True,
+    )
+
+    fields = {r.field for r in ImageEngine().probe(str(src))}
+    assert "Comment" in fields and "Creator" in fields
+
+    dst = tmp_path / "clean.gif"
+    result = ImageEngine().strip(str(src), str(dst), CleanConfig())
+    assert result.status == "cleaned"
+
+    remaining = read_tags(str(dst))
+    assert remaining == {}, remaining
+    assert ImageEngine().probe(str(dst)) == []
+    # the GIF is still a valid 1x1 image, not truncated
+    assert dst.read_bytes().startswith(b"GIF89a") and dst.read_bytes().endswith(b";")

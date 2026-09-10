@@ -13,7 +13,19 @@ import subprocess
 _STRUCTURAL_GROUPS = {
     "ExifTool", "File", "System", "Composite", "JFIF",
     "ICC_Profile", "ICC-header", "ICC-view", "ICC-meas", "ICC-chrm", "PrintIM",
+    # Every GIF-group tag describes the format itself — version, screen
+    # geometry, colour-map presence, bit depth, background / transparent
+    # index, animation frame count / delay. None of it names a person or a
+    # place, and all of it survives an `-all=` strip, so it must not count
+    # as residual.
+    "GIF",
 }
+
+# Tags that are always a metadata leak no matter which group exiftool
+# files them under — checked before the structural filters. The GIF / JPEG
+# comment block (`COM` marker / GIF comment extension) lands in the "File"
+# group in current exiftool, which would otherwise be filtered wholesale.
+_ALWAYS_META_TAGS = {"Comment"}
 _STRUCTURAL_TAGS = {
     # geometry / encoding — intrinsic to the pixels
     "ImageWidth", "ImageHeight", "ImageSize", "Megapixels", "BitDepth",
@@ -71,7 +83,9 @@ def read_tags(path: str, *, timeout: int = 30) -> dict[str, str]:
         group, _, tag = key.partition(":")
         if not tag:
             group, tag = "", key
-        if group in _STRUCTURAL_GROUPS or tag in _STRUCTURAL_TAGS:
+        if tag not in _ALWAYS_META_TAGS and (
+            group in _STRUCTURAL_GROUPS or tag in _STRUCTURAL_TAGS
+        ):
             continue
         tags[key] = _stringify(value)
     return tags

@@ -3,6 +3,24 @@
 All notable changes to MetaScrub. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
+## [Unreleased]
+
+### Added
+- **Format coverage**: macro-enabled Office (`.docm .xlsm .pptm`) and
+  template (`.dotx .dotm .xltx .xltm .potx .potm`) files now scrub through
+  the OOXML engine; `vbaProject.bin` is kept but the report flags the file
+  as only partly scrubbed. GIF (`.gif`) images: EXIF/XMP and the comment
+  extension. ODF `Thumbnails/` preview image is dropped and its
+  `META-INF/manifest.xml` entry pruned. `DEFAULT_FILETYPES` extended
+  accordingly (29 extensions picked up when scanning a directory).
+
+### Fixed
+- Image probe/verify counted every `GIF`-group structural tag (version,
+  screen geometry, colour-map, bit depth) as residual metadata, so every
+  GIF tripped the CI exit-code gate. The `GIF` group is now recognised as
+  structural; the JPEG/GIF `Comment` block is now tracked as a real leak
+  (it had been filtered out with the rest of the `File` group).
+
 ## [0.2.0] — 2026-09-10
 
 ### Added

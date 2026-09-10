@@ -7,15 +7,22 @@ from dataclasses import dataclass, field
 # "document" is) plus the raster image formats MetaScrub can also scrub.
 DEFAULT_FILETYPES = [
     "pdf",
-    "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+    "doc", "docx", "docm", "dotx", "dotm",
+    "xls", "xlsx", "xlsm", "xltx", "xltm",
+    "ppt", "pptx", "pptm", "potx", "potm",
     "odt", "ods", "odp",
     "svg",
-    "jpg", "jpeg", "png", "tif", "tiff", "heic", "webp",
+    "jpg", "jpeg", "png", "gif", "tif", "tiff", "heic", "heif", "webp",
 ]
 
 # OOXML containers the office engine rewrites in full (pure zipfile, no
-# external dependency).
-OOXML_EXTENSIONS = frozenset({"docx", "xlsx", "pptx"})
+# external dependency) — the document, macro-enabled and template
+# variants all share the docProps/* layout.
+OOXML_EXTENSIONS = frozenset({
+    "docx", "docm", "dotx", "dotm",
+    "xlsx", "xlsm", "xltx", "xltm",
+    "pptx", "pptm", "potx", "potm",
+})
 # OpenDocument containers — same zip treatment, different metadata member.
 ODF_EXTENSIONS = frozenset({"odt", "ods", "odp"})
 # Legacy OLE2 / Compound File Binary formats. No safe stdlib-only strip
@@ -24,7 +31,7 @@ ODF_EXTENSIONS = frozenset({"odt", "ods", "odp"})
 # for the LibreOffice-headless path in a later version.
 LEGACY_OFFICE_EXTENSIONS = frozenset({"doc", "xls", "ppt"})
 
-IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "tif", "tiff", "heic", "heif", "webp"})
+IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "gif", "tif", "tiff", "heic", "heif", "webp"})
 PDF_EXTENSIONS = frozenset({"pdf"})
 SVG_EXTENSIONS = frozenset({"svg"})
 

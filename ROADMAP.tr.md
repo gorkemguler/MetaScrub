@@ -88,8 +88,8 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 | # | Eksik | Not |
 |---|-------|-----|
 | L2 | **Belge *gövde* içeriğine dokunulmuyor** | Gövdeye yazılmış metin, bir yorumun/değişikliğin metni, görselin içine gömülü metin — tasarım gereği kapsam dışı (`--strip-form-values` / `--strip-office-authors` kimlik kısımları için opt-in istisnalar). |
-| L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` artık değişiklik-takibi/yorum yazarlarını hallediyor; hâlâ dokunulmayan: sıra dışı düzenlerde `docProps/thumbnail`, dış-bağlantı hedef yolları, `.docm/.xlsm` `vbaProject.bin`. |
-| L6 | **Görseller: Pillow yedeği zayıf** | Yalnız jpg/png/webp/heic (heic `pillow-heif` ile), animasyonlu biçimleri bozabilir. Asıl yol hâlâ exiftool. |
+| L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` değişiklik-takibi/yorum yazarlarını hallediyor; makro içeren / şablon dosyalar temizlenip `vbaProject.bin` işaretleniyor. Hâlâ dokunulmayan: `vbaProject.bin` *içeriği* (bilerek korunuyor), dış-bağlantı hedef yolları ve sıra dışı düzenlerde `docProps/thumbnail`. |
+| L6 | **Görseller: Pillow yedeği zayıf** | exiftool jpg/png/gif/webp/heic/tiff'i tam işler. Pillow yedeği (exiftool yokken) yalnız jpg/png/webp/heic (heic `pillow-heif` ile) ve animasyonlu biçimleri bozabilir. |
 | L7 | **Video temizliği best-effort** | Ses (`mutagen`) kapsamlı; video için yalnız metadata atom'ları temizlenir — exiftool'un yazamadığı bir konteyner (`.mkv`/`.avi`/`.webm`) tam kapsanmayabilir, oynatma kontrol edilmeli. |
 | L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
 | L8 | **exiftool yok-say listesi elle tutuluyor** | `engines/exiftool.py`'nin "yapısal etiket" izin listesi hâlâ elle tutuluyor; altın külliyat sık durumları koruyor ama egzotik bir kamera etiketi sızabilir. |
@@ -97,11 +97,43 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ---
 
-## Şimdi — v0.3 (servisleştir)
+## Şimdi — v0.3 planı (eksik kapatma taraması)
 
-### Servis sağlamlaştırma ("Linux sunucu / FTP kutusu" senaryosu)
-- CI'dan GHCR'a sürümlü imajlar; opsiyonel `/metrics`.
-- `--api-key` yanında belgelenmiş bir nginx/Caddy reverse-proxy tarifi.
+Sıralı batch'ler, her biri kendi commit'i:
+
+1. ~~**Biçim kapsamı** — GIF (comment/XMP blokları); `.docm/.xlsm/.pptm` +
+   `.dotx/.xltx/.potx`; ODF `Thumbnails/`. `DEFAULT_FILETYPES`
+   genişletilir.~~ **Bitti.** GIF artık temizleniyor (EXIF/XMP + comment
+   uzantısı) ve `GIF` exiftool grubu yapısal sayıldığı için temizlenmiş
+   bir GIF artık çıkış-kodu kapısını tetiklemiyor; JPEG/GIF `Comment`
+   bloğu gerçek bir kaçak olarak izleniyor. Makro içeren ve şablon OOXML
+   dosyaları office motorundan geçiyor — `vbaProject.bin` korunuyor ama
+   rapor dosyanın kısmen temizlendiğini bildiriyor. ODF `Thumbnails/`
+   önizlemesi + manifest girdisi düşürülüyor. `DEFAULT_FILETYPES` 29
+   uzantı. *(L5, L6 daralır)*
+2. **XFA form verisi** — `--strip-form-values` ile `/AcroForm/XFA`
+   `datasets` paketini (`<xfa:data>` içeriği) boşalt.
+3. **`watch` sağlamlaştırma** — lockfile (dizin başına tek watcher),
+   `--pattern` glob filtresi, kaybolan dosyalar için state budama,
+   `--jobs` geçişi.
+4. **Tutarlılık + paketleme** — `inspect --recurse/--media`; `py.typed`;
+   `--exclude GLOB`; `--no-follow-symlinks`; `--progress`; tam
+   `tool_versions()`; `--debug` re-raise; `.editorconfig` / `CODEOWNERS` /
+   issue+PR şablonları; CI'da `ruff format`.
+5. **Video EBML/RIFF** — minimal `.mkv/.webm` EBML `Tags` ve `.avi` RIFF
+   `LIST/INFO` + `IDIT` temizleyici (exiftool bunlara yazamıyor). *(L7'yi kapatır)*
+6. **Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel
+   `extract-msg`), `.7z` (opsiyonel `py7zr`).
+7. **Yerel drop uygulamaları** —
+   - macOS: `osacompile` droplet `MetaScrub.app` (Xcode yok) + Quick Action.
+   - Windows: WinForms sürükle-bırak `.ps1` GUI + `SendTo` kısayolu +
+     `winget` manifesti; sağ-tık girdisi zaten var.
+   - Linux: `.desktop` MIME handler + `zenity` drop diyaloğu + Nautilus betiği.
+8. **Web/API eşitliği** — web formunda ve API'de `--recurse` / `--media`;
+   `GET /v1/formats` endpoint'i; yenilenmiş ekran görüntüleri.
+9. **Yayın hattı** — `.github/workflows/docker.yml` tag'de
+   `ghcr.io/gorkemguler/metascrub` build+push; `--api-key` yanında
+   nginx/Caddy reverse-proxy tarifi.
 
 ### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u — **tamam**
 - `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`

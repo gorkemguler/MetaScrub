@@ -88,6 +88,91 @@ def test_source_not_modified(dirty_docx, tmp_path):
     assert dirty_docx.read_bytes() == before
 
 
+_ODF_MANIFEST = (
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3">'
+    '<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/>'
+    '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>'
+    '<manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>'
+    '<manifest:file-entry manifest:full-path="Thumbnails/thumbnail.png" manifest:media-type="image/png"/>'
+    '</manifest:manifest>'
+)
+_ODF_META = (
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+    'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" '
+    'xmlns:dc="http://purl.org/dc/elements/1.1/"><office:meta>'
+    "<meta:initial-creator>Olga Odt</meta:initial-creator></office:meta></office:document-meta>"
+)
+
+
+def _odt_with_thumbnail(path) -> None:
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("mimetype", "application/vnd.oasis.opendocument.text", compress_type=zipfile.ZIP_STORED)
+        z.writestr("META-INF/manifest.xml", _ODF_MANIFEST)
+        z.writestr("meta.xml", _ODF_META)
+        z.writestr("content.xml", '<?xml version="1.0"?><doc/>')
+        z.writestr("Thumbnails/thumbnail.png", b"\x89PNG\r\n\x1a\n fake preview bytes")
+
+
+def test_odf_thumbnail_dropped_and_manifest_pruned(tmp_path):
+    src = tmp_path / "notes.odt"
+    _odt_with_thumbnail(src)
+
+    fields = {r.field for r in OfficeEngine().probe(str(src))}
+    assert "thumbnail" in fields and "initial-creator" in fields
+
+    dst = tmp_path / "clean.odt"
+    result = OfficeEngine().strip(str(src), str(dst), CleanConfig())
+    assert result.status == "cleaned"
+
+    with zipfile.ZipFile(dst) as z:
+        names = set(z.namelist())
+        manifest = z.read("META-INF/manifest.xml").decode()
+    assert not any(n.startswith("Thumbnails/") for n in names)
+    assert "Thumbnails/thumbnail.png" not in manifest
+    assert "content.xml" in manifest          # the other entries are left alone
+    assert OfficeEngine().probe(str(dst)) == []
+
+
+def _docm_with_vba(path) -> None:
+    ct = ('<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+          '<Default Extension="xml" ContentType="application/xml"/>'
+          '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
+          '<Override PartName="/word/document.xml" ContentType="application/vnd.ms-word.document.macroEnabled.main+xml"/></Types>')
+    rels = ('<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="r1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
+            '<Relationship Id="r2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>')
+    core = ('<?xml version="1.0"?><cp:coreProperties '
+            'xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
+            'xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>Macro Mike</dc:creator></cp:coreProperties>')
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", ct)
+        z.writestr("_rels/.rels", rels)
+        z.writestr("docProps/core.xml", core)
+        z.writestr("word/document.xml", "<w:document/>")
+        z.writestr("word/vbaProject.bin", b"\x00\x01\x02 fake OLE macro storage \x03\x04")
+
+
+def test_macro_enabled_docm_scrubs_core_and_flags_vba(tmp_path):
+    src = tmp_path / "report.docm"
+    _docm_with_vba(src)
+
+    assert {r.field for r in OfficeEngine().probe(str(src))} >= {"creator"}
+
+    dst = tmp_path / "clean.docm"
+    result = OfficeEngine().strip(str(src), str(dst), CleanConfig())
+    assert result.status == "cleaned"
+    # core.xml gone, macro storage kept (breaking macros is worse), and the
+    # report says so rather than silently leaving it out.
+    with zipfile.ZipFile(dst) as z:
+        names = set(z.namelist())
+    assert "docProps/core.xml" not in names
+    assert "word/vbaProject.bin" in names
+    assert "vbaProject.bin" in result.kept
+    assert OfficeEngine().probe(str(dst)) == []
+
+
 def test_tracked_change_authors_kept_by_default(tracked_docx, tmp_path):
     dst = tmp_path / "c.docx"
     OfficeEngine().strip(str(tracked_docx), str(dst), CleanConfig())

@@ -31,6 +31,19 @@ _JPEG_1PX = base64.b64decode(
     "gD//2Q=="
 )
 
+# a canonical 43-byte 1x1 GIF89a (built from spec so the corpus stays
+# reviewable — no checked-in binary)
+_GIF_1PX = bytes.fromhex(
+    "474946383961"            # "GIF89a"
+    "0100" "0100"             # width = 1, height = 1
+    "80" "00" "00"            # packed (global colour table, 2 colours), bg, aspect
+    "000000" "ffffff"         # colour table: black, white
+    "21f9" "04" "01" "0000" "00" "00"       # graphic control extension
+    "2c" "0000" "0000" "0100" "0100" "00"   # image descriptor
+    "02" "02" "4401" "00"     # LZW min code size, sub-block, data, terminator
+    "3b"                      # trailer
+)
+
 from metascrub.cleaner import clean_paths
 from metascrub.config import CleanConfig
 from metascrub.engines import engine_for
@@ -103,6 +116,12 @@ def _image(path):
                     "-Make=CorpusCam", "-GPSLatitude=1.0", "-GPSLatitudeRef=N", str(path)], check=False)
 
 
+def _gif(path):
+    path.write_bytes(_GIF_1PX)
+    subprocess.run(["exiftool", "-q", "-overwrite_original", "-Comment=Corpus Commenter",
+                    "-XMP:Creator=Corpus Artist", str(path)], check=False)
+
+
 def _doc(path, tmp_path):
     docx = tmp_path / "_seed.docx"
     _ooxml(docx, "word/document.xml",
@@ -126,15 +145,19 @@ _CASES = {
     "ods": lambda p, t: _odf(p, "application/vnd.oasis.opendocument.spreadsheet"),
     "svg": lambda p, t: _svg(p),
     "jpg": lambda p, t: _image(p),
+    "gif": lambda p, t: _gif(p),
     "doc": _doc,
 }
+
+# Formats whose fixture needs exiftool to carry any metadata at all.
+_NEEDS_EXIFTOOL = {"jpg", "gif"}
 
 
 @pytest.mark.parametrize("ext", [
     pytest.param(e, marks=pytest.mark.slow) if e == "doc" else e for e in sorted(_CASES)
 ])
 def test_corpus_file_scrubs_to_zero_residual(ext, tmp_path):
-    if ext == "jpg" and not _HAS_EXIFTOOL:
+    if ext in _NEEDS_EXIFTOOL and not _HAS_EXIFTOOL:
         pytest.skip("exiftool not installed")
     if ext == "doc" and shutil.which("soffice") is None and shutil.which("libreoffice") is None:
         pytest.skip("LibreOffice not installed")
