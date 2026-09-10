@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import secrets
 
 import pikepdf
@@ -16,6 +17,16 @@ _CATALOG_PRIVATE_KEYS = ("/Metadata", "/PieceInfo")
 # opposed to the annotation's visible content (/Contents, /RC) which is
 # left alone — MetaScrub scrubs metadata, not content.
 _ANNOT_IDENTITY_KEYS = ("/T", "/M", "/CreationDate")
+
+# The <xfa:data> subtree of an XFA form packet holds what the user typed
+# into the form (the analogue of an AcroForm field's /V). Match its
+# open/close tags — any namespace prefix, self-closing tags naturally
+# don't match — so the body between them can be blanked while the
+# datasets wrapper and its <dd:dataDescription> schema are kept. `data\b`
+# won't catch <xfa:datasets> or <xfa:dataGroup>.
+_XFA_DATA_RE = re.compile(
+    rb"(<(?:[\w.-]+:)?data\b[^>]*>)(.*?)(</(?:[\w.-]+:)?data\s*>)", re.DOTALL
+)
 
 # Prettify the Clark-notation ({uri}local) keys pikepdf yields for XMP
 # back into the conventional prefix:local form for the report.
@@ -91,6 +102,7 @@ class PdfEngine:
             rows.extend(_probe_attachments(pdf))
             if cfg is not None and cfg.strip_form_values:
                 rows.extend(_probe_form_values(pdf))
+                rows.extend(_probe_xfa(pdf))
         return rows
 
     # ------------------------------------------------------------------ strip
@@ -154,6 +166,7 @@ class PdfEngine:
             # --- AcroForm field values (opt-in: --strip-form-values) ---
             if cfg.strip_form_values:
                 removed.extend(_strip_form_values(pdf))
+                removed.extend(_strip_xfa(pdf))
 
             # --- document /ID ---
             # A full rewrite already drops the original arbitrary /ID.
@@ -401,6 +414,66 @@ def _strip_form_values(pdf: pikepdf.Pdf) -> list[FieldChange]:
                 del w["/AP"]
                 touched = True
     if touched:
+        acro = pdf.Root.get("/AcroForm")
+        if acro is not None:
+            acro["/NeedAppearances"] = True
+    return removed
+
+
+def _iter_xfa_parts(pdf: pikepdf.Pdf):
+    """Yield (label, stream) for every XFA packet. `/AcroForm/XFA` is
+    either an array of alternating name/stream pairs (``["datasets", <s>,
+    "template", <s>, ...]``) or a single ``xdp:xdp`` stream bundling them
+    all — the caller finds the <xfa:data> subtree in whichever it gets."""
+    acro = pdf.Root.get("/AcroForm")
+    if acro is None:
+        return
+    xfa = acro.get("/XFA")
+    if xfa is None:
+        return
+    if isinstance(xfa, pikepdf.Array):
+        arr = list(xfa)
+        for i in range(0, len(arr) - 1, 2):
+            stream = arr[i + 1]
+            if hasattr(stream, "read_bytes"):
+                yield _str(arr[i]).strip("/") or "packet", stream
+    elif hasattr(xfa, "read_bytes"):
+        yield "xdp", xfa
+
+
+def _probe_xfa(pdf: pikepdf.Pdf) -> list[FieldChange]:
+    rows: list[FieldChange] = []
+    for label, stream in _iter_xfa_parts(pdf):
+        try:
+            data = stream.read_bytes()
+        except Exception:
+            continue
+        for m in _XFA_DATA_RE.finditer(data):
+            inner = re.sub(rb"\s+", b" ", m.group(2)).strip()
+            if inner:
+                preview = inner[:120].decode("utf-8", "replace")
+                rows.append(FieldChange("PDF Form", f"XFA {label} data", preview))
+    return rows
+
+
+def _strip_xfa(pdf: pikepdf.Pdf) -> list[FieldChange]:
+    """Blank the <xfa:data> body of every XFA packet — that's the filled-in
+    form data. The template (form definition) and the datasets wrapper /
+    data-description schema are left intact."""
+    removed: list[FieldChange] = []
+    changed = False
+    for label, stream in _iter_xfa_parts(pdf):
+        try:
+            data = stream.read_bytes()
+        except Exception:
+            continue
+        new, n = _XFA_DATA_RE.subn(rb"\1\3", data)
+        if n and new != data:
+            stream.write(new)
+            removed.append(FieldChange("PDF Form", f"XFA {label} data",
+                                       f"<{n} XFA data block(s) blanked>"))
+            changed = True
+    if changed:
         acro = pdf.Root.get("/AcroForm")
         if acro is not None:
             acro["/NeedAppearances"] = True

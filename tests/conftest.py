@@ -109,6 +109,31 @@ def form_pdf(tmp_path):
 
 
 @pytest.fixture
+def xfa_pdf(tmp_path):
+    """A PDF whose AcroForm carries an XFA packet array — the filled-in
+    values live in the <xfa:data> subtree of the 'datasets' packet."""
+    path = tmp_path / "xfa_form.pdf"
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(300, 200))
+    datasets = pikepdf.Stream(pdf, (
+        b'<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/">'
+        b'<dd:dataDescription xmlns:dd="http://ns.adobe.com/data-description/" dd:name="form1"/>'
+        b'<xfa:data><form1><applicant>Jane Q. Public</applicant>'
+        b'<ssn>123-45-6789</ssn></form1></xfa:data></xfa:datasets>'
+    ))
+    template = pikepdf.Stream(pdf, (
+        b'<template xmlns="http://www.xfa.org/schema/xfa-template/3.0/">'
+        b'<subform name="form1"><field name="applicant"/></subform></template>'
+    ))
+    pdf.Root.AcroForm = pdf.make_indirect(pikepdf.Dictionary(
+        Fields=pikepdf.Array([]),
+        XFA=pikepdf.Array(["template", template, "datasets", datasets]),
+    ))
+    pdf.save(str(path))
+    return path
+
+
+@pytest.fixture
 def encrypted_pdf(tmp_path):
     path = tmp_path / "locked.pdf"
     pdf = pikepdf.new()

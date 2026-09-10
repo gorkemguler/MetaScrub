@@ -125,7 +125,8 @@ def main(ctx: click.Context) -> None:
 @click.option("--strip-pdf-id", is_flag=True, default=False,
               help="Give each scrubbed PDF a fresh random /ID so copies can't be correlated by it.")
 @click.option("--strip-form-values", is_flag=True, default=False,
-              help="Also blank PDF form-field values (/V, /DV) — user-entered data, not just metadata.")
+              help="Also blank PDF form values (AcroForm /V, /DV and the XFA <xfa:data> packet) "
+                   "— user-entered data, not just metadata.")
 @click.option("--strip-office-authors", is_flag=True, default=False,
               help="Also blank Office tracked-change / comment author names and dates (text is kept).")
 @click.option("--json-report/--no-json-report", default=True, show_default=True)

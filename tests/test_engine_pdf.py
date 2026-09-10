@@ -154,6 +154,36 @@ def test_strip_form_values_blanks_field_and_appearance(form_pdf, tmp_path):
     assert PdfEngine().probe(str(dst), cfg) == []
 
 
+def test_xfa_data_left_alone_by_default(xfa_pdf, tmp_path):
+    dst = tmp_path / "clean.pdf"
+    PdfEngine().strip(str(xfa_pdf), str(dst), CleanConfig())
+    with pikepdf.open(str(dst)) as pdf:
+        xfa = list(pdf.Root.AcroForm.XFA)
+        datasets = xfa[xfa.index("datasets") + 1].read_bytes()
+    assert b"Jane Q. Public" in datasets and b"123-45-6789" in datasets   # untouched
+
+
+def test_strip_form_values_blanks_xfa_data_keeps_template(xfa_pdf, tmp_path):
+    cfg = CleanConfig(strip_form_values=True)
+    probed = PdfEngine().probe(str(xfa_pdf), cfg)
+    assert any("XFA" in r.field and "Jane Q. Public" in r.before for r in probed)
+
+    dst = tmp_path / "clean.pdf"
+    result = PdfEngine().strip(str(xfa_pdf), str(dst), cfg)
+    assert result.status == "cleaned"
+    assert any("XFA" in fc.field for fc in result.removed)
+
+    with pikepdf.open(str(dst)) as pdf:
+        xfa = list(pdf.Root.AcroForm.XFA)
+        datasets = xfa[xfa.index("datasets") + 1].read_bytes()
+        template = xfa[xfa.index("template") + 1].read_bytes()
+        assert bool(pdf.Root.AcroForm.get("/NeedAppearances")) is True
+    assert b"Jane Q. Public" not in datasets and b"123-45-6789" not in datasets
+    assert b"<xfa:datasets" in datasets and b"dataDescription" in datasets   # wrapper + schema kept
+    assert b'name="form1"' in template                                       # form definition kept
+    assert PdfEngine().probe(str(dst), cfg) == []
+
+
 def test_strip_pdf_id_randomises_between_runs(dirty_pdf, tmp_path):
     a, b = tmp_path / "a.pdf", tmp_path / "b.pdf"
     PdfEngine().strip(str(dirty_pdf), str(a), CleanConfig(strip_pdf_id=True))

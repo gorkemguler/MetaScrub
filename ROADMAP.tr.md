@@ -111,8 +111,11 @@ Sıralı batch'ler, her biri kendi commit'i:
    rapor dosyanın kısmen temizlendiğini bildiriyor. ODF `Thumbnails/`
    önizlemesi + manifest girdisi düşürülüyor. `DEFAULT_FILETYPES` 29
    uzantı. *(L5, L6 daralır)*
-2. **XFA form verisi** — `--strip-form-values` ile `/AcroForm/XFA`
-   `datasets` paketini (`<xfa:data>` içeriği) boşalt.
+2. ~~**XFA form verisi** — `--strip-form-values` ile `/AcroForm/XFA`
+   `datasets` paketini (`<xfa:data>` içeriği) boşalt.~~ **Bitti.** Her XFA
+   paketinin (dizi biçimi ya da tek `xdp:xdp` akışı) `<xfa:data>` gövdesi
+   boşaltılıyor; şablon, datasets sarmalayıcısı ve `<dd:dataDescription>`
+   şeması korunuyor.
 3. **`watch` sağlamlaştırma** — lockfile (dizin başına tek watcher),
    `--pattern` glob filtresi, kaybolan dosyalar için state budama,
    `--jobs` geçişi.

@@ -48,7 +48,7 @@ signature) is never modified.
 
 | Format | Engine | Removed |
 | --- | --- | --- |
-| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. |
+| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. With `--strip-form-values`: AcroForm field values and the XFA `<xfa:data>` packet too. |
 | **Office** `.docx .xlsx .pptx` (+ macro-enabled `.docm .xlsm .pptm` and templates `.dotx .dotm .xltx .xltm .potx .potm`) | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revision, timestamps), `docProps/app.xml` (Company, Manager, Template path), `docProps/custom.xml`, the embedded thumbnail, and Word revision-save-id fingerprints (`w:rsids`) from `settings.xml`. Dangling relationships and content-type overrides are pruned; per-member zip timestamps are normalised. `vbaProject.bin` is **kept** (breaking macros is worse than the small chance a name hides in it) and the report flags that the file was only partly scrubbed. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields — plus the `Thumbnails/` preview image (a rendered snapshot of the first page) and its `META-INF/manifest.xml` entry. |
 | **Legacy Office** `.doc .xls .ppt` | `olefile` (pure Python) | The `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property streams — author, last-saved-by, company, manager, template, title, timestamps, custom properties — are patched out **in place**: same file size, same format, same structure. `--in-place` works. If a container can't be parsed, MetaScrub falls back to a LibreOffice (`soffice`) re-render to `.docx/.xlsx/.pptx`. |
@@ -61,7 +61,8 @@ signature) is never modified.
 `--backup` keeps `<name>.orig` next to an `--in-place` scrub.
 
 Two **opt-in** flags go past metadata into identity data that's technically content:
-`--strip-form-values` blanks PDF form-field values (`/V` `/DV`) and their cached appearance;
+`--strip-form-values` blanks PDF form values — AcroForm fields (`/V` `/DV`) and their cached
+appearance, plus the `<xfa:data>` packet of an XFA form (the XFA template and schema are kept);
 `--strip-office-authors` blanks Office tracked-change / comment **author names and dates**
 (the change and comment text stays, so accept/reject still works).
 

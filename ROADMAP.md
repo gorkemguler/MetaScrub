@@ -113,9 +113,12 @@ Ordered batches, each landing as its own commit:
    kept but the report flags the file as partly scrubbed. ODF
    `Thumbnails/` preview + its manifest entry are dropped.
    `DEFAULT_FILETYPES` is 29 extensions. *(narrows L5, L6)*
-2. **XFA form data** — with `--strip-form-values`, blank the
-   `/AcroForm/XFA` `datasets` packet (`<xfa:data>` contents). *(closes the
-   XFA hole in L2's opt-in exception)*
+2. ~~**XFA form data** — with `--strip-form-values`, blank the
+   `/AcroForm/XFA` `datasets` packet (`<xfa:data>` contents).~~ **Done.**
+   Every XFA packet (array form or a single `xdp:xdp` stream) has its
+   `<xfa:data>` body blanked; the template, the datasets wrapper and its
+   `<dd:dataDescription>` schema are kept. *(closes the XFA hole in L2's
+   opt-in exception)*
 3. **`watch` hardening** — lockfile (one watcher per dir), `--pattern`
    glob filter, prune state entries for vanished files, `--jobs`
    pass-through.

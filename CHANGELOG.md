@@ -6,6 +6,11 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **PDF XFA forms**: `--strip-form-values` now also blanks the
+  `<xfa:data>` subtree of every `/AcroForm/XFA` packet (array form or a
+  single `xdp:xdp` stream) — that's the data typed into an XFA form. The
+  XFA template (form definition), the `datasets` wrapper and its
+  `<dd:dataDescription>` schema are kept, and `NeedAppearances` is set.
 - **Format coverage**: macro-enabled Office (`.docm .xlsm .pptm`) and
   template (`.dotx .dotm .xltx .xltm .potx .potm`) files now scrub through
   the OOXML engine; `vbaProject.bin` is kept but the report flags the file

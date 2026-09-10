@@ -48,7 +48,7 @@ imza) asla değiştirilmez.
 
 | Biçim | Motor | Silinen |
 | --- | --- | --- |
-| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. |
+| **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. `--strip-form-values` ile: AcroForm alan değerleri ve XFA `<xfa:data>` paketi de. |
 | **Office** `.docx .xlsx .pptx` (+ makro içeren `.docm .xlsm .pptm` ve şablonlar `.dotx .dotm .xltx .xltm .potx .potm`) | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. `vbaProject.bin` **korunur** (makroyu bozmak, içinde bir isim saklanma ihtimalinden kötüdür) ve rapor dosyanın kısmen temizlendiğini bildirir. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar — ayrıca `Thumbnails/` önizleme görseli (ilk sayfanın render edilmiş anlık görüntüsü) ve `META-INF/manifest.xml` içindeki girdisi. |
 | **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları — yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler — **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaScrub LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
@@ -61,7 +61,8 @@ imza) asla değiştirilmez.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
 
 İki **opt-in** bayrak metadata'nın ötesine, teknik olarak içerik olan kimlik verisine geçer:
-`--strip-form-values` PDF form alanı değerlerini (`/V` `/DV`) ve önbellekli görünümlerini boşaltır;
+`--strip-form-values` PDF form değerlerini boşaltır — AcroForm alanları (`/V` `/DV`) ve önbellekli
+görünümleri, artı bir XFA formunun `<xfa:data>` paketi (XFA şablonu ve şeması korunur);
 `--strip-office-authors` Office değişiklik-takibi / yorum **yazar adları ve tarihlerini** boşaltır
 (değişiklik ve yorum metni kalır, kabul/ret hâlâ çalışır).
 
