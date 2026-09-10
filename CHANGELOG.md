@@ -6,6 +6,13 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **Matroska / WebM / AVI metadata** (`engines/ebml_riff.py`): exiftool
+  can't write these, so a pure-Python in-place scrubber blanks the EBML
+  `Tags` block and `Info` title / `DateUTC` / `MuxingApp` / `WritingApp`
+  (Matroska), and `LIST INFO` + `IDIT` (AVI), by overwriting them with
+  `Void` / `JUNK` padding of identical length. File length is unchanged,
+  `--in-place` works, output is deterministic, track data is untouched.
+  `.avi` and `.3gp` join the `--media` extension set.
 - **Walk controls**: `--exclude GLOB` (repeatable; matches a name or a
   path relative to the walk root, prunes whole directories) and
   `--no-follow-symlinks` (don't scrub a symlinked file found in a walk —

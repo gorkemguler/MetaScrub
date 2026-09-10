@@ -47,9 +47,10 @@ jobs:
       # Fast suite everywhere (no LibreOffice needed).
       - run: pytest -q -m "not slow"
 
-      # Full suite (incl. the LibreOffice fallback path) on one Linux job.
-      - name: LibreOffice + full suite
+      # Full suite (incl. the LibreOffice fallback + real mkv/avi via
+      # ffmpeg) on one Linux job.
+      - name: LibreOffice + ffmpeg + full suite
         if: runner.os == 'Linux' && matrix.python == '3.12'
         run: |
-          sudo apt-get install -y libreoffice-core libreoffice-writer
+          sudo apt-get install -y libreoffice-core libreoffice-writer ffmpeg
           pytest -q

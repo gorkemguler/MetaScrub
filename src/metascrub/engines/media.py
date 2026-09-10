@@ -5,7 +5,13 @@ import shutil
 from ..config import AUDIO_EXTENSIONS, MEDIA_EXTENSIONS, VIDEO_EXTENSIONS, CleanConfig
 from ..models import FieldChange
 from .base import new_result
+from .ebml_riff import probe_avi, probe_matroska, scrub_avi, scrub_matroska
 from .exiftool import exiftool_available, read_tags, strip_media
+
+# Containers exiftool cannot write — handled by the pure-Python EBML /
+# RIFF scrubber (engines/ebml_riff.py) instead.
+_EBML_EXTENSIONS = {"mkv", "webm"}
+_RIFF_EXTENSIONS = {"avi"}
 
 # Video tags that are container structure / codec info, not identity —
 # filtered from the report so it doesn't look like they were "leaked".
@@ -26,8 +32,13 @@ class MediaEngine:
     extensions = MEDIA_EXTENSIONS
 
     def probe(self, path: str, cfg: CleanConfig | None = None) -> list[FieldChange]:
-        if _ext(path) in AUDIO_EXTENSIONS:
+        ext = _ext(path)
+        if ext in AUDIO_EXTENSIONS:
             return _probe_audio(path)
+        if ext in _EBML_EXTENSIONS:
+            return [FieldChange("Matroska", f, v) for f, v in probe_matroska(path)]
+        if ext in _RIFF_EXTENSIONS:
+            return [FieldChange("RIFF", f, v) for f, v in probe_avi(path)]
         rows: list[FieldChange] = []
         for key, value in read_tags(path).items():
             group, _, tag = key.partition(":")
@@ -46,7 +57,19 @@ class MediaEngine:
                 return new_result(src, None, self.name, "error", error=msg)
             return new_result(src, dst, self.name, "cleaned", removed=before)
 
-        # video
+        # Matroska / WebM / AVI — exiftool can't write these; use the
+        # pure-Python in-place Void/JUNK scrubber (works with --in-place).
+        if ext in _EBML_EXTENSIONS or ext in _RIFF_EXTENSIONS:
+            scrub = scrub_matroska if ext in _EBML_EXTENSIONS else scrub_avi
+            ok, changes = scrub(src, dst)
+            if not ok:
+                return new_result(src, None, self.name, "error",
+                                  error=changes[0][1] if changes else "could not parse container")
+            result = new_result(src, dst, self.name, "cleaned", removed=before)
+            result.reason = "in-place metadata blanking (track data untouched) — verify playback"
+            return result
+
+        # mp4 / mov / m4v / 3gp — exiftool
         if not exiftool_available():
             return new_result(src, None, self.name, "error",
                               error="video scrubbing needs the exiftool binary")

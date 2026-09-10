@@ -92,7 +92,7 @@ These are real gaps in the current release, not bugs:
 | L2 | **Document *body* content is never touched** | Text typed into the document body, a comment's or tracked change's actual text, text baked into an image — out of scope by design (`--strip-form-values` / `--strip-office-authors` are the opt-in exceptions for the identity bits). |
 | L5 | **Office: some parts still not covered** | `--strip-office-authors` handles tracked-change / comment authors; macro-enabled / template files scrub and flag `vbaProject.bin`. Still not touched: the *contents* of `vbaProject.bin` (kept on purpose), external-link target paths, and `docProps/thumbnail` in unusual layouts. |
 | L6 | **Images: Pillow fallback is weak** | exiftool handles jpg/png/gif/webp/heic/tiff thoroughly. The Pillow fallback (no exiftool) is only jpg/png/webp/heic (heic via `pillow-heif`) and can break animated formats. |
-| L7 | **Video scrub is best-effort** | Audio (`mutagen`) is thorough; for video only the metadata atoms are cleared — a container exiftool can't write (`.mkv`/`.avi`/`.webm` in places) may not be fully covered, and playback should be spot-checked. |
+| L7 | **Video scrub is best-effort** | Audio (`mutagen`) is thorough. MP4-family video: exiftool clears the metadata atoms. Matroska / WebM / AVI: the `Tags` / `Info` / `LIST INFO` / `IDIT` metadata is blanked in place (`engines/ebml_riff.py`), but a `Tags` element sitting *after* an unknown-size Cluster isn't reached, and `Chapters` / attachment names are left alone. Spot-check playback. |
 | L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
 | L8 | **exiftool ignore-list is hand-maintained** | `engines/exiftool.py`'s "structural tag" allow-list is still curated by hand; the golden corpus now guards the common cases but an exotic camera tag could slip through. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
@@ -133,8 +133,12 @@ Ordered batches, each landing as its own commit:
    deliberate hand-aligned style (grouped list literals, compact
    multi-arg calls) that `ruff format` flattens, and `ruff check` already
    gates correctness in CI. `.editorconfig` records the 120-col width.
-5. **Video EBML/RIFF** — a minimal `.mkv/.webm` EBML `Tags` stripper and
-   `.avi` RIFF `LIST/INFO` + `IDIT` stripper (exiftool can't write these).
+5. ~~**Video EBML/RIFF** — a minimal `.mkv/.webm` EBML `Tags` stripper and
+   `.avi` RIFF `LIST/INFO` + `IDIT` stripper (exiftool can't write
+   these).~~ **Done.** `engines/ebml_riff.py` blanks the `Tags` block +
+   `Info` title/date/app-name fields (Matroska) and `LIST INFO` + `IDIT`
+   (AVI) in place, overwriting with `Void`/`JUNK` padding of identical
+   length — deterministic, `--in-place`-safe, track data untouched.
    *(closes L7)*
 6. **More containers** — `.tar`/`.tar.gz` (stdlib), `.msg` (optional
    `extract-msg`), `.7z` (optional `py7zr`).
@@ -180,10 +184,11 @@ Shipped: `--jobs N` (thread-pool parallel scrub), `--quarantine DIR`,
 collapsible/filterable/printable HTML report, and a
 `release.yml` (tag → build → PyPI Trusted Publishing + GitHub Release).
 
+Shipped from this list: a `rich` progress bar (`clean --progress`), and
+deeper video (EBML `Tags` for `.mkv/.webm`, RIFF `LIST`/`IDIT` for `.avi`).
+
 Still open:
-- A `rich` progress bar for large trees.
 - A combined HTML report across runs; copy-as-CSV.
-- Deeper video — EBML `Tags` for `.mkv/.webm`, RIFF `LIST` for `.avi`.
 - Windows `IExplorerCommand` shell extension; `winget` / Homebrew /
   `.deb` packages; publish the GitHub Action to the Marketplace.
 

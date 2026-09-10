@@ -90,7 +90,7 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 | L2 | **Belge *gövde* içeriğine dokunulmuyor** | Gövdeye yazılmış metin, bir yorumun/değişikliğin metni, görselin içine gömülü metin — tasarım gereği kapsam dışı (`--strip-form-values` / `--strip-office-authors` kimlik kısımları için opt-in istisnalar). |
 | L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` değişiklik-takibi/yorum yazarlarını hallediyor; makro içeren / şablon dosyalar temizlenip `vbaProject.bin` işaretleniyor. Hâlâ dokunulmayan: `vbaProject.bin` *içeriği* (bilerek korunuyor), dış-bağlantı hedef yolları ve sıra dışı düzenlerde `docProps/thumbnail`. |
 | L6 | **Görseller: Pillow yedeği zayıf** | exiftool jpg/png/gif/webp/heic/tiff'i tam işler. Pillow yedeği (exiftool yokken) yalnız jpg/png/webp/heic (heic `pillow-heif` ile) ve animasyonlu biçimleri bozabilir. |
-| L7 | **Video temizliği best-effort** | Ses (`mutagen`) kapsamlı; video için yalnız metadata atom'ları temizlenir — exiftool'un yazamadığı bir konteyner (`.mkv`/`.avi`/`.webm`) tam kapsanmayabilir, oynatma kontrol edilmeli. |
+| L7 | **Video temizliği best-effort** | Ses (`mutagen`) kapsamlı. MP4 ailesi video: exiftool metadata atom'larını temizler. Matroska / WebM / AVI: `Tags` / `Info` / `LIST INFO` / `IDIT` metadata'sı yerinde boşaltılır (`engines/ebml_riff.py`), ama bilinmeyen boyutlu bir Cluster'dan *sonra* gelen `Tags` öğesine erişilmez ve `Chapters` / ek adlarına dokunulmaz. Oynatmayı kontrol edin. |
 | L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
 | L8 | **exiftool yok-say listesi elle tutuluyor** | `engines/exiftool.py`'nin "yapısal etiket" izin listesi hâlâ elle tutuluyor; altın külliyat sık durumları koruyor ama egzotik bir kamera etiketi sızabilir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
@@ -130,8 +130,13 @@ Sıralı batch'ler, her biri kendi commit'i:
    bir elle-hizalanmış stil kullanıyor (gruplu liste literalleri, kompakt
    çok-argümanlı çağrılar) ve `ruff check` zaten CI'da doğruluğu kapıya
    alıyor. `.editorconfig` 120 sütun genişliğini kaydediyor.
-5. **Video EBML/RIFF** — minimal `.mkv/.webm` EBML `Tags` ve `.avi` RIFF
-   `LIST/INFO` + `IDIT` temizleyici (exiftool bunlara yazamıyor). *(L7'yi kapatır)*
+5. ~~**Video EBML/RIFF** — minimal `.mkv/.webm` EBML `Tags` ve `.avi` RIFF
+   `LIST/INFO` + `IDIT` temizleyici (exiftool bunlara yazamıyor).~~
+   **Bitti.** `engines/ebml_riff.py` `Tags` bloğu + `Info`
+   başlık/tarih/uygulama-adı alanlarını (Matroska) ve `LIST INFO` +
+   `IDIT`'i (AVI) yerinde, aynı uzunlukta `Void`/`JUNK` dolgusuyla
+   boşaltıyor — deterministik, `--in-place`-güvenli, track verisine
+   dokunulmadan. *(L7'yi kapatır)*
 6. **Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel
    `extract-msg`), `.7z` (opsiyonel `py7zr`).
 7. **Yerel drop uygulamaları** —
@@ -177,10 +182,11 @@ Geldi: `--jobs N` (thread-pool paralel temizlik), `--quarantine DIR`,
 açılır/filtrelenebilir/yazdırılabilir HTML rapor, ve bir `release.yml`
 (tag → build → PyPI Trusted Publishing + GitHub Release).
 
+Bu listeden geldi: `rich` ilerleme çubuğu (`clean --progress`) ve daha
+derin video (`.mkv/.webm` için EBML `Tags`, `.avi` için RIFF `LIST`/`IDIT`).
+
 Hâlâ açık:
-- Büyük ağaçlar için `rich` ilerleme çubuğu.
 - Çalıştırmaları birleştiren HTML rapor; CSV-kopyala.
-- Daha derin video — `.mkv/.webm` için EBML `Tags`, `.avi` için RIFF `LIST`.
 - Windows `IExplorerCommand` shell eklentisi; `winget` / Homebrew /
   `.deb` paketleri; GitHub Action'ı Marketplace'e yayınla.
 
