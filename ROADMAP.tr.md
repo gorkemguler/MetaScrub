@@ -69,6 +69,15 @@ bir yapılacaklar listesi.
   `--max-files` sınırlarıyla → 413. Hem `web` hem `api`, kimlik doğrulama
   yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`--insecure`
   hariç). *(L9'u kapatır)*
+- **Kalıcı API işleri** — iş kaydı artık bir SQLite dosyası
+  (`<output_dir>/jobs.db`); iş durumu + özeti yeniden başlatmada korunur,
+  süreç öldüğünde `running` olan bir iş `error: interrupted by a service
+  restart` olarak döner, `--run-ttl-days N` başlangıçta eski bitmiş
+  işleri + çalıştırma dizinlerini siler. *(L10'un bir kısmı)*
+- **Konteyner** — imaj root olmayan bir kullanıcı (uid 1000) olarak
+  çalışır, `HEALTHCHECK`'i var, ve `metascrub api --log-json` istek
+  başına bir JSON erişim-log satırı basar. `docker-compose` API servisi
+  artık `METASCRUB_API_KEY` ve 30-günlük TTL alıyor.
 
 ---
 
@@ -91,10 +100,7 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 ## Şimdi — v0.3 (servisleştir)
 
 ### Servis sağlamlaştırma ("Linux sunucu / FTP kutusu" senaryosu)
-- **Kalıcı işler** — SQLite tabanlı iş kaydı; yeniden başlatmada durum
-  korunsun. Eski çalıştırma dizinleri için TTL temizliği. (L10'un bir kısmı)
-- **Konteyner** — root olmayan kullanıcı, `HEALTHCHECK`, GHCR'a sürümlü imaj.
-- Yapılandırılmış JSON log (`--log-json`); opsiyonel `/metrics`.
+- CI'dan GHCR'a sürümlü imajlar; opsiyonel `/metrics`.
 - `--api-key` yanında belgelenmiş bir nginx/Caddy reverse-proxy tarifi.
 
 ### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u

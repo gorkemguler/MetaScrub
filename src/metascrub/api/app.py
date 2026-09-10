@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import secrets
 import shutil
 import tempfile
+import time
 import zipfile
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
@@ -35,14 +38,8 @@ def _rm(path: str) -> None:
         pass
 
 
-def _summary(report: BatchReport) -> JobSummary:
-    return JobSummary(
-        files=len(report.results),
-        by_status=report.counts,
-        fields_removed=report.fields_removed,
-        files_with_residual=len(report.files_with_residual),
-        files_errored=len(report.errored),
-    )
+def _summary(job: Job) -> JobSummary | None:
+    return JobSummary(**job.summary) if job.summary else None
 
 
 def _links(request: Request, job_id: str) -> dict[str, str]:
@@ -62,7 +59,7 @@ def _status(job: Job, request: Request) -> JobStatusResponse:
         started_at=job.started_at.isoformat() if job.started_at else None,
         finished_at=job.finished_at.isoformat() if job.finished_at else None,
         error=job.error,
-        summary=_summary(job.report) if job.report is not None else None,
+        summary=_summary(job),
         links=_links(request, job.job_id),
     )
 
@@ -84,7 +81,8 @@ def _require_done(store: JobStore, job_id: str) -> Job:
 
 def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
                max_pending: int = 50, api_key: str | None = None,
-               max_upload_mb: int = 200, max_files: int = 50) -> FastAPI:
+               max_upload_mb: int = 200, max_files: int = 50,
+               run_ttl_days: int = 0, log_json: bool = False) -> FastAPI:
     """MetaScrub REST API — POST files, poll the job, pull the cleaned
     files + report as a zip. Every job runs in a bounded background thread
     pool so POST returns immediately; max_pending caps queued+running jobs.
@@ -94,7 +92,8 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
     `max_upload_mb` / `max_files` bound a single request.
     """
     os.makedirs(output_dir, exist_ok=True)
-    store = JobStore(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending)
+    store = JobStore(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending,
+                     run_ttl_days=run_ttl_days)
     max_upload_bytes = max_upload_mb * 1024 * 1024
 
     def require_key(request: Request) -> None:
@@ -119,9 +118,23 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
         title="MetaScrub API",
         version=__version__,
         description="Job-based bulk metadata scrubbing for PDF/Office/image files. "
-                    "No built-in authentication — see the README before exposing this.",
+                    "Set an API key before exposing this — see the README.",
         lifespan=lifespan,
     )
+
+    if log_json:
+        @app.middleware("http")
+        async def _access_log(request: Request, call_next):
+            t0 = time.monotonic()
+            response = await call_next(request)
+            print(json.dumps({
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "method": request.method, "path": request.url.path,
+                "status": response.status_code,
+                "ms": round((time.monotonic() - t0) * 1000, 1),
+                "client": request.client.host if request.client else None,
+            }), flush=True)
+            return response
 
     @app.get("/v1/health", response_model=HealthResponse, tags=["meta"])
     def health() -> HealthResponse:

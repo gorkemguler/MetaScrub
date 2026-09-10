@@ -87,6 +87,40 @@ def test_api_key_enforced(tmp_path, dirty_pdf):
         assert c.get("/v1/clean", headers={"X-API-Key": "sekret"}).status_code == 200
 
 
+def test_job_status_survives_restart(tmp_path, dirty_pdf):
+    out = str(tmp_path / "out")
+    app1 = create_app(output_dir=out)
+    with TestClient(app1) as c:
+        job_id = c.post("/v1/clean",
+                        files=[("files", ("f.pdf", dirty_pdf.read_bytes(), "application/pdf"))]).json()["job_id"]
+        _wait_done(c, job_id)
+
+    # a fresh app over the same output dir re-reads the SQLite registry
+    app2 = create_app(output_dir=out)
+    with TestClient(app2) as c:
+        r = c.get(f"/v1/clean/{job_id}")
+        assert r.status_code == 200
+        assert r.json()["status"] == "done"
+        assert r.json()["summary"]["files"] == 1
+        assert c.get(f"/v1/clean/{job_id}/report.json").status_code == 200   # file still on disk
+
+
+def test_running_job_marked_interrupted_after_restart(tmp_path):
+    out = str(tmp_path / "out")
+    create_app(output_dir=out)  # creates jobs.db
+    # forge a 'running' row as if the process died mid-job
+    import sqlite3
+    db = sqlite3.connect(str(tmp_path / "out" / "jobs.db"))
+    db.execute("INSERT INTO jobs VALUES ('zz','api-x','en',1,'running','2020-01-01T00:00:00+00:00',"
+               "'2020-01-01T00:00:00+00:00',NULL,NULL,NULL)")
+    db.commit()
+    db.close()
+
+    with TestClient(create_app(output_dir=out)) as c:
+        r = c.get("/v1/clean/zz").json()
+        assert r["status"] == "error" and "restart" in r["error"]
+
+
 def test_upload_limits(tmp_path, dirty_pdf):
     app = create_app(output_dir=str(tmp_path / "o"), max_files=2, max_upload_mb=1)
     with TestClient(app) as c:

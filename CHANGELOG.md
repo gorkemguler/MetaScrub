@@ -25,6 +25,13 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 - `--backup` — keep `<name>.orig` next to an `--in-place` scrub.
 - Golden-corpus test (`tests/test_corpus.py`), `ruff` + `mypy` config, a
   GitHub Actions CI matrix, and a `slow` pytest marker.
+- **REST API**: `--api-key` (env `METASCRUB_API_KEY`) on every `/v1` route
+  except `/v1/health`; streaming uploads with `--max-upload-mb` /
+  `--max-files` caps; a SQLite-backed job registry so status survives a
+  restart (`--run-ttl-days` prunes old runs); `--log-json` access log.
+  `metascrub api` / `web` refuse a non-loopback bind without auth unless
+  `--insecure`.
+- **Docker**: non-root user, `HEALTHCHECK`.
 
 ### Fixed
 - ODF `probe` looked for `<meta>` in the wrong XML namespace, so

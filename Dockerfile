@@ -36,18 +36,26 @@ COPY src ./src
 
 RUN pip install --no-cache-dir '.[api,image-fallback]'
 
-# Cleaned copies + run reports (report.html / report.json / cleaned/) land
-# here — mount a volume at /data to get them back onto the host.
-RUN mkdir -p /data
+# Cleaned copies + run reports (report.html / report.json / cleaned/) and
+# the API job registry (jobs.db) land here — mount a volume at /data to
+# get them back onto the host and keep job state across restarts.
+# Runs as a non-root user; if you bind-mount a host directory at /data,
+# make sure uid 1000 can write it (`chown 1000 ./metascrub_cleaned`).
+RUN useradd --system --uid 1000 --create-home metascrub \
+    && mkdir -p /data && chown metascrub:metascrub /data
 VOLUME /data
+USER metascrub
 
 # 8770 = web UI (default CMD). 8000 = REST API (only if you override CMD).
 EXPOSE 8770 8000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8770/', timeout=2).status == 200 else 1)"
 
 ENTRYPOINT ["metascrub"]
 # --host 0.0.0.0 so the port is reachable from outside the container at
 # all. That is NOT the same as being reachable from outside the host —
 # that depends on how you publish the port (`-p` / compose `ports:`).
-# Neither the web UI nor the API has any authentication: bind to
-# 127.0.0.1 on the host side unless an authenticating proxy sits in front.
-CMD ["web", "--host", "0.0.0.0", "--port", "8770", "--output-dir", "/data", "--no-open-browser"]
+# The web UI has no login; the API needs `--api-key` for a non-loopback
+# bind. Keep 127.0.0.1 on the host side unless a proxy / key is in place.
+CMD ["web", "--host", "0.0.0.0", "--port", "8770", "--output-dir", "/data", "--no-open-browser", "--insecure"]

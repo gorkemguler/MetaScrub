@@ -336,9 +336,13 @@ def web(host, port, output_dir, open_browser, insecure):
               help="Require this key on every /v1 route (X-API-Key or Bearer) except /v1/health.")
 @click.option("--max-upload-mb", default=200, show_default=True, help="Cap on a single request's total upload.")
 @click.option("--max-files", default=50, show_default=True, help="Cap on files per request.")
+@click.option("--run-ttl-days", default=0, show_default=True,
+              help="Delete finished jobs + their run dirs older than N days on startup (0 = keep).")
+@click.option("--log-json", is_flag=True, default=False, help="Emit one JSON access-log line per request.")
 @click.option("--insecure", is_flag=True, default=False,
               help="Allow binding a non-loopback host with no --api-key.")
-def api(host, port, output_dir, max_workers, max_pending, api_key, max_upload_mb, max_files, insecure):
+def api(host, port, output_dir, max_workers, max_pending, api_key, max_upload_mb, max_files,
+        run_ttl_days, log_json, insecure):
     """Launch the MetaScrub REST API (job-based). Requires: pip install 'metascrub[api]'."""
     try:
         import uvicorn
@@ -354,7 +358,8 @@ def api(host, port, output_dir, max_workers, max_pending, api_key, max_upload_mb
     auth = "API key required" if api_key else "NO authentication"
     console.print(f"[bold]MetaScrub API[/bold] on [bold]http://{host}:{port}/[/bold]  (docs: /docs) — {auth}")
     app = create_app(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending,
-                     api_key=api_key, max_upload_mb=max_upload_mb, max_files=max_files)
+                     api_key=api_key, max_upload_mb=max_upload_mb, max_files=max_files,
+                     run_ttl_days=run_ttl_days, log_json=log_json)
     uvicorn.run(app, host=host, port=port, log_level="warning")
 
 

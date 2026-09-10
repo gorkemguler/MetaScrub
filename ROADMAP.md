@@ -65,6 +65,15 @@ backlog.
   temp file (never the whole batch in memory) with `--max-upload-mb` /
   `--max-files` caps → 413. Both `web` and `api` **refuse to bind a
   non-loopback host** with no auth unless `--insecure`. *(closes L9)*
+- **Durable API jobs** — the job registry is now a SQLite file
+  (`<output_dir>/jobs.db`); job status + summary survive a restart, a job
+  that was `running` when the process died comes back as `error:
+  interrupted by a service restart`, and `--run-ttl-days N` prunes old
+  finished jobs + their run dirs on startup. *(part of L10)*
+- **Container** — the image runs as a non-root user (uid 1000), has a
+  `HEALTHCHECK`, and `metascrub api --log-json` emits one JSON
+  access-log line per request. `docker-compose` API service now takes
+  `METASCRUB_API_KEY` and a 30-day TTL.
 
 ---
 
@@ -87,10 +96,7 @@ These are real gaps in the current release, not bugs:
 ## Now — v0.3 (make it a service)
 
 ### Service hardening (the "run it on a Linux server / FTP box" story)
-- **Durable jobs** — SQLite-backed job registry so status survives a
-  restart; TTL cleanup of old run directories. (part of L10)
-- **Container** — non-root user, `HEALTHCHECK`, versioned images to GHCR.
-- Structured JSON logging (`--log-json`); optional `/metrics`.
+- Publish versioned images to GHCR from CI; optional `/metrics`.
 - A documented nginx/Caddy reverse-proxy recipe next to `--api-key`.
 
 ### `metascrub watch` — the FTP/SFTP drop-box daemon
