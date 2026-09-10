@@ -137,8 +137,11 @@ Sıralı batch'ler, her biri kendi commit'i:
    `IDIT`'i (AVI) yerinde, aynı uzunlukta `Void`/`JUNK` dolgusuyla
    boşaltıyor — deterministik, `--in-place`-güvenli, track verisine
    dokunulmadan. *(L7'yi kapatır)*
-6. **Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel
-   `extract-msg`), `.7z` (opsiyonel `py7zr`).
+6. ~~**Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel
+   `extract-msg`), `.7z` (opsiyonel `py7zr`).~~ **Bitti.** `.tar` +
+   `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; uid/gid/uname/mtime üye
+   başlıklarını da normalize eder), `.7z` (`metascrub[archive]`), `.msg`
+   (`metascrub[msg]`, salt-okunur — yalnız `inspect`).
 7. **Yerel drop uygulamaları** —
    - macOS: `osacompile` droplet `MetaScrub.app` (Xcode yok) + Quick Action.
    - Windows: WinForms sürükle-bırak `.ps1` GUI + `SendTo` kısayolu +
@@ -192,11 +195,12 @@ Hâlâ açık:
 
 ## Bir gün — daha büyük bahisler
 
-- **Özyinelemeli konteynerler** — *ilk sürüm tamam*: `metascrub clean
-  --recurse` `.zip` arşivlerine ve `.eml` e-postalarına iner
+- **Özyinelemeli konteynerler** — tamam: `metascrub clean --recurse`
+  `.zip` / `.tar*` / `.7z` arşivlerine ve `.eml` e-postalarına iner
   (`engines/container.py`), her üyeyi temizler, yeniden paketler, derinlik
-  sınırlı. Hâlâ açık: `.msg` (Outlook), ve bir PDF'nin *kendi*
-  `/EmbeddedFiles`'ının temizlenmiş kopyalarını yeniden gömme.
+  sınırlı. `.msg` (Outlook) yalnız-inceleme. Hâlâ açık: yazılabilir bir
+  `.msg` yolu, ve bir PDF'nin *kendi* `/EmbeddedFiles`'ının temizlenmiş
+  kopyalarını yeniden gömme.
 - **İçerik tarafı işaretleme** — çıktıda MetaScout'un `--scan-content`'ini
   çalıştıran bir `--flag-content`; gövde metninde hâlâ PII varsa uyarır.
   Şimdilik README ikinci geçiş olarak `metascout local-scan

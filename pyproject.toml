@@ -50,14 +50,29 @@ image-fallback = [
 ]
 
 # Opt-in audio scrubbing (mp3/flac/ogg/opus/wav/aiff tags via mutagen).
-# Video containers (mp4/mov/m4v) use the exiftool binary instead.
+# Video containers (mp4/mov/m4v) use the exiftool binary instead;
+# .mkv/.webm/.avi are handled by a pure-Python EBML/RIFF scrubber.
 media = [
     "mutagen>=1.47",
+]
+
+# Opt-in `.7z` recursion (`metascrub clean --recurse` into a 7-Zip
+# archive). `.zip` / `.eml` / `.tar` need nothing extra.
+archive = [
+    "py7zr>=0.20",
+]
+
+# Opt-in read-only `.msg` (Outlook) inspection — `metascrub inspect
+# --recurse` lists what's inside; rewriting the CFB is out of scope.
+msg = [
+    "extract-msg>=0.48",
 ]
 
 dev = [
     "pytest>=8.0",
     "mutagen>=1.47",
+    "py7zr>=0.20",
+    "extract-msg>=0.48",
     "httpx>=0.27",
     "fastapi>=0.110",
     "uvicorn>=0.29",

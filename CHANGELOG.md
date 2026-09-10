@@ -6,6 +6,14 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **More `--recurse` containers**: `.tar` and its compressed forms
+  (`.tar.gz` / `.tgz` / `.tar.bz2` / `.tar.xz`, via stdlib `tarfile`) —
+  members are scrubbed and the per-member `uid` / `gid` / `uname` /
+  `gname` / `mtime` headers (the packer's own identity) are normalised
+  to zero. `.7z` via optional `py7zr` (`metascrub[archive]`). `.msg`
+  (Outlook) via optional `extract-msg` (`metascrub[msg]`) is **read-only**
+  — `inspect --recurse` lists what's inside; `clean` skips it (rewriting
+  the CFB is out of scope).
 - **Matroska / WebM / AVI metadata** (`engines/ebml_riff.py`): exiftool
   can't write these, so a pure-Python in-place scrubber blanks the EBML
   `Tags` block and `Info` title / `DateUTC` / `MuxingApp` / `WritingApp`

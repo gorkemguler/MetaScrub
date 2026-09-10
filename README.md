@@ -55,7 +55,7 @@ signature) is never modified.
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core author/title/licence), `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes, and editor comments (`<!-- Created with … -->`). The drawing itself is untouched. |
 | **Images** `.jpg .jpeg .png .gif .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | All EXIF / IPTC / XMP / GPS / MakerNotes, PNG/WebP text chunks and the JPEG/GIF comment block. The ICC colour profile and EXIF orientation are kept by default so the picture still renders correctly (`--no-keep-color-profile` / `--no-keep-orientation` to drop those too). HEIC also works via `pillow-heif` when exiftool is absent. |
 | **Audio / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / pure Python | Audio: all tags (ID3 / Vorbis / iTunes) and embedded cover art — `pip install 'metascrub[media]'`. MP4-family video: exiftool clears the metadata atoms (`ItemList`, `Keys`, `UserData`, XMP — artist, `Make`/`Model` from a phone, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool can't write these): the whole EBML `Tags` block and the `Info` title / dates / muxer-and-writer app names are blanked in place — overwritten with `Void` / `JUNK` padding of identical length, so the file length is unchanged and `--in-place` works; the track data is never touched. Not scanned by default — pass **`--media`** (or list the extensions in `--filetypes`). Spot-check playback. |
-| **Containers** `.zip .eml` | stdlib `zipfile` / `email` | With **`--recurse`**: each supported member of a zip, and each attachment of an email, is scrubbed with its own engine and the archive/message repacked. Non-scrubbable members pass through untouched. Nesting is followed (depth-limited). |
+| **Containers** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (optional) | With **`--recurse`**: each supported member of an archive, and each email attachment, is scrubbed with its own engine and the archive/message repacked. `.tar*` also has its per-member uid/gid/username/mtime headers normalised (a leak of the packer's identity). `.7z` needs `pip install 'metascrub[archive]'`. `.msg` (Outlook) is **read-only** — `metascrub inspect --recurse` lists what's inside (needs `metascrub[msg]`); export to `.eml` to scrub. Non-scrubbable members pass through untouched. Nesting is followed (depth-limited). |
 
 `--keep Title` (repeatable) spares a named field from the otherwise-aggressive strip.
 `--backup` keeps `<name>.orig` next to an `--in-place` scrub.
@@ -71,6 +71,9 @@ appearance, plus the `<xfa:data>` packet of an XFA form (the XFA template and sc
 ```bash
 pip install metascrub                     # core: PDF + Office scrubbing
 pip install 'metascrub[api]'              # + the REST API service
+pip install 'metascrub[media]'            # + audio tag scrubbing (mutagen)
+pip install 'metascrub[archive]'          # + .7z recursion (py7zr)
+pip install 'metascrub[msg]'              # + read-only .msg inspection (extract-msg)
 pip install 'metascrub[image-fallback]'   # + Pillow (weak image fallback if exiftool is absent)
 ```
 

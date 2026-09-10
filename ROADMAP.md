@@ -140,8 +140,11 @@ Ordered batches, each landing as its own commit:
    (AVI) in place, overwriting with `Void`/`JUNK` padding of identical
    length — deterministic, `--in-place`-safe, track data untouched.
    *(closes L7)*
-6. **More containers** — `.tar`/`.tar.gz` (stdlib), `.msg` (optional
-   `extract-msg`), `.7z` (optional `py7zr`).
+6. ~~**More containers** — `.tar`/`.tar.gz` (stdlib), `.msg` (optional
+   `extract-msg`), `.7z` (optional `py7zr`).~~ **Done.** `.tar` +
+   `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; also normalises the
+   uid/gid/uname/mtime member headers), `.7z` (`metascrub[archive]`),
+   `.msg` (`metascrub[msg]`, read-only — `inspect` only).
 7. **Native drop apps** —
    - macOS: `osacompile` droplet `MetaScrub.app` (no Xcode) + the Quick Action.
    - Windows: a WinForms drag-drop `.ps1` GUI + `SendTo` shortcut +
@@ -194,9 +197,10 @@ Still open:
 
 ## Someday — bigger bets
 
-- **Recursive containers** — *first cut done*: `metascrub clean --recurse`
-  descends into `.zip` archives and `.eml` emails (`engines/container.py`),
-  scrubs each member, repacks, depth-limited. Still open: `.msg` (Outlook),
+- **Recursive containers** — done: `metascrub clean --recurse` descends
+  into `.zip` / `.tar*` / `.7z` archives and `.eml` emails
+  (`engines/container.py`), scrubs each member, repacks, depth-limited.
+  `.msg` (Outlook) is inspect-only. Still open: a writable `.msg` path,
   and re-embedding scrubbed copies of a PDF's *own* `/EmbeddedFiles`.
 - **Content-side flagging** — a `--flag-content` that runs MetaScout's
   `--scan-content` over the output and warns if PII still sits in the

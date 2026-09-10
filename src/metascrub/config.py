@@ -45,7 +45,16 @@ MEDIA_EXTENSIONS = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS
 
 # Containers whose members are themselves scrubbable — descended into with
 # `metascrub clean --recurse`. Not in DEFAULT_FILETYPES.
-CONTAINER_EXTENSIONS = frozenset({"zip", "eml"})
+#   zip / eml           — stdlib
+#   tar + compressed    — stdlib tarfile (auto-detects gz/bz2/xz); bare
+#                         gz/bz2/xz only route here when they are a tar
+#   7z                  — optional py7zr  (metascrub[archive])
+#   msg (Outlook)       — optional extract-msg, read-only (probe only)
+CONTAINER_EXTENSIONS = frozenset({
+    "zip", "eml",
+    "tar", "tgz", "tbz2", "tbz", "txz", "gz", "bz2", "xz",
+    "7z", "msg",
+})
 
 
 # Named bundles of `metascrub clean` settings. Explicit flags still win;

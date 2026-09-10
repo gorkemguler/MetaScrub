@@ -55,7 +55,7 @@ imza) asla değiştirilmez.
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .gif .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes, PNG/WebP metin blokları ve JPEG/GIF yorum bloğu. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). exiftool yoksa HEIC `pillow-heif` ile de çalışır. |
 | **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / saf Python | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi — `pip install 'metascrub[media]'`. MP4 ailesi video: exiftool metadata atom'larını temizler (`ItemList`, `Keys`, `UserData`, XMP — sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool bunlara yazamaz): tüm EBML `Tags` bloğu ve `Info` başlığı / tarihleri / muxer-ve-writer uygulama adları yerinde boşaltılır — aynı uzunlukta `Void` / `JUNK` dolgusuyla üzerine yazılır, böylece dosya uzunluğu değişmez ve `--in-place` çalışır; track verisine dokunulmaz. Varsayılan taranmaz — **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). Oynatmayı kontrol edin. |
-| **Konteynerler** `.zip .eml` | stdlib `zipfile` / `email` | **`--recurse`** ile: bir zip'in desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
+| **Konteynerler** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (opsiyonel) | **`--recurse`** ile: bir arşivin desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. `.tar*` ayrıca üye başına uid/gid/kullanıcı-adı/mtime başlıklarını normalize eder (paketleyenin kimlik sızıntısı). `.7z` için `pip install 'metascrub[archive]'` gerekir. `.msg` (Outlook) **salt-okunur** — `metascrub inspect --recurse` içindekileri listeler (`metascrub[msg]` gerekir); temizlemek için `.eml`'e aktarın. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
 
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
@@ -71,6 +71,9 @@ görünümleri, artı bir XFA formunun `<xfa:data>` paketi (XFA şablonu ve şem
 ```bash
 pip install metascrub                     # çekirdek: PDF + Office temizliği
 pip install 'metascrub[api]'              # + REST API servisi
+pip install 'metascrub[media]'            # + ses etiketi temizliği (mutagen)
+pip install 'metascrub[archive]'          # + .7z özyinelemesi (py7zr)
+pip install 'metascrub[msg]'              # + salt-okunur .msg incelemesi (extract-msg)
 pip install 'metascrub[image-fallback]'   # + Pillow (exiftool yoksa zayıf görsel yedeği)
 ```
 
