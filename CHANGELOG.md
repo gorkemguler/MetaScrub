@@ -32,6 +32,12 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
   `metascrub api` / `web` refuse a non-loopback bind without auth unless
   `--insecure`.
 - **Docker**: non-root user, `HEALTHCHECK`.
+- `--jobs N` (parallel scrub), `--quarantine DIR` (dated recoverable
+  originals), `--policy publish|internal|minimal`, and a `.metascrub.toml`
+  project config.
+- `metascrub watch <dir>` — scrub an FTP/SFTP drop folder on a poll loop.
+- `metascrub clean --check` (exit 3 on metadata), `.pre-commit-hooks.yaml`,
+  `action.yml` GitHub Action, and right-click installers in `platform/`.
 
 ### Fixed
 - ODF `probe` looked for `<meta>` in the wrong XML namespace, so

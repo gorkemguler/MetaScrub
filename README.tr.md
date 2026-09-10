@@ -122,12 +122,25 @@ metascrub clean a.pdf b.docx c.jpg --out ./temiz
 
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
-`--password` (şifreli PDF'ler — temizlenmiş kopya şifresiz yazılır),
-`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`), `--backup` (`--in-place` ile `<ad>.orig` sakla),
-`--strip-form-values`, `--strip-office-authors` (opt-in — yukarıya bakın).
+`--password` (şifreli PDF'ler), `--strip-pdf-id`, `--backup` (`--in-place` ile `<ad>.orig` sakla),
+`--strip-form-values`, `--strip-office-authors` (opt-in — yukarıya bakın),
+`--jobs N` (N dosyayı paralel temizle), `--quarantine DIR` (orijinali üzerine yaz ama önce
+`DIR/<tarih>/`'e taşı — kurtarılabilir, `--in-place`'ten güvenli),
+`--policy publish|internal|minimal` (adlandırılmış presetler).
 
-**Çıkış kodları** (CI kapısı olarak kullanılabilsin diye): `0` temiz · `1` bir dosya hata
-verdi · `2` bir temizlenmiş dosya doğrulama taramasında hâlâ metadata taşıyordu.
+**Proje yapılandırması:** çalışma dizininde ya da bir üstünde (git köküne kadar) bir
+`.metascrub.toml` komut başına varsayılanları belirler — CLI bayrakları ve env değişkenleri
+yine kazanır.
+
+```toml
+[clean]
+strip-office-authors = true
+jobs = 4
+keep = ["Title"]
+```
+
+**Çıkış kodları** (CI kapısı olarak): `0` temiz · `1` bir dosya hata verdi · `2` temizlenmiş
+dosya doğrulamada hâlâ metadata taşıyordu · `3` (`--check`) metadata bulundu.
 
 ### Diff — bir dizini zaman içinde izle
 

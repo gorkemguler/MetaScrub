@@ -29,6 +29,19 @@ PDF_EXTENSIONS = frozenset({"pdf"})
 SVG_EXTENSIONS = frozenset({"svg"})
 
 
+# Named bundles of `metascrub clean` settings. Explicit flags still win;
+# `--policy` only shifts the defaults.
+POLICIES: dict[str, dict] = {
+    # Everything, for a file about to go public.
+    "publish": {"strip_form_values": True, "strip_office_authors": True, "strip_pdf_id": True},
+    # Standard scrub, but keep document titles so files stay findable
+    # inside the org.
+    "internal": {"keep_fields": ("Title",)},
+    # Only the always-on metadata strip — no opt-in extras (the default).
+    "minimal": {},
+}
+
+
 @dataclass
 class CleanConfig:
     """Everything that controls a scrub run. Shared verbatim by the CLI,
@@ -77,6 +90,14 @@ class CleanConfig:
     # --in-place only: keep the untouched original next to the scrubbed
     # file as "<name>.orig" (never overwrites an existing .orig).
     backup: bool = False
+
+    # Like --in-place, but the original is moved into
+    # <quarantine>/<YYYY-MM-DD>/<relpath> first — recoverable, out of the
+    # way. Takes precedence over in_place / output_dir when set.
+    quarantine: str | None = None
+
+    # Files scrubbed in parallel (thread pool). 1 = sequential.
+    jobs: int = 1
 
     # Aggressive, opt-in: also blank things that are arguably *content*
     # but are, in practice, a PII leak.

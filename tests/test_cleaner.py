@@ -52,6 +52,33 @@ def test_backup_keeps_original_next_to_in_place_scrub(dirty_pdf):
         assert "/Info" not in pdf.trailer
 
 
+def test_quarantine_moves_original_and_scrubs_in_place(dirty_tree, tmp_path):
+    q = tmp_path / "quarantine"
+    report = clean_paths([str(dirty_tree)], CleanConfig(quarantine=str(q)), base_dir=str(dirty_tree))
+    assert {r.status for r in report.results} == {"cleaned"}
+
+    # originals overwritten in place...
+    with pikepdf.open(str(dirty_tree / "forecast.pdf")) as pdf:
+        assert "/Info" not in pdf.trailer
+    # ...but recoverable from quarantine/<date>/<relpath>
+    import datetime
+    day = datetime.date.today().isoformat()
+    assert (q / day / "forecast.pdf").is_file()
+    assert (q / day / "sub" / "memo2.docx").is_file()
+    with pikepdf.open(str(q / day / "forecast.pdf")) as pdf:
+        assert "/Info" in pdf.trailer      # the quarantined copy still has metadata
+
+
+def test_jobs_parallel_matches_sequential(dirty_tree, tmp_path):
+    seq = clean_paths([str(dirty_tree)], CleanConfig(output_dir=str(tmp_path / "a")),
+                      base_dir=str(dirty_tree))
+    par = clean_paths([str(dirty_tree)], CleanConfig(output_dir=str(tmp_path / "b"), jobs=4),
+                      base_dir=str(dirty_tree))
+    assert sorted(r.src_path for r in seq.results) == sorted(r.src_path for r in par.results)
+    assert seq.fields_removed == par.fields_removed
+    assert {r.status for r in par.results} == {"cleaned"}
+
+
 def test_backup_does_not_clobber_existing_orig(dirty_pdf):
     backup = dirty_pdf.with_name(dirty_pdf.name + ".orig")
     backup.write_bytes(b"an earlier original")

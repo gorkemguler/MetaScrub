@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .cleaner import clean_paths
-from .config import DEFAULT_FILETYPES, CleanConfig
+from .config import DEFAULT_FILETYPES, POLICIES, CleanConfig
 from .engines import engine_for, missing_dependencies
 from .report import render_html_report, render_json_report
 from .scanner import iter_files
@@ -48,11 +48,45 @@ def _log(message: str) -> None:
         console.print(f"[bold {_MARK}]›[/bold {_MARK}] {message}")
 
 
+def _load_project_config() -> dict:
+    """Find `.metascrub.toml` in the cwd or a parent and turn each table
+    (`[clean]`, `[inspect]`, `[watch]`) into a click default_map entry.
+    CLI flags and env vars still win — this only changes the *defaults*.
+    """
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # py3.10
+        try:
+            import tomli as tomllib
+        except ModuleNotFoundError:
+            return {}
+
+    here = os.getcwd()
+    while True:
+        candidate = os.path.join(here, ".metascrub.toml")
+        if os.path.isfile(candidate):
+            try:
+                with open(candidate, "rb") as fh:
+                    data = tomllib.load(fh)
+            except (OSError, ValueError):
+                return {}
+            return {
+                cmd: {k.replace("-", "_"): v for k, v in tbl.items()}
+                for cmd, tbl in data.items() if isinstance(tbl, dict)
+            }
+        parent = os.path.dirname(here)
+        if parent == here or os.path.isdir(os.path.join(here, ".git")):
+            return {}
+        here = parent
+
+
 @click.group()
 @click.version_option(package_name="metascrub")
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """MetaScrub — strip metadata from PDF, Office and image files in bulk."""
     load_dotenv(find_dotenv(usecwd=True))
+    ctx.default_map = _load_project_config()
 
 
 # --------------------------------------------------------------------------- clean
@@ -67,6 +101,9 @@ def main() -> None:
               help="Overwrite originals instead of writing cleaned copies (irreversible).")
 @click.option("--backup", is_flag=True, default=False,
               help="With --in-place, keep the untouched original as <name>.orig.")
+@click.option("--quarantine", default=None, type=click.Path(),
+              help="Overwrite the original, but move it to QUARANTINE/<date>/ first (safer than --in-place).")
+@click.option("--jobs", "-j", default=1, show_default=True, help="Scrub this many files in parallel.")
 @click.option("--out", "output_dir", default="./metascrub_cleaned", show_default=True,
               envvar="METASCRUB_OUTPUT_DIR", type=click.Path(),
               help="Where cleaned copies and the run report are written.")
@@ -94,9 +131,13 @@ def main() -> None:
 @click.option("--yes", "-y", is_flag=True, default=False, help="Skip the --in-place confirmation.")
 @click.option("--check", is_flag=True, default=False,
               help="Implies --dry-run; exit 3 if any file still carries metadata (pre-commit / CI gate).")
-def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields, dry_run, verify,
-          keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
-          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes, check):
+@click.option("--policy", type=click.Choice(sorted(POLICIES)), default=None,
+              help="Named preset: publish (all opt-ins), internal (keep titles), minimal (default).")
+@click.pass_context
+def clean(ctx, paths, filetypes, recursive, in_place, backup, quarantine, jobs, output_dir, keep_fields,
+          dry_run, verify, keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
+          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes, check,
+          policy):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -108,6 +149,18 @@ def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields
     base_dir = _common_base(roots)
     if check:
         dry_run = True
+    if policy:
+        cmdline = click.core.ParameterSource.COMMANDLINE
+        for name, value in POLICIES[policy].items():
+            if ctx.get_parameter_source(name) != cmdline:
+                if name == "keep_fields":
+                    keep_fields = tuple(keep_fields) + tuple(value)
+                elif name == "strip_pdf_id":
+                    strip_pdf_id = value
+                elif name == "strip_form_values":
+                    strip_form_values = value
+                elif name == "strip_office_authors":
+                    strip_office_authors = value
 
     cfg = CleanConfig(
         filetypes=ft_list, recursive=recursive, in_place=in_place, output_dir=output_dir,
@@ -115,7 +168,7 @@ def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields
         keep_color_profile=keep_color_profile, keep_orientation=keep_orientation,
         overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
         backup=backup, strip_form_values=strip_form_values,
-        strip_office_authors=strip_office_authors,
+        strip_office_authors=strip_office_authors, quarantine=quarantine, jobs=jobs,
     )
 
     _banner()

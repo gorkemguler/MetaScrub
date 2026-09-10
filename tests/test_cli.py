@@ -44,6 +44,54 @@ def test_clean_in_place_needs_confirmation(dirty_pdf):
     assert "overwrite" in result.output.lower()
 
 
+def test_policy_publish_enables_opt_ins(monkeypatch, dirty_pdf, tmp_path):
+    seen = {}
+    from metascrub import cli as climod
+
+    real = climod.clean_paths
+
+    def spy(roots, cfg, **kw):
+        seen["cfg"] = cfg
+        return real(roots, cfg, **kw)
+
+    monkeypatch.setattr(climod, "clean_paths", spy)
+    CliRunner().invoke(main, ["clean", str(dirty_pdf), "--policy", "publish",
+                              "--out", str(tmp_path / "o"), "--no-json-report", "--no-html-report"])
+    assert seen["cfg"].strip_pdf_id and seen["cfg"].strip_form_values and seen["cfg"].strip_office_authors
+
+
+def test_policy_internal_keeps_title(monkeypatch, dirty_pdf, tmp_path):
+    seen = {}
+    from metascrub import cli as climod
+
+    def spy(roots, cfg, **kw):
+        seen["cfg"] = cfg
+        from metascrub.cleaner import clean_paths as real
+        return real(roots, cfg, **kw)
+
+    monkeypatch.setattr(climod, "clean_paths", spy)
+    CliRunner().invoke(main, ["clean", str(dirty_pdf), "--policy", "internal",
+                              "--out", str(tmp_path / "o"), "--no-json-report", "--no-html-report"])
+    assert "Title" in seen["cfg"].keep_fields
+
+
+def test_project_config_toml_sets_defaults(dirty_pdf, tmp_path, monkeypatch):
+    (tmp_path / ".metascrub.toml").write_text("[clean]\njobs = 7\nstrip-pdf-id = true\n")
+    monkeypatch.chdir(tmp_path)
+    seen = {}
+    from metascrub import cli as climod
+
+    def spy(roots, cfg, **kw):
+        seen["cfg"] = cfg
+        from metascrub.cleaner import clean_paths as real
+        return real(roots, cfg, **kw)
+
+    monkeypatch.setattr(climod, "clean_paths", spy)
+    CliRunner().invoke(main, ["clean", str(dirty_pdf), "--out", str(tmp_path / "o"),
+                              "--no-json-report", "--no-html-report"])
+    assert seen["cfg"].jobs == 7 and seen["cfg"].strip_pdf_id is True
+
+
 def test_check_exit_3_on_metadata_then_0_when_clean(dirty_pdf, tmp_path):
     r = CliRunner().invoke(main, ["clean", str(dirty_pdf), "--check",
                                   "--no-json-report", "--no-html-report"])

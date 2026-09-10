@@ -122,12 +122,24 @@ metascrub clean a.pdf b.docx c.jpg --out ./clean
 
 Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
-`--password` (encrypted PDFs — the cleaned copy is written unencrypted),
-`--strip-pdf-id` (fresh random `/ID` per run), `--backup` (keep `<name>.orig` with `--in-place`),
-`--strip-form-values`, `--strip-office-authors` (opt-in — see above).
+`--password` (encrypted PDFs), `--strip-pdf-id`, `--backup` (keep `<name>.orig` with `--in-place`),
+`--strip-form-values`, `--strip-office-authors` (opt-in — see above),
+`--jobs N` (scrub N files in parallel), `--quarantine DIR` (overwrite the original but move
+it to `DIR/<date>/` first — recoverable, safer than `--in-place`),
+`--policy publish|internal|minimal` (named presets).
+
+**Project config:** a `.metascrub.toml` in the working directory or a parent (up to the git
+root) sets defaults per command — CLI flags and env vars still win.
+
+```toml
+[clean]
+strip-office-authors = true
+jobs = 4
+keep = ["Title"]
+```
 
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
-still carried metadata on the verify re-scan.
+still carried metadata on the verify re-scan · `3` (`--check` only) metadata found.
 
 ### Diff — track a directory over time
 

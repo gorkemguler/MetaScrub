@@ -124,20 +124,19 @@ These are real gaps in the current release, not bugs:
 
 ## Later — v1.0 (polish + scale)
 
-- **Parallelism** — `--jobs N` (ProcessPoolExecutor) for large trees; a
-  `rich` progress bar. (closes L10)
-- **`--quarantine`** — move originals to a dated folder rather than deleting
-  them, as a safer default than `--in-place`.
-- **Project config** — `.metascrub.toml` for per-repo keep-lists and
-  defaults.
-- **Policy profiles** — `--policy publish` / `--policy internal` etc., each a
-  documented, named set of fields to remove/keep.
+- **`--jobs N`** — files scrubbed in parallel via a thread pool.
+  *(part of L10)* Still open: a `rich` progress bar for big trees.
+- **`--quarantine DIR`** — overwrite the original but move it to
+  `DIR/<date>/<relpath>` first; recoverable, safer than `--in-place`.
+- **`.metascrub.toml`** — a per-project config (found in the cwd or a
+  parent up to the git root) supplying defaults per command.
+- **`--policy publish|internal|minimal`** — named presets that shift the
+  defaults (`publish` = all opt-ins, `internal` = keep titles).
 - **HTML report** — collapsible cards, filter by status, copy-as-CSV, a
   print stylesheet; a combined report across multiple runs.
 - Audio / video engine behind `--media`. (closes L7)
 - HEIC without exiftool (via `pillow-heif`). (part of L6)
-- PyPI release, `v0.1.0` tag + GitHub release + `CHANGELOG.md`,
-  `SECURITY.md`, `CONTRIBUTING.md`.
+- PyPI release, `v0.x` tags + GitHub releases.
 
 ## Someday — bigger bets
 

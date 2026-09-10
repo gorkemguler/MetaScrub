@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import contextlib
+import datetime as _dt
 import os
 import shutil
+import threading
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 
 from .config import CleanConfig
 from .engines import engine_for, tool_versions
@@ -16,6 +20,10 @@ def _noop_log(message: str) -> None:
     pass
 
 
+def _overwrites_original(cfg: CleanConfig) -> bool:
+    return cfg.in_place or bool(cfg.quarantine)
+
+
 def clean_paths(
     roots: list[str],
     cfg: CleanConfig,
@@ -27,7 +35,7 @@ def clean_paths(
     files = iter_files(roots, cfg.filetypes, recursive=cfg.recursive)
     report = BatchReport(
         root=base_dir or (roots[0] if roots else ""),
-        in_place=cfg.in_place,
+        in_place=_overwrites_original(cfg),
         dry_run=cfg.dry_run,
         tool_versions=tool_versions(),
     )
@@ -36,14 +44,29 @@ def clean_paths(
         return report
 
     log(f"found {len(files)} file(s) to process")
-    if not cfg.dry_run and not cfg.in_place:
+    if not cfg.dry_run and not _overwrites_original(cfg):
         os.makedirs(cfg.output_dir, exist_ok=True)
 
     used_out_paths: set[str] = set()
-    for path in files:
-        result = _clean_one(path, cfg, base_dir, used_out_paths, log)
-        report.results.append(result)
+    lock = threading.Lock()
+
+    def _one(path: str) -> CleanResult:
+        return _clean_one(path, cfg, base_dir, used_out_paths, _locked(log, lock), lock)
+
+    jobs = max(1, cfg.jobs)
+    if jobs == 1 or len(files) == 1 or cfg.dry_run:
+        report.results = [_one(p) for p in files]
+    else:
+        with ThreadPoolExecutor(max_workers=jobs, thread_name_prefix="metascrub") as ex:
+            report.results = list(ex.map(_one, files))
     return report
+
+
+def _locked(log: LogFn, lock: threading.Lock) -> LogFn:
+    def _fn(message: str) -> None:
+        with lock:
+            log(message)
+    return _fn
 
 
 def clean_file_list(
@@ -56,8 +79,9 @@ def clean_file_list(
     """Like clean_paths but for an already-resolved list of individual
     files (used by the web UI / API, which hand us upload paths directly).
     """
-    report = BatchReport(root=base_dir or "<uploads>", in_place=cfg.in_place, dry_run=cfg.dry_run, tool_versions=tool_versions())
-    if not cfg.dry_run and not cfg.in_place:
+    report = BatchReport(root=base_dir or "<uploads>", in_place=_overwrites_original(cfg),
+                         dry_run=cfg.dry_run, tool_versions=tool_versions())
+    if not cfg.dry_run and not _overwrites_original(cfg):
         os.makedirs(cfg.output_dir, exist_ok=True)
     used_out_paths: set[str] = set()
     for path in files:
@@ -71,6 +95,7 @@ def _clean_one(
     base_dir: str | None,
     used_out_paths: set[str],
     log: LogFn,
+    lock: threading.Lock | None = None,
 ) -> CleanResult:
     ext = _ext(path)
     engine = engine_for(ext)
@@ -79,6 +104,7 @@ def _clean_one(
         return CleanResult(src_path=path, filetype=ext, engine="?", status="unsupported",
                            reason=f"unrecognised file type '.{ext}'")
 
+    overwrites = _overwrites_original(cfg)
     try:
         if cfg.dry_run:
             rows = engine.probe(path, cfg)
@@ -89,10 +115,11 @@ def _clean_one(
                 bytes_before=_size(path),
             )
 
-        if cfg.in_place:
+        if overwrites:
             dst = path + ".metascrub-tmp"
         else:
-            dst = _dest_path(path, cfg.output_dir, base_dir, used_out_paths, cfg.overwrite)
+            with (lock or _NULL_LOCK):
+                dst = _dest_path(path, cfg.output_dir, base_dir, used_out_paths, cfg.overwrite)
 
         result = engine.strip(path, dst, cfg)
 
@@ -104,8 +131,10 @@ def _clean_one(
                 result.residual = [
                     f"{r.namespace}:{r.field}" for r in verify_engine.probe(result.out_path, cfg)
                 ]
-            if cfg.in_place:
-                if cfg.backup:
+            if overwrites:
+                if cfg.quarantine:
+                    _quarantine(path, base_dir, cfg.quarantine)
+                elif cfg.backup:
                     _make_backup(path)
                 os.replace(result.out_path, path)
                 result.out_path = path
@@ -154,12 +183,32 @@ def _is_within(path: str, root: str) -> bool:
     return path == root or path.startswith(root + os.sep)
 
 
+_NULL_LOCK = contextlib.nullcontext()
+
+
 def _make_backup(path: str) -> None:
     """Copy `path` to `path + '.orig'` before an in-place scrub, unless a
     backup is already there (never clobber an earlier original)."""
     dest = path + ".orig"
     if not os.path.exists(dest):
         shutil.copy2(path, dest)
+
+
+def _quarantine(path: str, base_dir: str | None, quarantine_dir: str) -> None:
+    """Move the untouched original into
+    <quarantine_dir>/<YYYY-MM-DD>/<relpath> before it's overwritten."""
+    if base_dir and _is_within(path, base_dir):
+        rel = os.path.relpath(path, base_dir)
+    else:
+        rel = os.path.basename(path)
+    dest = os.path.join(quarantine_dir, _dt.date.today().isoformat(), rel)
+    stem, ext = os.path.splitext(dest)
+    n = 1
+    while os.path.exists(dest):
+        dest = f"{stem}({n}){ext}"
+        n += 1
+    os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+    shutil.copy2(path, dest)
 
 
 def _cleanup(path: str | None) -> None:

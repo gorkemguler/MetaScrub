@@ -21,6 +21,7 @@ dependencies = [
     "jinja2>=3.1",
     "python-dotenv>=1.0",
     "flask>=3.0",
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
