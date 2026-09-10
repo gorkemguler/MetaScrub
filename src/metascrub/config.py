@@ -122,6 +122,20 @@ class CleanConfig:
     recurse: bool = False
     _recurse_depth: int = 0  # internal — guards against zip bombs / loops
 
+    # Directory-walk filters (no effect on paths named directly on the
+    # command line — those are always honoured).
+    #   exclude          — glob patterns; a file is skipped, and a
+    #                      directory not descended, when its name or its
+    #                      path relative to the walk root matches any.
+    #   follow_symlinks  — False: don't scrub a symlinked file found in a
+    #                      walk (writing through it would escape the tree).
+    exclude: list[str] = field(default_factory=list)
+    follow_symlinks: bool = True
+
+    # Re-raise the underlying exception instead of turning one bad file
+    # into a caught `error` result — for `--debug`.
+    debug: bool = False
+
     # Aggressive, opt-in: also blank things that are arguably *content*
     # but are, in practice, a PII leak.
     #   strip_form_values   — PDF AcroForm field values (/V, /DV): the

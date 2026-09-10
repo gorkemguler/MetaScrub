@@ -82,11 +82,14 @@ def _load_project_config() -> dict:
 
 @click.group()
 @click.version_option(package_name="metascrub")
+@click.option("--debug", is_flag=True, default=False,
+              help="Re-raise on the first failing file instead of recording it as an error.")
 @click.pass_context
-def main(ctx: click.Context) -> None:
+def main(ctx: click.Context, debug: bool) -> None:
     """MetaScrub — strip metadata from PDF, Office and image files in bulk."""
     load_dotenv(find_dotenv(usecwd=True))
     ctx.default_map = _load_project_config()
+    ctx.ensure_object(dict)["debug"] = debug
 
 
 # --------------------------------------------------------------------------- clean
@@ -101,6 +104,11 @@ def main(ctx: click.Context) -> None:
 @click.option("--recurse", is_flag=True, default=False,
               help="Descend into .zip archives and .eml emails and scrub each member.")
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
+@click.option("--exclude", "excludes", multiple=True, metavar="GLOB",
+              help="Skip files/dirs matching this glob when walking (repeatable).")
+@click.option("--follow-symlinks/--no-follow-symlinks", default=True, show_default=True,
+              help="--no-follow-symlinks: don't scrub a symlinked file found in a walk.")
+@click.option("--progress", is_flag=True, default=False, help="Show a progress bar.")
 @click.option("--in-place", is_flag=True, default=False,
               help="Overwrite originals instead of writing cleaned copies (irreversible).")
 @click.option("--backup", is_flag=True, default=False,
@@ -139,10 +147,11 @@ def main(ctx: click.Context) -> None:
 @click.option("--policy", type=click.Choice(sorted(POLICIES)), default=None,
               help="Named preset: publish (all opt-ins), internal (keep titles), minimal (default).")
 @click.pass_context
-def clean(ctx, paths, filetypes, media, recurse, recursive, in_place, backup, quarantine, jobs,
-          output_dir, keep_fields, dry_run, verify, keep_color_profile, keep_orientation, overwrite,
-          pdf_password, strip_pdf_id, strip_form_values, strip_office_authors, json_report,
-          html_report, report_lang, yes, check, policy):
+def clean(ctx, paths, filetypes, media, recurse, recursive, excludes, follow_symlinks, progress,
+          in_place, backup, quarantine, jobs, output_dir, keep_fields, dry_run, verify,
+          keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
+          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes,
+          check, policy):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -180,7 +189,8 @@ def clean(ctx, paths, filetypes, media, recurse, recursive, in_place, backup, qu
         overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
         backup=backup, strip_form_values=strip_form_values,
         strip_office_authors=strip_office_authors, quarantine=quarantine, jobs=jobs,
-        recurse=recurse,
+        recurse=recurse, exclude=list(excludes), follow_symlinks=follow_symlinks,
+        debug=ctx.obj.get("debug", False) if ctx.obj else False,
     )
 
     _banner()
@@ -195,7 +205,29 @@ def clean(ctx, paths, filetypes, media, recurse, recursive, in_place, backup, qu
             console.print("[yellow]Aborted.[/yellow]")
             sys.exit(1)
 
-    report = clean_paths(roots, cfg, base_dir=base_dir, log=_log)
+    if progress and not dry_run:
+        from rich.progress import (
+            BarColumn,
+            MofNCompleteColumn,
+            Progress,
+            TextColumn,
+            TimeElapsedColumn,
+        )
+
+        total = len(iter_files(roots, ft_list, recursive=recursive,
+                               exclude=list(excludes), follow_symlinks=follow_symlinks))
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(), MofNCompleteColumn(), TimeElapsedColumn(),
+            console=console, transient=True,
+        ) as bar:
+            task = bar.add_task("scrubbing", total=total or None)
+            report = clean_paths(
+                roots, cfg, base_dir=base_dir, log=lambda _m: None,
+                on_result=lambda _r: bar.advance(task),
+            )
+    else:
+        report = clean_paths(roots, cfg, base_dir=base_dir, log=_log)
 
     if not report.results:
         console.print("[yellow]No supported files found. Nothing to do.[/yellow]")
@@ -271,21 +303,38 @@ def _print_table(report, base_dir) -> None:
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option("--filetypes", default=",".join(DEFAULT_FILETYPES), show_default=True)
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
+@click.option("--media", is_flag=True, default=False,
+              help="Also inspect audio/video files.")
+@click.option("--recurse", is_flag=True, default=False,
+              help="Also look inside .zip archives and .eml emails.")
+@click.option("--exclude", "excludes", multiple=True, metavar="GLOB",
+              help="Skip files/dirs matching this glob when walking (repeatable).")
+@click.option("--follow-symlinks/--no-follow-symlinks", default=True, show_default=True)
 @click.option("--password", "pdf_password", default=None, help="Password for encrypted PDFs.")
 @click.option("--strip-form-values", is_flag=True, default=False,
               help="Also list PDF form-field values (shown only with this flag — they can be bulky).")
 @click.option("--strip-office-authors", is_flag=True, default=False,
               help="Also list Office tracked-change / comment author names.")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Emit JSON instead of tables.")
-def inspect(paths, filetypes, recursive, pdf_password, strip_form_values, strip_office_authors, as_json):
+@click.pass_context
+def inspect(ctx, paths, filetypes, recursive, media, recurse, excludes, follow_symlinks,
+            pdf_password, strip_form_values, strip_office_authors, as_json):
     """Show the metadata each file in PATHS currently carries. Read-only —
     writes nothing. Use this on the files MetaScout flagged to see exactly
     what's in them before scrubbing.
     """
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
+    if media:
+        from .config import MEDIA_EXTENSIONS
+        ft_list = sorted(set(ft_list) | MEDIA_EXTENSIONS)
+    if recurse:
+        from .config import CONTAINER_EXTENSIONS
+        ft_list = sorted(set(ft_list) | CONTAINER_EXTENSIONS)
+    debug = ctx.obj.get("debug", False) if ctx.obj else False
     insp_cfg = CleanConfig(pdf_password=pdf_password, strip_form_values=strip_form_values,
-                           strip_office_authors=strip_office_authors)
-    files = iter_files([os.fspath(p) for p in paths], ft_list, recursive=recursive)
+                           strip_office_authors=strip_office_authors, recurse=recurse, debug=debug)
+    files = iter_files([os.fspath(p) for p in paths], ft_list, recursive=recursive,
+                       exclude=list(excludes), follow_symlinks=follow_symlinks)
 
     if not files:
         console.print("[yellow]No supported files found.[/yellow]")
@@ -300,6 +349,8 @@ def inspect(paths, filetypes, recursive, pdf_password, strip_form_values, strip_
                 rows = [{"namespace": c.namespace, "field": c.field, "value": c.before}
                         for c in engine.probe(path, insp_cfg)]
             except Exception as exc:  # noqa: BLE001
+                if debug:
+                    raise
                 rows = [{"namespace": "!", "field": "error", "value": str(exc)}]
         out[path] = rows
 
@@ -391,7 +442,8 @@ def diff(run_a, run_b, as_json):
 @click.option("--strip-office-authors", is_flag=True, default=False)
 @click.option("--backup", is_flag=True, default=False, help="Keep <name>.orig when scrubbing in place.")
 @click.option("--verify/--no-verify", default=True, show_default=True)
-def watch(directory, filetypes, recursive, to_dir, move_processed, patterns, jobs, interval,
+@click.pass_context
+def watch(ctx, directory, filetypes, recursive, to_dir, move_processed, patterns, jobs, interval,
           settle, once, keep_fields, strip_pdf_id, strip_form_values, strip_office_authors,
           backup, verify):
     """Keep DIRECTORY scrubbed — a poll loop for an FTP/SFTP drop folder.
@@ -409,6 +461,7 @@ def watch(directory, filetypes, recursive, to_dir, move_processed, patterns, job
         filetypes=ft_list, recursive=recursive, keep_fields=list(keep_fields), verify=verify,
         jobs=max(1, jobs), strip_pdf_id=strip_pdf_id, strip_form_values=strip_form_values,
         strip_office_authors=strip_office_authors, backup=backup,
+        debug=ctx.obj.get("debug", False) if ctx.obj else False,
     )
     w = Watcher(directory, cfg, interval=interval, settle=settle, to_dir=to_dir,
                 move_processed=move_processed, recursive=recursive,

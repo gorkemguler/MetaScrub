@@ -106,6 +106,65 @@ def test_check_exit_3_on_metadata_then_0_when_clean(dirty_pdf, tmp_path):
     assert r2.exit_code == 0 and "No metadata found" in r2.output
 
 
+def test_clean_exclude_glob_skips_matches(dirty_tree, tmp_path):
+    out = tmp_path / "cleaned"
+    result = CliRunner().invoke(
+        main, ["clean", str(dirty_tree), "--out", str(out), "--exclude", "*.jpg",
+               "--no-json-report", "--no-html-report"]
+    )
+    assert result.exit_code == 0, result.output
+    assert (out / "forecast.pdf").exists()
+    assert not (out / "photo.jpg").exists()
+
+
+def test_clean_progress_bar_runs(dirty_tree, tmp_path):
+    out = tmp_path / "cleaned"
+    result = CliRunner().invoke(
+        main, ["clean", str(dirty_tree), "--out", str(out), "--progress",
+               "--no-json-report", "--no-html-report"]
+    )
+    assert result.exit_code == 0, result.output
+    assert (out / "forecast.pdf").exists()
+
+
+def test_debug_flag_reraises_instead_of_error_result(monkeypatch, dirty_pdf, tmp_path):
+    from metascrub import cleaner
+
+    real = cleaner.engine_for
+
+    class _Boom:
+        def __init__(self, e):
+            self.name = e.name
+        def probe(self, p, cfg=None):
+            return []
+        def strip(self, s, d, c):
+            raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(cleaner, "engine_for", lambda ext: _Boom(real(ext)))
+
+    plain = CliRunner().invoke(main, ["clean", str(dirty_pdf), "--out", str(tmp_path / "a"),
+                                      "--no-json-report", "--no-html-report"])
+    assert plain.exit_code == 1                       # recorded as an errored file, batch continues
+
+    dbg = CliRunner().invoke(main, ["--debug", "clean", str(dirty_pdf), "--out", str(tmp_path / "b"),
+                                    "--no-json-report", "--no-html-report"])
+    assert isinstance(dbg.exception, RuntimeError) and "kaboom" in str(dbg.exception)
+
+
+def test_inspect_recurse_looks_inside_zip(dirty_pdf, tmp_path):
+    import zipfile
+
+    z = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        zf.write(dirty_pdf, "inner/forecast.pdf")
+
+    result = CliRunner().invoke(main, ["inspect", str(z), "--recurse", "--json"])
+    assert result.exit_code == 0, result.output
+    data = json.loads(result.output)
+    fields = {row["field"] for rows in data.values() for row in rows}
+    assert any("Author" in f or "forecast.pdf" in f for f in fields)
+
+
 def test_clean_exit_2_when_residual(monkeypatch, dirty_pdf, tmp_path):
     from metascrub import cleaner
 

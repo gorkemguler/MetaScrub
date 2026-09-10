@@ -16,6 +16,7 @@ jobs:
       - run: pip install -e ".[dev]" ruff mypy
       - run: ruff check src tests
       - run: mypy src
+      - run: metascrub --version   # smoke-test the console entry point
 
   test:
     name: test (py${{ matrix.python }} / ${{ matrix.os }})

@@ -6,6 +6,20 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **Walk controls**: `--exclude GLOB` (repeatable; matches a name or a
+  path relative to the walk root, prunes whole directories) and
+  `--no-follow-symlinks` (don't scrub a symlinked file found in a walk —
+  writing through it would escape the tree) on `clean` and `inspect`.
+- **`--progress`** on `clean` — a `rich` bar for large trees.
+- **`metascrub --debug`** (group-level) — re-raise on the first failing
+  file instead of recording it as an `error` result.
+- **`inspect --media` / `inspect --recurse`** — mirror `clean`, so you
+  can look inside an archive or at a video before scrubbing.
+- **`py.typed`** — the package now ships its type information.
+- `tool_versions()` (embedded in every report) now also reports
+  `olefile`, `mutagen`, `pillow` and the LibreOffice path.
+- Repo: `.editorconfig`, `CODEOWNERS`, issue forms + a PR template; CI
+  smoke-tests the `metascrub` entry point.
 - **`metascrub watch` hardening**: a PID-stamped `.metascrub-watch.lock`
   keeps a second watcher off the same directory (a lock held by a dead
   process is stolen); `--pattern GLOB` (repeatable) filters what's picked

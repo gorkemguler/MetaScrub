@@ -129,7 +129,13 @@ Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`
 `--strip-form-values`, `--strip-office-authors` (opt-in — yukarıya bakın),
 `--jobs N` (N dosyayı paralel temizle), `--quarantine DIR` (orijinali üzerine yaz ama önce
 `DIR/<tarih>/`'e taşı — kurtarılabilir, `--in-place`'ten güvenli),
-`--policy publish|internal|minimal` (adlandırılmış presetler).
+`--policy publish|internal|minimal` (adlandırılmış presetler),
+`--exclude GLOB` (tekrarlanabilir — gezerken dosya/dizin atla),
+`--no-follow-symlinks` (sembolik bağlı dosyayı temizleme), `--progress` (ilerleme çubuğu), ve
+grup düzeyinde `metascrub --debug …` (ilk hatalı dosyada hatayı kaydetmek yerine yeniden fırlat).
+
+`metascrub inspect` da `--media` ve `--recurse` alır; bir arşive ya da videoya işaret edip
+temizlemeden önce içindekileri görebilirsin.
 
 **Proje yapılandırması:** çalışma dizininde ya da bir üstünde (git köküne kadar) bir
 `.metascrub.toml` komut başına varsayılanları belirler — CLI bayrakları ve env değişkenleri

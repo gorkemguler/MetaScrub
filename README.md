@@ -129,7 +129,13 @@ Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--d
 `--strip-form-values`, `--strip-office-authors` (opt-in — see above),
 `--jobs N` (scrub N files in parallel), `--quarantine DIR` (overwrite the original but move
 it to `DIR/<date>/` first — recoverable, safer than `--in-place`),
-`--policy publish|internal|minimal` (named presets).
+`--policy publish|internal|minimal` (named presets),
+`--exclude GLOB` (repeatable — skip files/dirs when walking),
+`--no-follow-symlinks` (don't scrub a symlinked file), `--progress` (a progress bar), and the
+group-level `metascrub --debug …` (re-raise on the first failing file instead of recording it).
+
+`metascrub inspect` takes `--media` and `--recurse` too, so you can point it at an archive or a
+video and see what's inside before scrubbing.
 
 **Project config:** a `.metascrub.toml` in the working directory or a parent (up to the git
 root) sets defaults per command — CLI flags and env vars still win.

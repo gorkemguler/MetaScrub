@@ -69,6 +69,30 @@ def test_quarantine_moves_original_and_scrubs_in_place(dirty_tree, tmp_path):
         assert "/Info" in pdf.trailer      # the quarantined copy still has metadata
 
 
+def test_on_result_called_once_per_file(dirty_tree, tmp_path):
+    seen = []
+    report = clean_paths([str(dirty_tree)], CleanConfig(output_dir=str(tmp_path / "o")),
+                         base_dir=str(dirty_tree), on_result=seen.append)
+    assert len(seen) == len(report.results)
+    assert {r.src_path for r in seen} == {r.src_path for r in report.results}
+
+
+def test_exclude_and_follow_symlinks_flow_through_config(dirty_tree, tmp_path):
+    report = clean_paths([str(dirty_tree)],
+                         CleanConfig(output_dir=str(tmp_path / "o"), exclude=["*.jpg"]),
+                         base_dir=str(dirty_tree))
+    assert not any(r.src_path.endswith(".jpg") for r in report.results)
+
+
+def test_tool_versions_reports_the_optional_libraries():
+    from metascrub.engines import tool_versions
+
+    v = tool_versions()
+    assert v["metascrub"] and "pikepdf" in v
+    # olefile is a core dep; mutagen/pillow are extras that are installed in dev
+    assert "olefile" in v
+
+
 def test_jobs_parallel_matches_sequential(dirty_tree, tmp_path):
     seq = clean_paths([str(dirty_tree)], CleanConfig(output_dir=str(tmp_path / "a")),
                       base_dir=str(dirty_tree))

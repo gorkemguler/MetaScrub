@@ -30,9 +30,18 @@ def clean_paths(
     *,
     base_dir: str | None = None,
     log: LogFn = _noop_log,
+    on_result: Callable[[CleanResult], None] | None = None,
 ) -> BatchReport:
-    """Scan `roots` for supported files and scrub each one per `cfg`."""
-    files = iter_files(roots, cfg.filetypes, recursive=cfg.recursive)
+    """Scan `roots` for supported files and scrub each one per `cfg`.
+
+    `on_result`, if given, is called once per file as it finishes (already
+    serialised under the internal lock) — the CLI uses it to drive a
+    progress bar.
+    """
+    files = iter_files(
+        roots, cfg.filetypes, recursive=cfg.recursive,
+        exclude=cfg.exclude, follow_symlinks=cfg.follow_symlinks,
+    )
     report = BatchReport(
         root=base_dir or (roots[0] if roots else ""),
         in_place=_overwrites_original(cfg),
@@ -51,7 +60,11 @@ def clean_paths(
     lock = threading.Lock()
 
     def _one(path: str) -> CleanResult:
-        return _clean_one(path, cfg, base_dir, used_out_paths, _locked(log, lock), lock)
+        result = _clean_one(path, cfg, base_dir, used_out_paths, _locked(log, lock), lock)
+        if on_result is not None:
+            with lock:
+                on_result(result)
+        return result
 
     jobs = max(1, cfg.jobs)
     if jobs == 1 or len(files) == 1 or cfg.dry_run:
@@ -153,6 +166,8 @@ def _clean_one(
         return result
 
     except Exception as exc:  # noqa: BLE001 - one bad file must not abort the batch
+        if cfg.debug:
+            raise
         log(f"! {path}: {exc}")
         return CleanResult(src_path=path, filetype=ext, engine=engine.name, status="error",
                            error=str(exc), bytes_before=_size(path))

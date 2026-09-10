@@ -122,10 +122,12 @@ Sıralı batch'ler, her biri kendi commit'i:
    sahibin kilidini çalar); tekrarlanabilir `--pattern GLOB`; `-j/--jobs N`
    (birikmiş iş tek `clean_paths` çağrısında); kaybolan dosya kayıtları
    her taramada budanır.
-4. **Tutarlılık + paketleme** — `inspect --recurse/--media`; `py.typed`;
+4. ~~**Tutarlılık + paketleme** — `inspect --recurse/--media`; `py.typed`;
    `--exclude GLOB`; `--no-follow-symlinks`; `--progress`; tam
    `tool_versions()`; `--debug` re-raise; `.editorconfig` / `CODEOWNERS` /
-   issue+PR şablonları; CI'da `ruff format`.
+   issue+PR şablonları; CI'da `ruff format`.~~ **Bitti.** Hepsi geldi;
+   `ruff format` tüm repoya kendi commit'inde uygulandı ve
+   `ruff format --check` CI'yı kapıya alıyor.
 5. **Video EBML/RIFF** — minimal `.mkv/.webm` EBML `Tags` ve `.avi` RIFF
    `LIST/INFO` + `IDIT` temizleyici (exiftool bunlara yazamıyor). *(L7'yi kapatır)*
 6. **Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel

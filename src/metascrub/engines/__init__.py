@@ -65,13 +65,22 @@ def tool_versions() -> dict[str, str]:
     from .. import __version__
 
     versions = {"metascrub": __version__}
-    try:
-        import pikepdf
-
-        versions["pikepdf"] = pikepdf.__version__
-    except Exception:  # noqa: BLE001
-        pass
+    for mod in ("pikepdf", "olefile", "mutagen", "PIL"):
+        try:
+            m = __import__(mod)
+            label = "pillow" if mod == "PIL" else mod
+            ver = getattr(m, "__version__", None) or getattr(m, "version_string", None)
+            versions[label] = str(ver or "?")
+        except Exception:  # noqa: BLE001
+            pass
     ev = exiftool_version()
     if ev:
         versions["exiftool"] = ev
+    from .legacy_office import soffice_path
+
+    sp = soffice_path()
+    if sp:
+        # Path, not a version: `soffice --version` spins up a full LO
+        # process (~1 s) and this is called on every run.
+        versions["libreoffice"] = sp
     return versions

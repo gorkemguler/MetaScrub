@@ -1,0 +1,53 @@
+name: Bug report
+description: A file that isn't scrubbed correctly, a crash, or wrong output.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran and what MetaScrub did versus what you expected.
+      placeholder: |
+        $ metascrub clean report.pdf --out cleaned/
+        ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: MetaScrub version
+      description: "`metascrub --version`"
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: File format
+      options:
+        - PDF
+        - Office (docx/xlsx/pptx)
+        - OpenDocument (odt/ods/odp)
+        - Legacy Office (doc/xls/ppt)
+        - Image
+        - Audio / video
+        - SVG
+        - Container (zip/eml)
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, and `exiftool -ver` / `soffice --version` if relevant.
+    validations:
+      required: false
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sample file
+      description: >
+        If you can share a file that reproduces it, attach it here — ideally
+        one with no real data in it. Never attach anything sensitive.
+    validations:
+      required: false

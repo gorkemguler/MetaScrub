@@ -82,7 +82,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-metascrub = ["report/templates/*.jinja"]
+metascrub = ["report/templates/*.jinja", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

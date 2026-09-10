@@ -125,10 +125,12 @@ Ordered batches, each landing as its own commit:
    a dead owner's lock); repeatable `--pattern GLOB`; `-j/--jobs N`
    (settled backlog scrubbed in one `clean_paths` call); vanished-file
    state entries pruned per scan.
-4. **Consistency + packaging** — `inspect --recurse/--media`; `py.typed`;
+4. ~~**Consistency + packaging** — `inspect --recurse/--media`; `py.typed`;
    `--exclude GLOB`; `--no-follow-symlinks`; `--progress` (rich bar);
    full `tool_versions()` (mutagen/olefile/soffice); `--debug` re-raise;
-   `.editorconfig` / `CODEOWNERS` / issue+PR templates; `ruff format` in CI.
+   `.editorconfig` / `CODEOWNERS` / issue+PR templates; `ruff format` in
+   CI.~~ **Done.** All of the above shipped; `ruff format` was applied
+   repo-wide in its own commit and `ruff format --check` gates CI.
 5. **Video EBML/RIFF** — a minimal `.mkv/.webm` EBML `Tags` stripper and
    `.avi` RIFF `LIST/INFO` + `IDIT` stripper (exiftool can't write these).
    *(closes L7)*
