@@ -130,7 +130,9 @@ _CASES = {
 }
 
 
-@pytest.mark.parametrize("ext", sorted(_CASES))
+@pytest.mark.parametrize("ext", [
+    pytest.param(e, marks=pytest.mark.slow) if e == "doc" else e for e in sorted(_CASES)
+])
 def test_corpus_file_scrubs_to_zero_residual(ext, tmp_path):
     if ext == "jpg" and not _HAS_EXIFTOOL:
         pytest.skip("exiftool not installed")

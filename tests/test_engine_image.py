@@ -5,8 +5,8 @@ import shutil
 import pytest
 
 from metascrub.config import CleanConfig
-from metascrub.engines.image import ImageEngine
 from metascrub.engines.exiftool import read_tags
+from metascrub.engines.image import ImageEngine
 
 needs_exiftool = pytest.mark.skipif(
     shutil.which("exiftool") is None, reason="exiftool binary not installed"

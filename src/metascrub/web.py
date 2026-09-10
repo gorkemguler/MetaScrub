@@ -245,7 +245,7 @@ def create_app(output_dir: str = "./metascrub_cleaned") -> Flask:
         return _form(_lang(request.args.get("lang")))
 
     @app.post("/clean")
-    def clean() -> Response | str:
+    def clean():
         lang = _lang(request.form.get("lang"))
         uploads = [f for f in request.files.getlist("files") if f and f.filename]
         if not uploads:
@@ -259,7 +259,7 @@ def create_app(output_dir: str = "./metascrub_cleaned") -> Flask:
 
         saved: list[str] = []
         for f in uploads:
-            name = secure_filename(f.filename) or "file"
+            name = secure_filename(f.filename or "") or "file"
             dest = os.path.join(up_dir, name)
             stem, ext = os.path.splitext(dest)
             n = 1

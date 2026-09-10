@@ -67,7 +67,6 @@ def test_clean_requires_files(client):
 
 def test_report_409_before_done(client, dirty_pdf, monkeypatch):
     # never-finishing worker so we can observe the 409
-    import metascrub.api.app as appmod
 
     r = client.post("/v1/clean", files=[("files", ("f.pdf", dirty_pdf.read_bytes(), "application/pdf"))])
     job_id = r.json()["job_id"]

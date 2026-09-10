@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-from typing import Callable
+from collections.abc import Callable
 
 from .config import CleanConfig
 from .engines import engine_for, tool_versions
-from .models import BatchReport, CleanResult, FieldChange
+from .models import BatchReport, CleanResult
 from .scanner import iter_files
 
 LogFn = Callable[[str], None]

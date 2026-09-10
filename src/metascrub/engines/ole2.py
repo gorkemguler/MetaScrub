@@ -115,7 +115,7 @@ def _stream_runs(ole: olefile.OleFileIO, entry) -> list[tuple[int, int]]:
     return runs
 
 
-def _gather(data: bytes, runs: list[tuple[int, int]], size: int) -> bytes:
+def _gather(data: bytes | bytearray, runs: list[tuple[int, int]], size: int) -> bytes:
     out = bytearray()
     for off, length in runs:
         out += data[off:off + length]
@@ -124,7 +124,7 @@ def _gather(data: bytes, runs: list[tuple[int, int]], size: int) -> bytes:
     return bytes(out[:size])
 
 
-def _scatter(data: bytearray, runs: list[tuple[int, int]], buf: bytes) -> None:
+def _scatter(data: bytearray, runs: list[tuple[int, int]], buf: bytes | bytearray) -> None:
     pos = 0
     for off, length in runs:
         take = min(length, len(buf) - pos)

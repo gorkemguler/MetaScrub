@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from ..models import FieldChange
-from .base import Engine, new_result
+from .base import Engine
 from .exiftool import exiftool_available, exiftool_version
 from .image import ImageEngine
 from .legacy_office import LegacyOfficeEngine
@@ -21,7 +20,7 @@ def engine_for(ext: str) -> Engine | None:
     ext = ext.lower().lstrip(".")
     for engine in _REAL_ENGINES:
         if ext in engine.extensions:
-            return engine  # type: ignore[return-value]
+            return engine
     return None
 
 

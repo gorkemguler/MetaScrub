@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 import threading
 import uuid
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable
 
 from ..models import BatchReport
 from ..report import render_html_report, render_json_report

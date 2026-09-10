@@ -116,7 +116,7 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
         # worker thread), then hand the worker just the staged paths.
         staged: list[tuple[str, bytes]] = []
         for f in uploads:
-            staged.append((secure_filename(f.filename) or "file", await f.read()))
+            staged.append((secure_filename(f.filename or "") or "file", await f.read()))
 
         def work(log, run_path: str) -> BatchReport:
             up_dir = os.path.join(run_path, "uploads")

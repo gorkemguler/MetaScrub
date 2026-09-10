@@ -71,3 +71,27 @@ metascrub = ["report/templates/*.jinja"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: needs an external tool (LibreOffice) and takes a few seconds — deselect with -m 'not slow'",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4"]
+# E501: long lines are almost all i18n sentences and OOXML content-type
+# URLs — not worth wrapping without an autoformatter. B008: click puts
+# function calls in option defaults on purpose.
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011", "E402"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = false
+warn_unused_ignores = true
+exclude = ["tests/"]

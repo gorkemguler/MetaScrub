@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from xml.etree import ElementTree as ET
 
-from ..config import CleanConfig, SVG_EXTENSIONS
+from ..config import SVG_EXTENSIONS, CleanConfig
 from ..models import FieldChange
 from .base import new_result
 

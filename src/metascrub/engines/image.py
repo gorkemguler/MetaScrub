@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..config import CleanConfig, IMAGE_EXTENSIONS
+from ..config import IMAGE_EXTENSIONS, CleanConfig
 from ..models import FieldChange
 from .base import new_result
 from .exiftool import exiftool_available, read_tags, strip_all

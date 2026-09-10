@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import zipfile
-
 import olefile
+import pytest
 
 from metascrub.config import CleanConfig
 from metascrub.engines import engine_for
@@ -45,6 +44,7 @@ def test_in_place_now_supported_for_legacy(legacy_doc):
     assert result.status == "cleaned"
 
 
+@pytest.mark.slow
 def test_libreoffice_fallback_when_ole_patch_fails(monkeypatch, legacy_doc, tmp_path):
     import metascrub.engines.legacy_office as mod
 

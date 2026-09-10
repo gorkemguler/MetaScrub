@@ -4,7 +4,7 @@ import re
 import zipfile
 from xml.etree import ElementTree as ET
 
-from ..config import CleanConfig, ODF_EXTENSIONS, OOXML_EXTENSIONS
+from ..config import ODF_EXTENSIONS, OOXML_EXTENSIONS, CleanConfig
 from ..models import FieldChange
 from .base import new_result
 
@@ -299,7 +299,6 @@ def _prune_rels(data: bytes, drops: set[str]) -> bytes | None:
         root = ET.fromstring(data)
     except ET.ParseError:
         return None
-    ns = f"{{{_NS['pr']}}}"
     changed = False
     for rel in list(root):
         target = (rel.get("Target") or "").lstrip("/")

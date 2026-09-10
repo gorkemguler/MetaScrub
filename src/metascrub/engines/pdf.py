@@ -53,7 +53,7 @@ def _open(path: str, cfg: CleanConfig | None):
     password = (cfg.pdf_password if cfg else None) or ""
     try:
         return pikepdf.open(path, password=password)
-    except pikepdf.PasswordError as exc:  # type: ignore[attr-defined]
+    except pikepdf.PasswordError as exc:
         raise _Encrypted(wrong_password=bool(password)) from exc
 
 
@@ -168,11 +168,11 @@ class PdfEngine:
                     [pikepdf.String(secrets.token_bytes(16)), pikepdf.String(secrets.token_bytes(16))]
                 )
 
-            save_kwargs = dict(
-                fix_metadata_version=False,
-                deterministic_id=not cfg.strip_pdf_id,
-                object_stream_mode=pikepdf.ObjectStreamMode.generate,
-            )
+            save_kwargs = {
+                "fix_metadata_version": False,
+                "deterministic_id": not cfg.strip_pdf_id,
+                "object_stream_mode": pikepdf.ObjectStreamMode.generate,
+            }
             # A full rewrite (not an incremental update) so removed values
             # can't be recovered from a superseded xref section. An
             # encrypted input becomes an unencrypted cleaned copy — noted

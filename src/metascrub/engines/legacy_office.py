@@ -8,7 +8,7 @@ import tempfile
 
 import olefile
 
-from ..config import CleanConfig, LEGACY_OFFICE_EXTENSIONS
+from ..config import LEGACY_OFFICE_EXTENSIONS, CleanConfig
 from ..models import FieldChange
 from .base import new_result
 from .office import OfficeEngine
@@ -30,7 +30,7 @@ def _label_removed(pairs: list[tuple[str, str]], before: list[FieldChange]) -> l
     out: list[FieldChange] = []
     for ns, raw in pairs:
         pid = int(raw.rsplit(" ", 1)[-1]) if raw.startswith("property ") else None
-        label = _PROP_LABEL.get(pid, raw)
+        label = _PROP_LABEL.get(pid, raw) if pid is not None else raw
         out.append(FieldChange(ns, label, by_field.get(label, "<blanked>")))
     return out
 

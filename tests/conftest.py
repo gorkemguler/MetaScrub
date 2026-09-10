@@ -171,9 +171,7 @@ _SETTINGS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:proofState w:spelling="clean"/><w:rsids><w:rsidRoot w:val="00AB12CD"/><w:rsid w:val="00EF3456"/></w:rsids></w:settings>"""
 
 
-@pytest.fixture
-def dirty_docx(tmp_path):
-    path = tmp_path / "memo.docx"
+def _write_dirty_docx(path) -> None:
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("[Content_Types].xml", _CT)
         z.writestr("_rels/.rels", _RELS)
@@ -182,6 +180,12 @@ def dirty_docx(tmp_path):
         z.writestr("docProps/custom.xml", _CUSTOM)
         z.writestr("word/document.xml", _DOC)
         z.writestr("word/settings.xml", _SETTINGS)
+
+
+@pytest.fixture
+def dirty_docx(tmp_path):
+    path = tmp_path / "memo.docx"
+    _write_dirty_docx(path)
     return path
 
 
@@ -192,25 +196,35 @@ def _soffice() -> str | None:
 needs_soffice = pytest.mark.skipif(_soffice() is None, reason="LibreOffice (soffice) not installed")
 
 
-@pytest.fixture
-def legacy_doc(tmp_path, dirty_docx):
-    """A real OLE2 .doc, produced by round-tripping the dirty .docx fixture
-    through LibreOffice (the author/title survive the conversion)."""
+@pytest.fixture(scope="session")
+def _legacy_doc_master(tmp_path_factory):
+    """Build one real OLE2 .doc for the whole test session — LibreOffice
+    startup is slow, so run it once, not per test."""
     if _soffice() is None:
         pytest.skip("LibreOffice (soffice) not installed")
     import subprocess
 
-    profile = tmp_path / "loprofile"
+    d = tmp_path_factory.mktemp("legacy")
+    docx = d / "memo.docx"
+    _write_dirty_docx(docx)
     subprocess.run(
         [_soffice(), "--headless", "--norestore", "--nolockcheck",
-         f"-env:UserInstallation=file://{profile}",
-         "--convert-to", "doc", "--outdir", str(tmp_path), str(dirty_docx)],
+         f"-env:UserInstallation=file://{d / 'loprofile'}",
+         "--convert-to", "doc", "--outdir", str(d), str(docx)],
         capture_output=True, timeout=120, check=False,
     )
-    doc = tmp_path / "memo.doc"
+    doc = d / "memo.doc"
     if not doc.is_file():
         pytest.skip("LibreOffice conversion did not produce a .doc")
     return doc
+
+
+@pytest.fixture
+def legacy_doc(tmp_path, _legacy_doc_master):
+    """A fresh per-test copy of the session-built OLE2 .doc."""
+    dest = tmp_path / "memo.doc"
+    shutil.copy(_legacy_doc_master, dest)
+    return dest
 
 
 _TRACKED_DOC = """<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>

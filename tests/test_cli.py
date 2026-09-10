@@ -46,7 +46,6 @@ def test_clean_in_place_needs_confirmation(dirty_pdf):
 
 def test_clean_exit_2_when_residual(monkeypatch, dirty_pdf, tmp_path):
     from metascrub import cleaner
-    from metascrub.models import FieldChange
 
     real = cleaner.engine_for
     monkeypatch.setattr(cleaner, "engine_for", lambda ext: _Leftover(real(ext)))

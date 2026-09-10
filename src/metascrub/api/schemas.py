@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class HealthResponse(BaseModel):
@@ -30,7 +30,7 @@ class JobCreated(BaseModel):
     status: str
     run_id: str
     created_at: str
-    links: JobLinks
+    links: dict[str, str]
 
 
 class JobStatusResponse(BaseModel):
@@ -43,7 +43,7 @@ class JobStatusResponse(BaseModel):
     finished_at: str | None = None
     error: str | None = None
     summary: JobSummary | None = None
-    links: JobLinks
+    links: dict[str, str]
 
 
 class JobLogResponse(BaseModel):

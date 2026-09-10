@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .cleaner import clean_paths
-from .config import CleanConfig, DEFAULT_FILETYPES
+from .config import DEFAULT_FILETYPES, CleanConfig
 from .engines import engine_for, missing_dependencies
 from .report import render_html_report, render_json_report
 from .scanner import iter_files
