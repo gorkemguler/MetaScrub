@@ -130,19 +130,17 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ## Sonra — v1.0 (cila + ölçek)
 
-- **Paralellik** — büyük ağaçlar için `--jobs N` (ProcessPoolExecutor); bir
-  `rich` ilerleme çubuğu. (L10'u kapatır)
-- **`--quarantine`** — orijinalleri silmek yerine tarihli bir klasöre taşı;
-  `--in-place`'ten daha güvenli bir varsayılan.
-- **Proje yapılandırması** — repo başına keep-list ve varsayılanlar için
-  `.metascrub.toml`.
-- **Politika profilleri** — `--policy publish` / `--policy internal` vb.; her
-  biri belgelenmiş, adlandırılmış bir alan seti.
-- **HTML rapor** — açılır/kapanır kartlar, duruma göre filtre, CSV-kopyala,
-  yazdırma stili; birden çok çalıştırmayı birleştiren rapor.
-- PyPI sürümü, `v0.x` etiketleri + GitHub release'leri.
-- Daha derin video (`.mkv/.webm` için EBML `Tags`, `.avi` için RIFF
-  `LIST`); büyük ağaçlar için `rich` ilerleme çubuğu.
+Geldi: `--jobs N` (thread-pool paralel temizlik), `--quarantine DIR`,
+`.metascrub.toml` proje yapılandırması, `--policy publish|internal|minimal`,
+açılır/filtrelenebilir/yazdırılabilir HTML rapor, ve bir `release.yml`
+(tag → build → PyPI Trusted Publishing + GitHub Release).
+
+Hâlâ açık:
+- Büyük ağaçlar için `rich` ilerleme çubuğu.
+- Çalıştırmaları birleştiren HTML rapor; CSV-kopyala.
+- Daha derin video — `.mkv/.webm` için EBML `Tags`, `.avi` için RIFF `LIST`.
+- Windows `IExplorerCommand` shell eklentisi; `winget` / Homebrew /
+  `.deb` paketleri; GitHub Action'ı Marketplace'e yayınla.
 
 ## Bir gün — daha büyük bahisler
 

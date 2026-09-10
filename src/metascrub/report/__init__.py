@@ -120,6 +120,9 @@ _STRINGS = {
         "hero_sub_warn": "some files still carry metadata — verify manually",
         "hero_sub_bad": "some files could not be processed",
         "res_title": "Per file",
+        "filter_all": "all",
+        "expand_all": "expand all",
+        "collapse_all": "collapse all",
     },
     "tr": {
         "title": "MetaScrub raporu",
@@ -155,5 +158,8 @@ _STRINGS = {
         "hero_sub_warn": "bazı dosyalarda hâlâ metadata var — elle doğrulayın",
         "hero_sub_bad": "bazı dosyalar işlenemedi",
         "res_title": "Dosya bazında",
+        "filter_all": "tümü",
+        "expand_all": "hepsini aç",
+        "collapse_all": "hepsini kapat",
     },
 }

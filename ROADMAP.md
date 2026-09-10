@@ -130,19 +130,17 @@ These are real gaps in the current release, not bugs:
 
 ## Later — v1.0 (polish + scale)
 
-- **`--jobs N`** — files scrubbed in parallel via a thread pool.
-  *(part of L10)* Still open: a `rich` progress bar for big trees.
-- **`--quarantine DIR`** — overwrite the original but move it to
-  `DIR/<date>/<relpath>` first; recoverable, safer than `--in-place`.
-- **`.metascrub.toml`** — a per-project config (found in the cwd or a
-  parent up to the git root) supplying defaults per command.
-- **`--policy publish|internal|minimal`** — named presets that shift the
-  defaults (`publish` = all opt-ins, `internal` = keep titles).
-- **HTML report** — collapsible cards, filter by status, copy-as-CSV, a
-  print stylesheet; a combined report across multiple runs.
-- PyPI release, `v0.x` tags + GitHub releases.
-- Deeper video (EBML `Tags` for `.mkv/.webm`, RIFF `LIST` for `.avi`);
-  a `rich` progress bar for large trees.
+Shipped: `--jobs N` (thread-pool parallel scrub), `--quarantine DIR`,
+`.metascrub.toml` project config, `--policy publish|internal|minimal`, a
+collapsible/filterable/printable HTML report, and a
+`release.yml` (tag → build → PyPI Trusted Publishing + GitHub Release).
+
+Still open:
+- A `rich` progress bar for large trees.
+- A combined HTML report across runs; copy-as-CSV.
+- Deeper video — EBML `Tags` for `.mkv/.webm`, RIFF `LIST` for `.avi`.
+- Windows `IExplorerCommand` shell extension; `winget` / Homebrew /
+  `.deb` packages; publish the GitHub Action to the Marketplace.
 
 ## Someday — bigger bets
 

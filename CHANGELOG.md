@@ -3,7 +3,7 @@
 All notable changes to MetaScrub. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
-## [Unreleased]
+## [0.2.0] — 2026-09-10
 
 ### Added
 - **PDF**: annotation authors + timestamps (`/T` `/M` `/CreationDate`),

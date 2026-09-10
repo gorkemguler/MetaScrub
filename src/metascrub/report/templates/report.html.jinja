@@ -8,6 +8,28 @@
 .msc-src { padding:0 22px 18px; color:var(--muted); font-size:12px; word-break:break-all; }
 h3.msc-h { font-size:13px; letter-spacing:.04em; color:var(--muted); text-transform:uppercase;
   margin:26px 0 10px; }
+.msc-filter { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px; }
+.msc-filter button { background:var(--panel-2); color:var(--muted); border:1px solid var(--border);
+  border-radius:999px; padding:4px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+.msc-filter button.on { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+details.msc-card > summary { cursor:pointer; list-style:none; display:flex; align-items:center;
+  gap:10px; flex-wrap:wrap; }
+details.msc-card > summary::-webkit-details-marker { display:none; }
+details.msc-card > summary::before { content:"▸"; color:var(--muted); font-size:11px; }
+details.msc-card[open] > summary::before { content:"▾"; }
+details.msc-card .msc-file { font-size:12.5px; }
+.msc-count { color:var(--muted); font-size:12px; margin-left:auto; }
+body.f-cleaned .msc-card:not(.is-cleaned),
+body.f-skipped .msc-card:not(.is-skipped),
+body.f-error .msc-card:not(.is-error),
+body.f-residual .msc-card:not(.has-residual) { display:none; }
+@media print {
+  .msc-filter, details.msc-card > summary::before { display:none; }
+  body { background:#fff; color:#000; }
+  .msc-hero, .msc-card { border-color:#bbb; break-inside:avoid; }
+  details.msc-card { display:block !important; }
+  details.msc-card > * { display:revert !important; }
+}
 </style>
 </head>
 <body>
@@ -49,13 +71,25 @@ h3.msc-h { font-size:13px; letter-spacing:.04em; color:var(--muted); text-transf
   </div>
 
   <h3 class="msc-h">{{ S.res_title }}</h3>
+  <div class="msc-filter" id="msc-filter">
+    <button data-f="" class="on">{{ S.filter_all }} ({{ results | length }})</button>
+    <button data-f="cleaned">{{ S.status_cleaned }} ({{ report.counts.get('cleaned', 0) }})</button>
+    {% if report.counts.get('skipped') %}<button data-f="skipped">{{ S.status_skipped }} ({{ report.counts.get('skipped') }})</button>{% endif %}
+    {% if report.errored %}<button data-f="error">{{ S.status_error }} ({{ report.errored | length }})</button>{% endif %}
+    {% if report.files_with_residual %}<button data-f="residual">{{ S.sum_residual }} ({{ report.files_with_residual | length }})</button>{% endif %}
+    <button id="msc-expand" style="margin-left:auto">{{ S.expand_all }}</button>
+  </div>
 
   {% for r in results %}
-  <div class="msc-card is-{{ r.status }}">
-    <div class="msc-file">{{ r.src_path }}</div>
-    <div style="margin:7px 0">
+  <details class="msc-card is-{{ r.status }}{% if r.residual %} has-residual{% endif %}"
+    {% if r.status in ('error',) or r.residual %}open{% endif %}>
+    <summary>
       <span class="msc-pill {{ r.status }}">{{ S['status_' ~ r.status] }}</span>
-      <span class="msc-meta">&nbsp; {{ r.engine }} · .{{ r.filetype }}
+      <span class="msc-file">{{ r.src_path }}</span>
+      <span class="msc-count">{{ r.removed | length }} {{ S.sum_removed }}{% if r.residual %} · ⚠ {{ r.residual | length }}{% endif %}</span>
+    </summary>
+    <div style="margin:8px 0 0">
+      <span class="msc-meta">{{ r.engine }} · .{{ r.filetype }}
         {% if r.bytes_before %}· {{ S.size }} {{ r.bytes_before }} → {{ r.bytes_after }} B{% endif %}
       </span>
     </div>
@@ -81,8 +115,25 @@ h3.msc-h { font-size:13px; letter-spacing:.04em; color:var(--muted); text-transf
 
     {% if r.kept %}<div class="msc-kept">✓ {{ S.kept }}: {{ r.kept | join(', ') }}</div>{% endif %}
     {% if r.residual %}<div class="msc-residual">⚠ {{ S.residual }}: {{ r.residual | join(', ') }}</div>{% endif %}
-  </div>
+  </details>
   {% endfor %}
 </div>
+<script>
+(function () {
+  var bar = document.getElementById('msc-filter');
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-f]');
+    if (!b) return;
+    document.body.className = b.dataset.f ? 'f-' + b.dataset.f : '';
+    bar.querySelectorAll('button[data-f]').forEach(function (x) { x.classList.toggle('on', x === b); });
+  });
+  var exp = document.getElementById('msc-expand'), open = false;
+  exp.addEventListener('click', function () {
+    open = !open;
+    document.querySelectorAll('details.msc-card').forEach(function (d) { d.open = open; });
+    exp.textContent = open ? '{{ S.collapse_all }}' : '{{ S.expand_all }}';
+  });
+})();
+</script>
 </body>
 </html>
