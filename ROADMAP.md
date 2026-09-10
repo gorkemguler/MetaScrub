@@ -148,8 +148,11 @@ Still open:
   descends into `.zip` archives and `.eml` emails (`engines/container.py`),
   scrubs each member, repacks, depth-limited. Still open: `.msg` (Outlook),
   and re-embedding scrubbed copies of a PDF's *own* `/EmbeddedFiles`.
-- **Content-side flagging** — call MetaScout's `--scan-content` on the
-  output and warn if PII still sits in the *body* text. MetaScrub still
-  won't edit content, but it can tell you it's there.
-- **Deterministic rebuilds** — byte-identical output for the same input +
-  options, so a scrub is reproducible/auditable.
+- **Content-side flagging** — a `--flag-content` that runs MetaScout's
+  `--scan-content` over the output and warns if PII still sits in the
+  *body* text. For now the README just points at running `metascout
+  local-scan --scan-content` as a second pass.
+- **Deterministic rebuilds** — *done and guarded*: `tests/test_deterministic.py`
+  asserts a second scrub of the same file with the same options is
+  byte-identical (every format bar `--strip-pdf-id`, which is random by
+  design).

@@ -150,7 +150,10 @@ Hâlâ açık:
   sınırlı. Hâlâ açık: `.msg` (Outlook), ve bir PDF'nin *kendi*
   `/EmbeddedFiles`'ının temizlenmiş kopyalarını yeniden gömme.
 - **İçerik tarafı işaretleme** — çıktıda MetaScout'un `--scan-content`'ini
-  çalıştır ve gövde metninde hâlâ PII varsa uyar. MetaScrub yine içeriği
-  düzenlemez ama orada olduğunu söyleyebilir.
-- **Deterministik yeniden inşa** — aynı girdi + seçenekler için byte-birebir
-  aynı çıktı; böylece bir temizlik tekrarlanabilir/denetlenebilir olur.
+  çalıştıran bir `--flag-content`; gövde metninde hâlâ PII varsa uyarır.
+  Şimdilik README ikinci geçiş olarak `metascout local-scan
+  --scan-content` çalıştırmayı öneriyor.
+- **Deterministik yeniden inşa** — *tamam ve korumalı*:
+  `tests/test_deterministic.py` aynı dosyanın aynı seçeneklerle ikinci
+  temizliğinin byte-birebir aynı olduğunu doğrular (`--strip-pdf-id`
+  hariç — o tasarım gereği rastgele).

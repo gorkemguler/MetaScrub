@@ -251,6 +251,8 @@ Or `docker compose up --build` (web UI); `docker compose --profile api up metasc
 - **Images** — `exiftool -all=`, which is the reference tool for this.
 - **`--verify`** (on by default) re-scans every cleaned file and lists anything still present
   in the report; the CLI exits `2` if so.
+- **Deterministic** — scrubbing the same file twice with the same options gives byte-identical
+  output (checked in CI), so a scrub is auditable. `--strip-pdf-id` is the deliberate exception.
 
 ### Limitations
 
