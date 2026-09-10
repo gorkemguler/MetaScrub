@@ -78,6 +78,15 @@ class CleanConfig:
     # file as "<name>.orig" (never overwrites an existing .orig).
     backup: bool = False
 
+    # Aggressive, opt-in: also blank things that are arguably *content*
+    # but are, in practice, a PII leak.
+    #   strip_form_values   — PDF AcroForm field values (/V, /DV): the
+    #                         name/address/etc. someone typed into a form.
+    #   strip_office_authors — Office tracked-change and comment author
+    #                         names/dates (the change/comment text stays).
+    strip_form_values: bool = False
+    strip_office_authors: bool = False
+
     def wants_field(self, name: str) -> bool:
         """True if `name` should be preserved rather than stripped."""
         lowered = name.strip().lower()

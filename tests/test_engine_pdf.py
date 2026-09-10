@@ -131,6 +131,29 @@ def test_probe_encrypted_without_password_reports_encryption(encrypted_pdf):
     assert len(rows) == 1 and rows[0].field == "encryption"
 
 
+def test_form_values_left_alone_by_default(form_pdf, tmp_path):
+    dst = tmp_path / "clean.pdf"
+    PdfEngine().strip(str(form_pdf), str(dst), CleanConfig())
+    with pikepdf.open(str(dst)) as pdf:
+        assert str(pdf.Root.AcroForm.Fields[0].V) == "Jane Q. Public"   # untouched
+
+
+def test_strip_form_values_blanks_field_and_appearance(form_pdf, tmp_path):
+    cfg = CleanConfig(strip_form_values=True)
+    assert any(r.field.startswith("applicant_name") for r in PdfEngine().probe(str(form_pdf), cfg))
+
+    dst = tmp_path / "clean.pdf"
+    result = PdfEngine().strip(str(form_pdf), str(dst), cfg)
+    assert result.status == "cleaned"
+    assert any("Jane Q. Public" == fc.before for fc in result.removed)
+
+    with pikepdf.open(str(dst)) as pdf:
+        field = pdf.Root.AcroForm.Fields[0]
+        assert "/V" not in field and "/AP" not in field
+        assert bool(pdf.Root.AcroForm.get("/NeedAppearances")) is True
+    assert PdfEngine().probe(str(dst), cfg) == []
+
+
 def test_strip_pdf_id_randomises_between_runs(dirty_pdf, tmp_path):
     a, b = tmp_path / "a.pdf", tmp_path / "b.pdf"
     PdfEngine().strip(str(dirty_pdf), str(a), CleanConfig(strip_pdf_id=True))

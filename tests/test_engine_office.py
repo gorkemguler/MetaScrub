@@ -83,3 +83,32 @@ def test_source_not_modified(dirty_docx, tmp_path):
     before = dirty_docx.read_bytes()
     OfficeEngine().strip(str(dirty_docx), str(tmp_path / "c.docx"), CleanConfig())
     assert dirty_docx.read_bytes() == before
+
+
+def test_tracked_change_authors_kept_by_default(tracked_docx, tmp_path):
+    dst = tmp_path / "c.docx"
+    OfficeEngine().strip(str(tracked_docx), str(dst), CleanConfig())
+    with zipfile.ZipFile(dst) as z:
+        assert b"Dave Editor" in z.read("word/document.xml")
+
+
+def test_strip_office_authors_blanks_names_and_dates_keeps_markup(tracked_docx, tmp_path):
+    cfg = CleanConfig(strip_office_authors=True)
+    probed = {r.field: r.before for r in OfficeEngine().probe(str(tracked_docx), cfg)}
+    assert "Dave Editor" in probed.get("document.xml", "")
+    assert "Frank Legal" in probed.get("comments.xml", "")
+
+    dst = tmp_path / "c.docx"
+    result = OfficeEngine().strip(str(tracked_docx), str(dst), cfg)
+    assert result.status == "cleaned"
+
+    with zipfile.ZipFile(dst) as z:
+        doc = z.read("word/document.xml").decode()
+        com = z.read("word/comments.xml").decode()
+        ppl = z.read("word/people.xml").decode()
+    for name in ("Dave Editor", "Erin Reviewer", "Frank Legal", "S-1-5-21-frank"):
+        assert name not in doc and name not in com and name not in ppl
+    assert 'w:date="' not in doc and 'w:date="' not in com
+    assert "<w:ins " in doc and "<w:del " in doc          # change markup preserved
+    assert "<w:comment " in com                           # comment (minus author) preserved
+    assert OfficeEngine().probe(str(dst), cfg) == []

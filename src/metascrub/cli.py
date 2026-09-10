@@ -83,6 +83,10 @@ def main() -> None:
               help="Password to open encrypted PDFs (the cleaned copy is written unencrypted).")
 @click.option("--strip-pdf-id", is_flag=True, default=False,
               help="Give each scrubbed PDF a fresh random /ID so copies can't be correlated by it.")
+@click.option("--strip-form-values", is_flag=True, default=False,
+              help="Also blank PDF form-field values (/V, /DV) — user-entered data, not just metadata.")
+@click.option("--strip-office-authors", is_flag=True, default=False,
+              help="Also blank Office tracked-change / comment author names and dates (text is kept).")
 @click.option("--json-report/--no-json-report", default=True, show_default=True)
 @click.option("--html-report/--no-html-report", default=True, show_default=True)
 @click.option("--report-lang", type=click.Choice(["en", "tr"]), default="en", show_default=True,
@@ -90,7 +94,7 @@ def main() -> None:
 @click.option("--yes", "-y", is_flag=True, default=False, help="Skip the --in-place confirmation.")
 def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields, dry_run, verify,
           keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
-          json_report, html_report, report_lang, yes):
+          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -106,7 +110,8 @@ def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields
         keep_fields=list(keep_fields), dry_run=dry_run, verify=verify,
         keep_color_profile=keep_color_profile, keep_orientation=keep_orientation,
         overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
-        backup=backup,
+        backup=backup, strip_form_values=strip_form_values,
+        strip_office_authors=strip_office_authors,
     )
 
     _banner()
@@ -188,14 +193,19 @@ def _print_table(report, base_dir) -> None:
 @click.option("--filetypes", default=",".join(DEFAULT_FILETYPES), show_default=True)
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
 @click.option("--password", "pdf_password", default=None, help="Password for encrypted PDFs.")
+@click.option("--strip-form-values", is_flag=True, default=False,
+              help="Also list PDF form-field values (shown only with this flag — they can be bulky).")
+@click.option("--strip-office-authors", is_flag=True, default=False,
+              help="Also list Office tracked-change / comment author names.")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Emit JSON instead of tables.")
-def inspect(paths, filetypes, recursive, pdf_password, as_json):
+def inspect(paths, filetypes, recursive, pdf_password, strip_form_values, strip_office_authors, as_json):
     """Show the metadata each file in PATHS currently carries. Read-only —
     writes nothing. Use this on the files MetaScout flagged to see exactly
     what's in them before scrubbing.
     """
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
-    insp_cfg = CleanConfig(pdf_password=pdf_password)
+    insp_cfg = CleanConfig(pdf_password=pdf_password, strip_form_values=strip_form_values,
+                           strip_office_authors=strip_office_authors)
     files = iter_files([os.fspath(p) for p in paths], ft_list, recursive=recursive)
 
     if not files:

@@ -91,6 +91,24 @@ def attachment_pdf(tmp_path):
 
 
 @pytest.fixture
+def form_pdf(tmp_path):
+    path = tmp_path / "form.pdf"
+    pdf = pikepdf.new()
+    page = pdf.add_blank_page(page_size=(300, 200))
+    field = pdf.make_indirect(pikepdf.Dictionary(
+        FT=pikepdf.Name.Tx, T="applicant_name", V="Jane Q. Public", DV="",
+        Type=pikepdf.Name.Annot, Subtype=pikepdf.Name.Widget, Rect=[20, 20, 200, 40],
+        AP=pikepdf.Dictionary(N=pikepdf.Stream(pdf, b"BT (Jane Q. Public) Tj ET")),
+    ))
+    page.Annots = pdf.make_indirect(pikepdf.Array([field]))
+    pdf.Root.AcroForm = pdf.make_indirect(
+        pikepdf.Dictionary(Fields=pikepdf.Array([field]), NeedAppearances=False)
+    )
+    pdf.save(str(path))
+    return path
+
+
+@pytest.fixture
 def encrypted_pdf(tmp_path):
     path = tmp_path / "locked.pdf"
     pdf = pikepdf.new()
@@ -193,6 +211,32 @@ def legacy_doc(tmp_path, dirty_docx):
     if not doc.is_file():
         pytest.skip("LibreOffice conversion did not produce a .doc")
     return doc
+
+
+_TRACKED_DOC = """<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:ins w:id="1" w:author="Dave Editor" w:date="2024-05-01T10:00:00Z"><w:r><w:t>added text</w:t></w:r></w:ins>
+<w:del w:id="2" w:author="Erin Reviewer" w:date="2024-05-02T11:00:00Z"><w:r><w:delText>gone</w:delText></w:r></w:del></w:p>
+</w:body></w:document>"""
+_COMMENTS = """<?xml version="1.0"?><w:comments xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:comment w:id="1" w:author="Frank Legal" w:initials="FL" w:date="2024-05-03T09:00:00Z"><w:p><w:r><w:t>check this clause</w:t></w:r></w:p></w:comment></w:comments>"""
+_PEOPLE = """<?xml version="1.0"?><w15:people xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"><w15:person w15:author="Frank Legal"><w15:presenceInfo w15:providerId="AD" w15:userId="S-1-5-21-frank"/></w15:person></w15:people>"""
+
+
+@pytest.fixture
+def tracked_docx(tmp_path):
+    path = tmp_path / "tracked.docx"
+    ct = ('<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+          '<Default Extension="xml" ContentType="application/xml"/>'
+          '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+          '<Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/></Types>')
+    rels = ('<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="r1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>')
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", ct)
+        z.writestr("_rels/.rels", rels)
+        z.writestr("word/document.xml", _TRACKED_DOC)
+        z.writestr("word/comments.xml", _COMMENTS)
+        z.writestr("word/people.xml", _PEOPLE)
+    return path
 
 
 @pytest.fixture

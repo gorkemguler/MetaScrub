@@ -58,6 +58,11 @@ imza) asla değiştirilmez.
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
 
+İki **opt-in** bayrak metadata'nın ötesine, teknik olarak içerik olan kimlik verisine geçer:
+`--strip-form-values` PDF form alanı değerlerini (`/V` `/DV`) ve önbellekli görünümlerini boşaltır;
+`--strip-office-authors` Office değişiklik-takibi / yorum **yazar adları ve tarihlerini** boşaltır
+(değişiklik ve yorum metni kalır, kabul/ret hâlâ çalışır).
+
 ## Kurulum
 
 ```bash
@@ -118,7 +123,8 @@ metascrub clean a.pdf b.docx c.jpg --out ./temiz
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (şifreli PDF'ler — temizlenmiş kopya şifresiz yazılır),
-`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`), `--backup` (`--in-place` ile `<ad>.orig` sakla).
+`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`), `--backup` (`--in-place` ile `<ad>.orig` sakla),
+`--strip-form-values`, `--strip-office-authors` (opt-in — yukarıya bakın).
 
 **Çıkış kodları** (CI kapısı olarak kullanılabilsin diye): `0` temiz · `1` bir dosya hata
 verdi · `2` bir temizlenmiş dosya doğrulama taramasında hâlâ metadata taşıyordu.

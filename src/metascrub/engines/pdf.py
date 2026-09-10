@@ -89,6 +89,8 @@ class PdfEngine:
 
             rows.extend(_probe_annots(pdf))
             rows.extend(_probe_attachments(pdf))
+            if cfg is not None and cfg.strip_form_values:
+                rows.extend(_probe_form_values(pdf))
         return rows
 
     # ------------------------------------------------------------------ strip
@@ -148,6 +150,10 @@ class PdfEngine:
             # --- annotation authors / dates + embedded-file metadata ---
             removed.extend(_strip_annots(pdf))
             removed.extend(_strip_attachments(pdf))
+
+            # --- AcroForm field values (opt-in: --strip-form-values) ---
+            if cfg.strip_form_values:
+                removed.extend(_strip_form_values(pdf))
 
             # --- document /ID ---
             # A full rewrite already drops the original arbitrary /ID.
@@ -342,6 +348,62 @@ def _strip_attachments(pdf: pikepdf.Pdf) -> list[FieldChange]:
                     old = _str(params[pk])
                     del params[pk]
                     removed.append(FieldChange("PDF Attachment", f"{name} {pk.lstrip('/')}", old))
+    return removed
+
+
+def _iter_form_fields(pdf: pikepdf.Pdf):
+    """Yield every terminal AcroForm field (one that holds a value), plus
+    its widget objects for /AP cleanup. Walks /Kids for hierarchical forms."""
+    acro = pdf.Root.get("/AcroForm")
+    if acro is None:
+        return
+    stack = list(acro.get("/Fields", []))
+    while stack:
+        field = stack.pop()
+        kids = field.get("/Kids")
+        child_fields = [k for k in kids if "/T" in k] if kids is not None else []
+        if child_fields:
+            stack.extend(child_fields)
+            continue
+        widgets = list(kids) if kids is not None else [field]
+        yield field, widgets
+
+
+def _field_name(field) -> str:
+    return _str(field.get("/T", "<field>")).lstrip("/")
+
+
+def _probe_form_values(pdf: pikepdf.Pdf) -> list[FieldChange]:
+    rows: list[FieldChange] = []
+    for field, _widgets in _iter_form_fields(pdf):
+        for key in ("/V", "/DV"):
+            if key in field:
+                val = _str(field[key])
+                if val not in ("", "/Off"):
+                    rows.append(FieldChange("PDF Form", f"{_field_name(field)} {key.lstrip('/')}", val))
+    return rows
+
+
+def _strip_form_values(pdf: pikepdf.Pdf) -> list[FieldChange]:
+    removed: list[FieldChange] = []
+    touched = False
+    for field, widgets in _iter_form_fields(pdf):
+        for key in ("/V", "/DV"):
+            if key in field:
+                val = _str(field[key])
+                del field[key]
+                if val not in ("", "/Off"):
+                    removed.append(FieldChange("PDF Form", f"{_field_name(field)} {key.lstrip('/')}", val))
+                touched = True
+        # Drop the cached appearance so the old value doesn't still render.
+        for w in widgets:
+            if "/AP" in w:
+                del w["/AP"]
+                touched = True
+    if touched:
+        acro = pdf.Root.get("/AcroForm")
+        if acro is not None:
+            acro["/NeedAppearances"] = True
     return removed
 
 

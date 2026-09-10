@@ -58,6 +58,11 @@ signature) is never modified.
 `--keep Title` (repeatable) spares a named field from the otherwise-aggressive strip.
 `--backup` keeps `<name>.orig` next to an `--in-place` scrub.
 
+Two **opt-in** flags go past metadata into identity data that's technically content:
+`--strip-form-values` blanks PDF form-field values (`/V` `/DV`) and their cached appearance;
+`--strip-office-authors` blanks Office tracked-change / comment **author names and dates**
+(the change and comment text stays, so accept/reject still works).
+
 ## Install
 
 ```bash
@@ -118,7 +123,8 @@ metascrub clean a.pdf b.docx c.jpg --out ./clean
 Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (encrypted PDFs — the cleaned copy is written unencrypted),
-`--strip-pdf-id` (fresh random `/ID` per run), `--backup` (keep `<name>.orig` with `--in-place`).
+`--strip-pdf-id` (fresh random `/ID` per run), `--backup` (keep `<name>.orig` with `--in-place`),
+`--strip-form-values`, `--strip-office-authors` (opt-in — see above).
 
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
 still carried metadata on the verify re-scan.

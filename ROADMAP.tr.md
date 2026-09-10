@@ -35,9 +35,16 @@ bir yapılacaklar listesi.
   ve editör yorumları silinir; çizime dokunulmaz. *(L7'nin bir kısmı)*
 - **`--backup`** — `--in-place` ile, dokunulmamış orijinali `<ad>.orig`
   olarak saklar (mevcut olanı asla ezmez).
-
-L3'te artık yalnız AcroForm alan *değerleri* ve derin `xmpMM` geçmişi
-kaldı (belge/sayfa düzeyi XMP zaten toptan siliniyor).
+- **`--strip-form-values`** *(opt-in)* — PDF AcroForm alan değerlerini
+  (`/V`, `/DV`) boşaltır ve eski değerin hâlâ görünmemesi için önbellekli
+  `/AP` görünümünü düşürür; `NeedAppearances` işaretlenir. Birinin bir
+  forma yazdığı ad/adres teknik olarak içerik olsa da bir sızıntıdır.
+  *(L3'ü kapatır)*
+- **`--strip-office-authors`** *(opt-in)* — `document.xml`, `comments.xml`,
+  header/footer'lar ve `people.xml` / `authors.xml` / `persons`
+  kayıtlarında (Word / PowerPoint / Excel) değişiklik-takibi ve yorum
+  **yazar adları + tarihlerini** boşaltır; değişiklik ve yorum *metni*
+  korunur ki kabul/ret hâlâ çalışsın. *(L5'in bir kısmı)*
 
 ---
 
@@ -47,9 +54,8 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 | # | Eksik | Not |
 |---|-------|-----|
-| L2 | **Belge içeriğine hiç dokunulmuyor** | Değişiklik takibi / yorumlardaki yazar adları, gövdeye yazılmış metin, görselin içine gömülü metin — tasarım gereği kapsam dışı. |
-| L3 | **PDF: AcroForm alan değerleri temizlenmiyor** | `/Info`, XMP, `/PieceInfo`, sayfa metadata'sı, annotation'lar ve gömülü-dosya metadata'sı artık hallediliyor; doldurulmuş bir form alanının *değeri* hâlâ olduğu gibi kalıyor (bu tartışmalı biçimde içerik). |
-| L5 | **Office: yalnız `docProps/*` + `w:rsids`** | Henüz yok: değişiklik-takibi/yorum yazarları, bazı düzenlerde `docProps/thumbnail`, dış-bağlantı yolları, `.docm/.xlsm` `vbaProject.bin`. |
+| L2 | **Belge *gövde* içeriğine dokunulmuyor** | Gövdeye yazılmış metin, bir yorumun/değişikliğin metni, görselin içine gömülü metin — tasarım gereği kapsam dışı (`--strip-form-values` / `--strip-office-authors` kimlik kısımları için opt-in istisnalar). |
+| L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` artık değişiklik-takibi/yorum yazarlarını hallediyor; hâlâ dokunulmayan: sıra dışı düzenlerde `docProps/thumbnail`, dış-bağlantı hedef yolları, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
 | L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
 | L11 | **Eski Office LibreOffice gerektiriyor** | `.doc/.xls/.ppt` temizliği `soffice`'e devrediyor; saf-Python bir OLE2 yeniden yazıcısı yok, o yüzden onsuz bu dosyalar `unsupported` kalıyor. |
@@ -61,11 +67,6 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ## Şimdi — v0.2 (kapsam + güven)
 
-- **AcroForm alan değerleri** — opt-in `--strip-form-values`: değeri
-  kullanıcı girişi PII olan doldurulmuş form alanlarını (`/V`, `/DV`)
-  boşalt. (L3'ü kapatır)
-- **Office yazarları** — opt-in `--strip-office-authors`: `w:ins`/`w:del`
-  yazarları, `comments.xml` / `people.xml`, PowerPoint notları. (L5'in bir kısmı)
 - **Saf-Python eski Office** — LibreOffice'e devretmeden `.doc/.xls/.ppt`
   temizlenebilsin diye minimal bir OLE2 property-stream yeniden yazıcısı.
   (L11'i kapatır)

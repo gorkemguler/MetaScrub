@@ -68,7 +68,14 @@ class OfficeEngine:
             with zipfile.ZipFile(path) as zf:
                 names = set(zf.namelist())
                 if ext in OOXML_EXTENSIONS:
-                    return _probe_ooxml(zf, names)
+                    rows = _probe_ooxml(zf, names)
+                    if cfg is not None and cfg.strip_office_authors:
+                        rows += [
+                            FieldChange("Office authors", part.rsplit("/", 1)[-1],
+                                        ", ".join(found) or "<author metadata>")
+                            for part, _new, found in _plan_office_authors(zf, names)
+                        ]
+                    return rows
                 return _probe_odf(zf, names)
         except zipfile.BadZipFile:
             return []
@@ -166,7 +173,52 @@ def _plan_ooxml(zf: zipfile.ZipFile, names: set[str], cfg: CleanConfig):
                 rewrites[settings_part] = cleaned
                 removed.append(FieldChange(settings_part, "w:rsids", "<revision save IDs>"))
 
+    # Opt-in: blank tracked-change / comment author names + dates.
+    if cfg.strip_office_authors:
+        for part, cleaned, names_found in _plan_office_authors(zf, names):
+            rewrites[part] = cleaned
+            removed.append(FieldChange("Office authors", part.rsplit("/", 1)[-1],
+                                       ", ".join(names_found) or "<author metadata>"))
+
     return removed, rewrites, drops
+
+
+# Members whose tracked-change / comment markup carries author + date
+# attributes (the change/comment text itself is left alone).
+_AUTHOR_CONTENT_RE = re.compile(
+    r"^(word/(document|comments\w*|header\d*|footer\d*|footnotes|endnotes)\.xml"
+    r"|ppt/(slides/slide\d+|comments/[^/]+|notesSlides/notesSlide\d+)\.xml"
+    r"|xl/(comments\d*|threadedComments/[^/]+)\.xml)$"
+)
+# Person / author registries — blank the identifying attributes.
+_AUTHOR_REGISTRY_RE = re.compile(r"^(word/people\.xml|ppt/authors\.xml|xl/persons/person\.xml)$")
+
+# Attributes deleted wherever they appear (any namespace prefix): the
+# person and the moment.
+_ATTR_DELETE = re.compile(rb'\s+(?:[\w]+:)?(?:author|userId|date|dateUtc)="[^"]*"')
+# On person / author registry files only, also blank the display fields.
+_ATTR_BLANK_REGISTRY = re.compile(rb'\s+((?:[\w]+:)?(?:name|displayName|initials|providerId))="[^"]*"')
+_EL_XL_AUTHOR = re.compile(rb"<author>[^<]*</author>")
+_NAME_HINT = re.compile(rb'(?:[\w]+:)?(?:author|name|displayName)="([^"]+)"')
+
+
+def _plan_office_authors(zf: zipfile.ZipFile, names: set[str]):
+    """Yield (member, rewritten_bytes, [author names found]) for every part
+    that carries tracked-change / comment / person authorship."""
+    for name in sorted(names):
+        is_content = bool(_AUTHOR_CONTENT_RE.match(name))
+        is_registry = bool(_AUTHOR_REGISTRY_RE.match(name))
+        if not (is_content or is_registry):
+            continue
+        data = zf.read(name)
+        found = sorted({m.decode("utf-8", "replace") for m in _NAME_HINT.findall(data)
+                        if m and m not in (b"", b"Author")})
+        new = _ATTR_DELETE.sub(b"", data)
+        new = _EL_XL_AUTHOR.sub(b"<author></author>", new)
+        if is_registry:
+            new = _ATTR_BLANK_REGISTRY.sub(rb' \1=""', new)
+        if new != data:
+            yield name, new, found
 
 
 def _core_fields(data: bytes) -> list[FieldChange]:

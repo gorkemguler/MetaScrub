@@ -34,9 +34,16 @@ backlog.
   and editor comments; the drawing is untouched. *(part of L7)*
 - **`--backup`** — with `--in-place`, keeps the untouched original as
   `<name>.orig` (never clobbers an existing one).
-
-L3 now only leaves AcroForm field *values* and deep `xmpMM` history
-(doc/page-level XMP is already deleted wholesale).
+- **`--strip-form-values`** *(opt-in)* — blanks PDF AcroForm field values
+  (`/V`, `/DV`) and drops the cached `/AP` appearance so the old value
+  can't still render; sets `NeedAppearances`. The name/address someone
+  typed into a form is a leak even though it's technically content.
+  *(closes L3)*
+- **`--strip-office-authors`** *(opt-in)* — blanks tracked-change and
+  comment **author names + dates** across `document.xml`,
+  `comments.xml`, headers/footers, and the `people.xml` / `authors.xml` /
+  `persons` registries (Word / PowerPoint / Excel); the change and
+  comment *text* is kept so accept/reject still works. *(part of L5)*
 
 ---
 
@@ -46,9 +53,8 @@ These are real gaps in the current release, not bugs:
 
 | # | Gap | Notes |
 |---|-----|-------|
-| L2 | **Document content is never touched** | Author names in tracked changes / comments, text typed into the body, text baked into an image — all out of scope by design. |
-| L3 | **PDF: AcroForm field values not scrubbed** | `/Info`, XMP, `/PieceInfo`, page metadata, annotations and embedded-file metadata are all handled now; a filled-in form field's *value* is still left as-is (it's arguably content). |
-| L5 | **Office: only `docProps/*` + `w:rsids`** | Not yet: tracked-change/comment authors, `docProps/thumbnail` in some layouts, external-link paths, `.docm/.xlsm` `vbaProject.bin`. |
+| L2 | **Document *body* content is never touched** | Text typed into the document body, a comment's or tracked change's actual text, text baked into an image — out of scope by design (`--strip-form-values` / `--strip-office-authors` are the opt-in exceptions for the identity bits). |
+| L5 | **Office: some parts still not covered** | `--strip-office-authors` now handles tracked-change / comment authors; still not touched: `docProps/thumbnail` in unusual layouts, external-link target paths, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
 | L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
 | L11 | **Legacy Office needs LibreOffice** | `.doc/.xls/.ppt` scrubbing shells out to `soffice`; there's no pure-Python OLE2 rewriter, so without it those files stay `unsupported`. |
@@ -60,10 +66,6 @@ These are real gaps in the current release, not bugs:
 
 ## Now — v0.2 (coverage + confidence)
 
-- **AcroForm field values** — opt-in `--strip-form-values`: blank filled-in
-  form fields (`/V`, `/DV`) whose value is user-entered PII. (closes L3)
-- **Office authors** — opt-in `--strip-office-authors`: `w:ins`/`w:del`
-  authors, `comments.xml` / `people.xml`, PowerPoint notes. (part of L5)
 - **Pure-Python legacy Office** — a minimal OLE2 property-stream rewriter
   so `.doc/.xls/.ppt` can be scrubbed without shelling out to LibreOffice.
   (would close L11)
