@@ -3,7 +3,11 @@
 All notable changes to MetaScrub. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
-## [Unreleased]
+## [0.3.0] — 2026-09-11
+
+The v0.3 "gap-closing sweep": nine batches closing format, container,
+platform and deployment gaps. Tag `v0.3.0` to fire the PyPI + GHCR
+publish workflows.
 
 ### Added
 - **Container publishing**: `.github/workflows/docker.yml` builds a
