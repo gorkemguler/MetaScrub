@@ -287,6 +287,56 @@ def diff(run_a, run_b, as_json):
         sys.exit(1)
 
 
+# --------------------------------------------------------------------------- watch
+
+
+@main.command()
+@click.argument("directory", type=click.Path(exists=True, file_okay=False))
+@click.option("--filetypes", default=",".join(DEFAULT_FILETYPES), show_default=True)
+@click.option("--recursive/--no-recursive", default=True, show_default=True)
+@click.option("--to", "to_dir", default=None, type=click.Path(),
+              help="Write cleaned copies here instead of scrubbing in place.")
+@click.option("--move-processed", default=None, type=click.Path(),
+              help="Move each original here after it's scrubbed.")
+@click.option("--interval", default=5.0, show_default=True, help="Seconds between scans.")
+@click.option("--settle", default=2.0, show_default=True,
+              help="A file must be unchanged this long before it's touched (half-finished uploads).")
+@click.option("--once", is_flag=True, default=False, help="Scan once and exit (for cron).")
+@click.option("--keep", "keep_fields", multiple=True, metavar="FIELD")
+@click.option("--strip-pdf-id", is_flag=True, default=False)
+@click.option("--strip-form-values", is_flag=True, default=False)
+@click.option("--strip-office-authors", is_flag=True, default=False)
+@click.option("--backup", is_flag=True, default=False, help="Keep <name>.orig when scrubbing in place.")
+@click.option("--verify/--no-verify", default=True, show_default=True)
+def watch(directory, filetypes, recursive, to_dir, move_processed, interval, settle, once,
+          keep_fields, strip_pdf_id, strip_form_values, strip_office_authors, backup, verify):
+    """Keep DIRECTORY scrubbed — a poll loop for an FTP/SFTP drop folder.
+
+    A file is only touched once it has stopped changing for --settle
+    seconds, so a partial upload is safe. State is kept in
+    DIRECTORY/.metascrub-watch.json so a restart doesn't re-scrub
+    everything; a file re-dropped with a newer timestamp is handled again.
+    """
+    from .watch import Watcher
+
+    ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
+    cfg = CleanConfig(
+        filetypes=ft_list, recursive=recursive, keep_fields=list(keep_fields), verify=verify,
+        strip_pdf_id=strip_pdf_id, strip_form_values=strip_form_values,
+        strip_office_authors=strip_office_authors, backup=backup,
+    )
+    w = Watcher(directory, cfg, interval=interval, settle=settle, to_dir=to_dir,
+                move_processed=move_processed, recursive=recursive, log=_log)
+
+    _banner()
+    if once:
+        n = w.scan_once()
+        console.print(f"[dim]scrubbed {n} file(s)[/dim]")
+        return
+    console.print(f"[bold]MetaScrub watch[/bold] on [bold]{w.dir}[/bold] — Ctrl-C to stop\n")
+    w.run_forever()
+
+
 # --------------------------------------------------------------------------- web / api
 
 _LOOPBACK = {"127.0.0.1", "localhost", "::1", ""}

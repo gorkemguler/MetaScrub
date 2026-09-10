@@ -99,10 +99,13 @@ These are real gaps in the current release, not bugs:
 - Publish versioned images to GHCR from CI; optional `/metrics`.
 - A documented nginx/Caddy reverse-proxy recipe next to `--api-key`.
 
-### `metascrub watch` — the FTP/SFTP drop-box daemon
-- `metascrub watch <dir> [--pattern] [--in-place | --to <dir>] [--move-back]`
-- inotify (Linux) / polling fallback, debounce, lockfile, systemd unit.
-- Optional SFTP mode: pull from a remote drop dir, scrub, push back.
+### `metascrub watch` — the FTP/SFTP drop-box daemon — **done**
+- `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
+- Polling loop with a settle window (no half-uploaded files), a JSON state
+  file so restarts don't reprocess, re-drop detection, and a systemd
+  template unit in `platform/linux/`.
+- *Still to do:* inotify fast-path on Linux, and an SFTP mode that pulls
+  from a remote drop dir and pushes the cleaned file back.
 
 ### Platform wrappers (the "right-click / plugin" story)
 - **macOS** — a Quick Action (`.workflow`) so *Finder → right-click → Clean

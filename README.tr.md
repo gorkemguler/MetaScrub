@@ -141,6 +141,20 @@ metascrub diff ./tarama-ocak ./tarama-subat     # ne değişti?
 **yeniden ortaya çıkan** dosyaları (birisi belgeyi editörde tekrar kaydetmiş) gösterir.
 Bir şey metadata geri kazandıysa çıkış kodu `1` — bir cron işine koyun.
 
+### Watch — bir bırakma klasörünü temiz tut
+
+```bash
+metascrub watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
+metascrub watch ./inbox --once        # tek geçiş, cron için
+```
+
+Bir FTP/SFTP iniş bölgesi için poll döngüsü: bir dosyaya ancak `--settle` saniye boyunca
+değişmeyi bıraktıktan sonra dokunulur (yarım kalmış yükleme asla temizlenmez), durum
+`<dir>/.metascrub-watch.json`'da tutulur (yeniden başlatma her şeyi yeniden işlemez), ve
+daha yeni bir zaman damgasıyla tekrar bırakılan dosya yeniden işlenir. Varsayılan yerinde
+temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon unit'i
+[`platform/linux/`](platform/linux/metascrub-watch@.service)'de.
+
 ## Web arayüzü
 
 ```bash

@@ -103,10 +103,13 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 - CI'dan GHCR'a sürümlü imajlar; opsiyonel `/metrics`.
 - `--api-key` yanında belgelenmiş bir nginx/Caddy reverse-proxy tarifi.
 
-### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u
-- `metascrub watch <dir> [--pattern] [--in-place | --to <dir>] [--move-back]`
-- inotify (Linux) / polling yedeği, debounce, lockfile, systemd unit.
-- Opsiyonel SFTP modu: uzak bırakma dizininden çek, temizle, geri gönder.
+### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u — **tamam**
+- `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
+- Settle penceresiyle poll döngüsü (yarım yüklenmiş dosya yok), yeniden
+  başlatmanın yeniden işlememesi için JSON durum dosyası, yeniden-bırakma
+  tespiti, ve `platform/linux/`'te systemd şablon unit'i.
+- *Hâlâ yapılacak:* Linux'ta inotify hızlı-yolu, ve uzak bırakma
+  dizininden çekip temizlenmiş dosyayı geri iten bir SFTP modu.
 
 ### Platform sarmalayıcıları ("sağ tık / eklenti" senaryosu)
 - **macOS** — bir Quick Action (`.workflow`); *Finder → sağ tık → Clean

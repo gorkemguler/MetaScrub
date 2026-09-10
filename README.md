@@ -141,6 +141,20 @@ Shows files added/removed between the two runs and, the useful part, files where
 **reappeared** (someone re-saved the document in an editor). Exit code `1` if anything
 regained metadata — drop it in a cron job.
 
+### Watch — keep a drop folder scrubbed
+
+```bash
+metascrub watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
+metascrub watch ./inbox --once        # one pass, for cron
+```
+
+A poll loop for an FTP/SFTP landing zone: a file is only touched once it has stopped
+changing for `--settle` seconds (a half-finished upload is never scrubbed), state lives in
+`<dir>/.metascrub-watch.json` so a restart doesn't reprocess everything, and a file
+re-dropped with a newer timestamp is handled again. Scrubs in place by default; `--to DIR`
+writes cleaned copies instead. A systemd template unit is in
+[`platform/linux/`](platform/linux/metascrub-watch@.service).
+
 ## Web UI
 
 ```bash
