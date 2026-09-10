@@ -24,9 +24,17 @@ ODF_EXTENSIONS = frozenset({"odt", "ods", "odp"})
 # for the LibreOffice-headless path in a later version.
 LEGACY_OFFICE_EXTENSIONS = frozenset({"doc", "xls", "ppt"})
 
-IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "tif", "tiff", "heic", "webp"})
+IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "tif", "tiff", "heic", "heif", "webp"})
 PDF_EXTENSIONS = frozenset({"pdf"})
 SVG_EXTENSIONS = frozenset({"svg"})
+
+# Audio + video. Not in DEFAULT_FILETYPES — added by `metascrub clean
+# --media` or an explicit --filetypes. Handled with exiftool: audio tags
+# strip cleanly; for video only the metadata atoms are cleared, the track
+# structure (incl. the rotation matrix) is left alone.
+AUDIO_EXTENSIONS = frozenset({"mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "wma", "aiff", "aif"})
+VIDEO_EXTENSIONS = frozenset({"mp4", "m4v", "mov", "mkv", "webm", "avi", "3gp"})
+MEDIA_EXTENSIONS = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS
 
 
 # Named bundles of `metascrub clean` settings. Explicit flags still win;

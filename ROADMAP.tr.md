@@ -89,8 +89,8 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 |---|-------|-----|
 | L2 | **Belge *gövde* içeriğine dokunulmuyor** | Gövdeye yazılmış metin, bir yorumun/değişikliğin metni, görselin içine gömülü metin — tasarım gereği kapsam dışı (`--strip-form-values` / `--strip-office-authors` kimlik kısımları için opt-in istisnalar). |
 | L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` artık değişiklik-takibi/yorum yazarlarını hallediyor; hâlâ dokunulmayan: sıra dışı düzenlerde `docProps/thumbnail`, dış-bağlantı hedef yolları, `.docm/.xlsm` `vbaProject.bin`. |
-| L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
-| L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
+| L6 | **Görseller: Pillow yedeği zayıf** | Yalnız jpg/png/webp/heic (heic `pillow-heif` ile), animasyonlu biçimleri bozabilir. Asıl yol hâlâ exiftool. |
+| L7 | **Video temizliği best-effort** | Ses (`mutagen`) kapsamlı; video için yalnız metadata atom'ları temizlenir — exiftool'un yazamadığı bir konteyner (`.mkv`/`.avi`/`.webm`) tam kapsanmayabilir, oynatma kontrol edilmeli. |
 | L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
 | L8 | **exiftool yok-say listesi elle tutuluyor** | `engines/exiftool.py`'nin "yapısal etiket" izin listesi hâlâ elle tutuluyor; altın külliyat sık durumları koruyor ama egzotik bir kamera etiketi sızabilir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
@@ -140,10 +140,9 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
   biri belgelenmiş, adlandırılmış bir alan seti.
 - **HTML rapor** — açılır/kapanır kartlar, duruma göre filtre, CSV-kopyala,
   yazdırma stili; birden çok çalıştırmayı birleştiren rapor.
-- `--media` arkasında ses / video motoru. (L7'yi kapatır)
-- exiftool'suz HEIC (`pillow-heif` ile). (L6'nın bir kısmı)
-- PyPI sürümü, `v0.1.0` etiketi + GitHub release + `CHANGELOG.md`,
-  `SECURITY.md`, `CONTRIBUTING.md`.
+- PyPI sürümü, `v0.x` etiketleri + GitHub release'leri.
+- Daha derin video (`.mkv/.webm` için EBML `Tags`, `.avi` için RIFF
+  `LIST`); büyük ağaçlar için `rich` ilerleme çubuğu.
 
 ## Bir gün — daha büyük bahisler
 

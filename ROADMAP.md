@@ -74,6 +74,12 @@ backlog.
   `HEALTHCHECK`, and `metascrub api --log-json` emits one JSON
   access-log line per request. `docker-compose` API service now takes
   `METASCRUB_API_KEY` and a 30-day TTL.
+- **Audio / video** — a new `MediaEngine` (opt-in via `--media`). Audio
+  (`mp3/m4a/flac/ogg/opus/wav/aiff`) uses `mutagen` — every tag and
+  embedded cover art. Video (`mp4/mov/m4v/...`) uses exiftool to clear
+  the metadata atoms while leaving the track structure alone. HEIC now
+  also works through `pillow-heif` when exiftool is absent. *(closes L7;
+  narrows L6)*
 
 ---
 
@@ -85,8 +91,8 @@ These are real gaps in the current release, not bugs:
 |---|-----|-------|
 | L2 | **Document *body* content is never touched** | Text typed into the document body, a comment's or tracked change's actual text, text baked into an image — out of scope by design (`--strip-form-values` / `--strip-office-authors` are the opt-in exceptions for the identity bits). |
 | L5 | **Office: some parts still not covered** | `--strip-office-authors` now handles tracked-change / comment authors; still not touched: `docProps/thumbnail` in unusual layouts, external-link target paths, `.docm/.xlsm` `vbaProject.bin`. |
-| L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
-| L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
+| L6 | **Images: Pillow fallback is weak** | Only jpg/png/webp/heic (heic via `pillow-heif`), can break animated formats. exiftool is still the real path. |
+| L7 | **Video scrub is best-effort** | Audio (`mutagen`) is thorough; for video only the metadata atoms are cleared — a container exiftool can't write (`.mkv`/`.avi`/`.webm` in places) may not be fully covered, and playback should be spot-checked. |
 | L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
 | L8 | **exiftool ignore-list is hand-maintained** | `engines/exiftool.py`'s "structural tag" allow-list is still curated by hand; the golden corpus now guards the common cases but an exotic camera tag could slip through. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
@@ -134,9 +140,9 @@ These are real gaps in the current release, not bugs:
   defaults (`publish` = all opt-ins, `internal` = keep titles).
 - **HTML report** — collapsible cards, filter by status, copy-as-CSV, a
   print stylesheet; a combined report across multiple runs.
-- Audio / video engine behind `--media`. (closes L7)
-- HEIC without exiftool (via `pillow-heif`). (part of L6)
 - PyPI release, `v0.x` tags + GitHub releases.
+- Deeper video (EBML `Tags` for `.mkv/.webm`, RIFF `LIST` for `.avi`);
+  a `rich` progress bar for large trees.
 
 ## Someday — bigger bets
 

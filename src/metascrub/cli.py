@@ -96,6 +96,8 @@ def main(ctx: click.Context) -> None:
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option("--filetypes", default=",".join(DEFAULT_FILETYPES), show_default=True,
               help="Comma-separated extensions to pick up when walking a directory.")
+@click.option("--media", is_flag=True, default=False,
+              help="Also pick up audio/video files (mp3, m4a, mp4, mov, mkv, ...).")
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
 @click.option("--in-place", is_flag=True, default=False,
               help="Overwrite originals instead of writing cleaned copies (irreversible).")
@@ -134,10 +136,10 @@ def main(ctx: click.Context) -> None:
 @click.option("--policy", type=click.Choice(sorted(POLICIES)), default=None,
               help="Named preset: publish (all opt-ins), internal (keep titles), minimal (default).")
 @click.pass_context
-def clean(ctx, paths, filetypes, recursive, in_place, backup, quarantine, jobs, output_dir, keep_fields,
-          dry_run, verify, keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
-          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes, check,
-          policy):
+def clean(ctx, paths, filetypes, media, recursive, in_place, backup, quarantine, jobs, output_dir,
+          keep_fields, dry_run, verify, keep_color_profile, keep_orientation, overwrite, pdf_password,
+          strip_pdf_id, strip_form_values, strip_office_authors, json_report, html_report,
+          report_lang, yes, check, policy):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -145,6 +147,9 @@ def clean(ctx, paths, filetypes, recursive, in_place, backup, quarantine, jobs, 
     overwrite the originals instead.
     """
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
+    if media:
+        from .config import MEDIA_EXTENSIONS
+        ft_list = sorted(set(ft_list) | MEDIA_EXTENSIONS)
     roots = [os.fspath(p) for p in paths]
     base_dir = _common_base(roots)
     if check:

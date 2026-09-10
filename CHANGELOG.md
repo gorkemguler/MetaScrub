@@ -36,6 +36,10 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
   originals), `--policy publish|internal|minimal`, and a `.metascrub.toml`
   project config.
 - `metascrub watch <dir>` — scrub an FTP/SFTP drop folder on a poll loop.
+- **Audio/video**: `--media` scans `.mp3/.m4a/.flac/.ogg/.opus/.wav/.aiff`
+  (tags + cover art via `mutagen`, `metascrub[media]`) and
+  `.mp4/.mov/.m4v/.mkv/.webm` (metadata atoms via exiftool, track kept).
+  HEIC via `pillow-heif` in the Pillow fallback.
 - `metascrub clean --check` (exit 3 on metadata), `.pre-commit-hooks.yaml`,
   `action.yml` GitHub Action, and right-click installers in `platform/`.
 

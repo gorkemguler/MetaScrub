@@ -53,6 +53,13 @@ def _pillow_strip(src: str, dst: str, cfg: CleanConfig) -> tuple[bool, str]:
     except ImportError:
         return False, "install 'metascrub[image-fallback]' or the exiftool binary"
 
+    try:  # optional: teaches Pillow to read/write HEIC/HEIF
+        import pillow_heif
+
+        pillow_heif.register_heif_opener()
+    except ImportError:
+        pass
+
     try:
         with Image.open(src) as im:
             icc = im.info.get("icc_profile") if cfg.keep_color_profile else None

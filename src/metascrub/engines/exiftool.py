@@ -138,6 +138,43 @@ def _rm(path: str) -> None:
         pass
 
 
+# Video metadata atoms/groups that are safe to clear without touching the
+# track structure (so the file stays playable and correctly rotated).
+_VIDEO_CLEAR = [
+    "-QuickTime:ItemList:all=", "-QuickTime:Keys:all=", "-QuickTime:UserData:all=",
+    "-XMP:all=", "-ID3:all=", "-RIFF:all=", "-Matroska:all=",
+    "-Encoder=", "-HandlerDescription=", "-Comment=", "-Title=", "-Artist=",
+    "-CreationDate=", "-ContentCreateDate=",
+]
+
+
+def strip_media(src: str, dst: str, *, is_video: bool, timeout: int = 120) -> tuple[bool, str]:
+    """Scrub an audio or video file. Audio: `-all=` (tags only, structure
+    is untouched by exiftool for audio). Video: clear the metadata atoms
+    but leave the track headers alone."""
+    try:
+        shutil.copyfile(src, dst)
+    except OSError as exc:
+        return False, f"could not stage output file: {exc}"
+
+    cmd = ["exiftool", "-m", "-overwrite_original"]
+    cmd += _VIDEO_CLEAR if is_video else ["-all="]
+    cmd += [dst]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _rm(dst)
+        return False, f"exiftool timed out after {timeout}s"
+    except OSError as exc:
+        _rm(dst)
+        return False, f"exiftool could not run: {exc}"
+    msg = (proc.stdout + proc.stderr).strip()
+    if proc.returncode != 0:
+        _rm(dst)
+        return False, msg or f"exiftool exited {proc.returncode}"
+    return True, msg
+
+
 def _stringify(value: object) -> str:
     if isinstance(value, (list, tuple)):
         return ", ".join(str(v) for v in value)

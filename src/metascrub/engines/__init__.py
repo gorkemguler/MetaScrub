@@ -4,6 +4,7 @@ from .base import Engine
 from .exiftool import exiftool_available, exiftool_version
 from .image import ImageEngine
 from .legacy_office import LegacyOfficeEngine
+from .media import MediaEngine
 from .office import OfficeEngine
 from .pdf import PdfEngine
 from .svg import SvgEngine
@@ -12,7 +13,7 @@ __all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies
 
 
 _REAL_ENGINES: tuple[Engine, ...] = (
-    PdfEngine(), OfficeEngine(), LegacyOfficeEngine(), ImageEngine(), SvgEngine(),
+    PdfEngine(), OfficeEngine(), LegacyOfficeEngine(), ImageEngine(), SvgEngine(), MediaEngine(),
 )
 
 
