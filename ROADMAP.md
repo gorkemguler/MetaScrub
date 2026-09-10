@@ -107,21 +107,20 @@ These are real gaps in the current release, not bugs:
 - *Still to do:* inotify fast-path on Linux, and an SFTP mode that pulls
   from a remote drop dir and pushes the cleaned file back.
 
-### Platform wrappers (the "right-click / plugin" story)
-- **macOS** — a Quick Action (`.workflow`) so *Finder → right-click → Clean
-  metadata* and the Services menu both call the CLI; a small SwiftUI
-  drop-target `.app`; a Homebrew formula.
-- **Windows** — an Explorer context-menu entry (`IExplorerCommand` shell
-  extension), a `winget` package, a PowerShell module.
-- **Linux** — Nautilus / Dolphin / Thunar custom-action scripts; `.deb` /
-  `.rpm` / AUR.
+### Platform wrappers (the "right-click / plugin" story) — **first cut done**
+- **macOS** — `platform/macos/install-quick-action.sh` builds a Finder
+  Quick Action. *To do:* a signed drop-target `.app`, a Homebrew formula.
+- **Windows** — `platform/windows/install-context-menu.ps1` adds an
+  HKCU right-click entry. *To do:* an `IExplorerCommand` shell extension
+  (for the Win11 top-level menu), a `winget` package.
+- **Linux** — `platform/linux/nautilus-scrub-metadata.sh`. *To do:*
+  Dolphin `.desktop` service menu, `.deb` / `.rpm` / AUR.
 
-### CI / DevSecOps integration
-- A `pre-commit` hook that runs `metascrub clean --dry-run` and fails the
-  commit on dirty documents.
-- A published **GitHub Action** (`gorkemguler/metascrub-action`) — runs on a
-  PR, posts the report as a comment, optionally auto-commits cleaned files.
-- A GitLab CI template.
+### CI / DevSecOps integration — **done**
+- `metascrub clean --check` (exit 3 on metadata), a `.pre-commit-hooks.yaml`
+  (`id: metascrub`), and a composite **GitHub Action** (`action.yml`,
+  `check` / `fix` modes). *To do:* publish the action to the Marketplace,
+  a GitLab CI template, and a PR-comment reporter.
 
 ## Later — v1.0 (polish + scale)
 

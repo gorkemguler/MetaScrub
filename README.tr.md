@@ -242,12 +242,36 @@ Ya da `docker compose up --build` (web arayüzü); `docker compose --profile api
 - Sertifikalı bir sanitizasyon aracı değildir. Kritik işlerde çıktıyı kendiniz doğrulayın —
   `metascrub inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
 
+## Sağ tık entegrasyonu
+
+Finder Quick Action (macOS), Explorer sağ tık (Windows) ve bir dosya-yöneticisi betiği
+(Linux) **[`platform/`](platform/)** altında — her biri için tek kurulum komutu.
+
+## CI / hook'lar
+
+`metascrub clean --check`, `--dry-run` demektir ve bir dosya hâlâ metadata taşıyorsa **3**
+ile çıkar (temizse 0, hatada 1) — pre-commit ve CI için bir kapı.
+
+```yaml
+# .pre-commit-config.yaml
+- repo: https://github.com/gorkemguler/MetaScrub
+  rev: main
+  hooks: [{ id: metascrub }]
+```
+
+```yaml
+# .github/workflows/no-metadata.yml
+- uses: gorkemguler/MetaScrub@main
+  with:
+    paths: docs/ public/
+    mode: check        # ya da yerinde temizleyip commit'lemek için "fix"
+```
+
 ## Yol haritası
 
-Tüm yapılacaklar listesi ve v0.1'in bilinen sınırlamaları için **[ROADMAP.tr.md](ROADMAP.tr.md)**.
-Başlıklar: daha derin PDF/Office kapsamı, eski `.doc/.xls/.ppt`, API kimlik doğrulaması,
-SFTP/FTP bırakma dizinleri için `metascrub watch` daemon'u, macOS Finder Quick Action,
-Windows Explorer girdisi, ve pre-commit hook + GitHub Action.
+Nelerin geldiği, bilinen sınırlamalar ve backlog için **[ROADMAP.tr.md](ROADMAP.tr.md)**
+(inotify watch, SFTP modu, `--jobs`, `--quarantine`, `.metascrub.toml`, politika profilleri,
+ses/video, PyPI, özyinelemeli konteyner temizliği).
 
 ## Lisans
 

@@ -44,6 +44,20 @@ def test_clean_in_place_needs_confirmation(dirty_pdf):
     assert "overwrite" in result.output.lower()
 
 
+def test_check_exit_3_on_metadata_then_0_when_clean(dirty_pdf, tmp_path):
+    r = CliRunner().invoke(main, ["clean", str(dirty_pdf), "--check",
+                                  "--no-json-report", "--no-html-report"])
+    assert r.exit_code == 3
+    assert "carry metadata" in r.output
+
+    out = tmp_path / "c"
+    CliRunner().invoke(main, ["clean", str(dirty_pdf), "--out", str(out),
+                              "--no-json-report", "--no-html-report"])
+    r2 = CliRunner().invoke(main, ["clean", str(out / dirty_pdf.name), "--check",
+                                   "--no-json-report", "--no-html-report"])
+    assert r2.exit_code == 0 and "No metadata found" in r2.output
+
+
 def test_clean_exit_2_when_residual(monkeypatch, dirty_pdf, tmp_path):
     from metascrub import cleaner
 

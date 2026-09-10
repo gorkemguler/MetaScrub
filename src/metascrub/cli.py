@@ -92,9 +92,11 @@ def main() -> None:
 @click.option("--report-lang", type=click.Choice(["en", "tr"]), default="en", show_default=True,
               envvar="METASCRUB_REPORT_LANG")
 @click.option("--yes", "-y", is_flag=True, default=False, help="Skip the --in-place confirmation.")
+@click.option("--check", is_flag=True, default=False,
+              help="Implies --dry-run; exit 3 if any file still carries metadata (pre-commit / CI gate).")
 def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields, dry_run, verify,
           keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
-          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes):
+          strip_form_values, strip_office_authors, json_report, html_report, report_lang, yes, check):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -104,6 +106,8 @@ def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
     roots = [os.fspath(p) for p in paths]
     base_dir = _common_base(roots)
+    if check:
+        dry_run = True
 
     cfg = CleanConfig(
         filetypes=ft_list, recursive=recursive, in_place=in_place, output_dir=output_dir,
@@ -151,6 +155,16 @@ def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields
     if report.errored:
         console.print(f"\n[bold red]{len(report.errored)} file(s) errored.[/bold red]")
         sys.exit(1)
+    if check:
+        dirty = [r for r in report.results if r.removed]
+        if dirty:
+            console.print(
+                f"\n[bold yellow]{len(dirty)} file(s) carry metadata "
+                f"({report.fields_removed} field(s)).[/bold yellow] Run `metascrub clean` on them."
+            )
+            sys.exit(3)
+        console.print("\n[green]No metadata found.[/green]")
+        return
     if not dry_run and report.files_with_residual:
         console.print(
             f"\n[bold yellow]{len(report.files_with_residual)} file(s) still carry metadata "

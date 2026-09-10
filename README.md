@@ -247,12 +247,36 @@ Or `docker compose up --build` (web UI); `docker compose --profile api up metasc
 - Not a certified sanitisation tool. Verify anything high-stakes yourself — that's what
   `metascrub inspect` on the output, or a second pass with MetaScout, is for.
 
+## Right-click integration
+
+Finder Quick Action (macOS), Explorer right-click (Windows), and a file-manager script
+(Linux) all live in **[`platform/`](platform/)** — one install command each.
+
+## CI / hooks
+
+`metascrub clean --check` implies `--dry-run` and exits **3** if any file still carries
+metadata (0 if clean, 1 on error) — a gate for pre-commit and CI.
+
+```yaml
+# .pre-commit-config.yaml
+- repo: https://github.com/gorkemguler/MetaScrub
+  rev: main
+  hooks: [{ id: metascrub }]
+```
+
+```yaml
+# .github/workflows/no-metadata.yml
+- uses: gorkemguler/MetaScrub@main
+  with:
+    paths: docs/ public/
+    mode: check        # or "fix" to scrub in place and commit
+```
+
 ## Roadmap
 
-See **[ROADMAP.md](ROADMAP.md)** for the full backlog and the known limitations of v0.1.
-Headlines: deeper PDF/Office coverage, legacy `.doc/.xls/.ppt`, API authentication,
-a `metascrub watch` daemon for SFTP/FTP drop directories, macOS Finder Quick Action,
-Windows Explorer entry, and a pre-commit hook + GitHub Action.
+See **[ROADMAP.md](ROADMAP.md)** for what's shipped, the known limitations, and the backlog
+(inotify watch, SFTP mode, `--jobs`, `--quarantine`, `.metascrub.toml`, policy profiles,
+audio/video, PyPI, recursive-container scrubbing).
 
 ## License
 
