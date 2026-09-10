@@ -9,6 +9,13 @@ class HealthResponse(BaseModel):
     active_jobs: int
 
 
+class FormatsResponse(BaseModel):
+    extensions: list[str]
+    engines: dict[str, list[str]]
+    optional: dict[str, bool]
+    tool_versions: dict[str, str]
+
+
 class JobSummary(BaseModel):
     files: int
     by_status: dict[str, int]

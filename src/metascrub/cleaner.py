@@ -91,13 +91,27 @@ def clean_file_list(
 ) -> BatchReport:
     """Like clean_paths but for an already-resolved list of individual
     files (used by the web UI / API, which hand us upload paths directly).
+
+    Unlike clean_paths, `cfg.filetypes` is honoured as an allow-list — an
+    upload whose extension isn't enabled is `skipped`, so the web/API
+    "audio/video" and "look inside archives" toggles gate exactly what
+    the CLI's `--media` / `--recurse` do.
     """
     report = BatchReport(root=base_dir or "<uploads>", in_place=_overwrites_original(cfg),
                          dry_run=cfg.dry_run, tool_versions=tool_versions())
     if not cfg.dry_run and not _overwrites_original(cfg):
         os.makedirs(cfg.output_dir, exist_ok=True)
+    allowed = {ft.lower().lstrip(".") for ft in cfg.filetypes if ft.strip()}
     used_out_paths: set[str] = set()
     for path in files:
+        ext = _ext(path)
+        if allowed and ext not in allowed:
+            log(f"! {path}: .{ext} not enabled")
+            report.results.append(CleanResult(
+                src_path=path, filetype=ext, engine="?", status="skipped",
+                reason=f".{ext} is not enabled — turn on audio/video or archive recursion",
+            ))
+            continue
         report.results.append(_clean_one(path, cfg, base_dir, used_out_paths, log))
     return report
 

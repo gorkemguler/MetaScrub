@@ -17,10 +17,12 @@ from werkzeug.utils import secure_filename
 
 from .. import __version__
 from ..cleaner import clean_file_list
-from ..config import CleanConfig
+from ..config import CONTAINER_EXTENSIONS, MEDIA_EXTENSIONS, CleanConfig
+from ..engines import format_support
 from ..models import BatchReport
 from .jobs import Job, JobQueueFull, JobStore
 from .schemas import (
+    FormatsResponse,
     HealthResponse,
     JobCreated,
     JobLogResponse,
@@ -141,6 +143,13 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
         active = sum(1 for j in store.list() if j.status in ("queued", "running"))
         return HealthResponse(status="ok", version=__version__, active_jobs=active)
 
+    @app.get("/v1/formats", response_model=FormatsResponse, tags=["meta"])
+    def formats() -> FormatsResponse:
+        """What this server can scrub: every supported extension, the
+        extensions each engine handles, and which optional pieces
+        (exiftool, LibreOffice, mutagen, py7zr, …) are installed here."""
+        return FormatsResponse(**format_support())
+
     @app.post("/v1/clean", response_model=JobCreated, status_code=202, tags=["clean"],
               dependencies=guard)
     async def create_clean(
@@ -148,6 +157,8 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
         files: list[UploadFile] = File(..., description="Files to scrub."),
         keep_title: bool = Form(False),
         keep_color_profile: bool = Form(True),
+        recurse: bool = Form(False, description="Descend into .zip/.tar/.7z/.eml members."),
+        media: bool = Form(False, description="Also scrub uploaded audio/video files."),
         in_place: bool = Form(False, description="Ignored — the API always returns cleaned copies."),
         report_lang: str = Form("en"),
     ) -> JobCreated:
@@ -192,10 +203,17 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
                     n += 1
                 shutil.move(tmp_path, dest)
                 paths.append(dest)
+            filetypes = list(CleanConfig().filetypes)
+            if media:
+                filetypes = sorted(set(filetypes) | MEDIA_EXTENSIONS)
+            if recurse:
+                filetypes = sorted(set(filetypes) | CONTAINER_EXTENSIONS)
             cfg = CleanConfig(
+                filetypes=filetypes,
                 output_dir=os.path.join(run_path, "cleaned"),
                 keep_fields=["Title"] if keep_title else [],
                 keep_color_profile=keep_color_profile,
+                recurse=recurse,
             )
             return clean_file_list(paths, cfg, base_dir=up_dir, log=log)
 

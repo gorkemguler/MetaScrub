@@ -12,8 +12,8 @@ from werkzeug.utils import secure_filename
 
 from ._theme import full_css
 from .cleaner import clean_file_list
-from .config import CleanConfig
-from .engines import supported_extensions
+from .config import CONTAINER_EXTENSIONS, MEDIA_EXTENSIONS, CleanConfig
+from .engines import format_support, supported_extensions
 from .report import render_html_report, render_json_report
 
 # 200 MB per upload batch — a local single-user tool, but still worth
@@ -23,10 +23,12 @@ _MAX_CONTENT_LENGTH = 200 * 1024 * 1024
 _STR = {
     "en": {
         "tagline": "drop files in, get them back scrubbed",
-        "drop": "Drop PDF / Office / image files here, or click to choose",
+        "drop": "Drop PDF / Office / image / SVG files here, or click to choose",
         "opts": "Options",
         "keep_title": "Keep the document title",
         "keep_icc": "Keep image colour profile",
+        "opt_media": "Also scrub audio / video files",
+        "opt_recurse": "Look inside archives (.zip, .tar, .7z, .eml)",
         "lang": "Report language",
         "submit": "Scrub metadata",
         "working": "Scrubbing…",
@@ -53,10 +55,12 @@ _STR = {
     },
     "tr": {
         "tagline": "dosyaları bırak, temizlenmiş halde geri al",
-        "drop": "PDF / Office / görsel dosyalarını buraya bırak ya da seçmek için tıkla",
+        "drop": "PDF / Office / görsel / SVG dosyalarını buraya bırak ya da seçmek için tıkla",
         "opts": "Seçenekler",
         "keep_title": "Belge başlığını koru",
         "keep_icc": "Görsel renk profilini koru",
+        "opt_media": "Ses / video dosyalarını da temizle",
+        "opt_recurse": "Arşivlerin içine bak (.zip, .tar, .7z, .eml)",
         "lang": "Rapor dili",
         "submit": "Metadata'yı temizle",
         "working": "Temizleniyor…",
@@ -139,6 +143,8 @@ def _form(lang: str, error: str | None = None) -> str:
   <h4>{s['opts']}</h4>
   <label class="msc-opt"><input type="checkbox" name="keep_title"> {s['keep_title']}</label>
   <label class="msc-opt"><input type="checkbox" name="keep_icc" checked> {s['keep_icc']}</label>
+  <label class="msc-opt"><input type="checkbox" name="media"> {s['opt_media']}</label>
+  <label class="msc-opt"><input type="checkbox" name="recurse"> {s['opt_recurse']}</label>
   <label class="msc-opt">{s['lang']}:
     <select name="report_lang">
       <option value="en"{' selected' if lang=='en' else ''}>English</option>
@@ -244,6 +250,13 @@ def create_app(output_dir: str = "./metascrub_cleaned") -> Flask:
     def index() -> str:
         return _form(_lang(request.args.get("lang")))
 
+    @app.get("/formats")
+    def formats() -> Response:
+        import json as _json
+
+        return Response(_json.dumps(format_support(), ensure_ascii=False),
+                        mimetype="application/json")
+
     @app.post("/clean")
     def clean():
         lang = _lang(request.form.get("lang"))
@@ -269,10 +282,18 @@ def create_app(output_dir: str = "./metascrub_cleaned") -> Flask:
             f.save(dest)
             saved.append(dest)
 
+        recurse = bool(request.form.get("recurse"))
+        filetypes = list(CleanConfig().filetypes)
+        if request.form.get("media"):
+            filetypes = sorted(set(filetypes) | MEDIA_EXTENSIONS)
+        if recurse:
+            filetypes = sorted(set(filetypes) | CONTAINER_EXTENSIONS)
         cfg = CleanConfig(
+            filetypes=filetypes,
             output_dir=out_dir,
             keep_fields=["Title"] if request.form.get("keep_title") else [],
             keep_color_profile=bool(request.form.get("keep_icc")),
+            recurse=recurse,
         )
         report = clean_file_list(saved, cfg, base_dir=up_dir)
 

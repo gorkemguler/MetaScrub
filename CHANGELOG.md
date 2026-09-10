@@ -6,6 +6,13 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **Web / API parity with `--recurse` / `--media`**: the local web form
+  has *Also scrub audio / video* and *Look inside archives* checkboxes,
+  and `POST /v1/clean` takes `recurse` / `media` form fields. `GET
+  /v1/formats` (and the web `/formats`) report every supported
+  extension, the extensions per engine, and which optional pieces
+  (exiftool, LibreOffice, mutagen, py7zr, extract-msg) are installed.
+  Screenshots refreshed.
 - **Native drop apps** in `platform/`:
   - macOS: `MetaScrub.app`, a drag-and-drop droplet built with
     `osacompile` (no Xcode) — `platform/macos/build-app.sh`.
@@ -62,6 +69,12 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
   extension. ODF `Thumbnails/` preview image is dropped and its
   `META-INF/manifest.xml` entry pruned. `DEFAULT_FILETYPES` extended
   accordingly (29 extensions picked up when scanning a directory).
+
+### Changed
+- Web UI / REST API: an uploaded audio, video or archive file is now
+  `skipped` unless the matching toggle (*audio / video*, *look inside
+  archives*) is on — matching what `--media` / `--recurse` gate on the
+  CLI. Previously any uploaded type was scrubbed regardless.
 
 ### Fixed
 - Image probe/verify counted every `GIF`-group structural tag (version,

@@ -45,6 +45,33 @@ def test_clean_rejects_empty(client):
     assert r.status_code == 400
 
 
+def test_formats_json(client):
+    r = client.get("/formats")
+    assert r.status_code == 200
+    body = r.get_json()
+    assert "pdf" in body["extensions"]
+    assert "media" in body["engines"] and "py7zr" in body["optional"]
+
+
+def test_form_exposes_media_and_recurse_toggles(client):
+    html = client.get("/").data
+    assert b'name="media"' in html and b'name="recurse"' in html
+
+
+def test_audio_upload_needs_the_media_toggle(client, tmp_path):
+    mp3 = b"ID3\x03\x00\x00\x00\x00\x00\x21" + b"\x00" * 64
+    base = {"lang": "en"}
+
+    off = client.post("/clean", data={**base, "files": [(io.BytesIO(mp3), "song.mp3")]},
+                      content_type="multipart/form-data")
+    assert b"not enabled" in off.data or b"skipped" in off.data
+
+    on = client.post("/clean", data={**base, "media": "on", "files": [(io.BytesIO(mp3), "song.mp3")]},
+                     content_type="multipart/form-data")
+    assert on.status_code == 200
+    assert b"not enabled" not in on.data
+
+
 def test_zip_download_contains_cleaned_file(client, dirty_pdf):
     data = {"lang": "en", "files": [(io.BytesIO(dirty_pdf.read_bytes()), "f.pdf")]}
     client.post("/clean", data=data, content_type="multipart/form-data")

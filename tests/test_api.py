@@ -34,6 +34,51 @@ def test_health(client):
     assert r.status_code == 200 and r.json()["status"] == "ok"
 
 
+def test_formats_endpoint(client):
+    r = client.get("/v1/formats")
+    assert r.status_code == 200
+    body = r.json()
+    assert "pdf" in body["extensions"] and "mkv" in body["extensions"]
+    assert "pdf" in body["engines"] and "media" in body["engines"]
+    assert set(body["optional"]) >= {"exiftool", "py7zr", "mutagen"}
+    assert body["tool_versions"]["metascrub"]
+
+
+def test_formats_open_without_api_key(tmp_path):
+    app = create_app(output_dir=str(tmp_path / "o"), api_key="sekret")
+    with TestClient(app) as c:
+        assert c.get("/v1/formats").status_code == 200   # capability info, like /health
+
+
+def test_media_upload_skipped_unless_enabled(client, tmp_path):
+    mp3 = b"ID3\x03\x00\x00\x00\x00\x00\x21" + b"\x00" * 64   # minimal ID3v2 stub
+    def _post(data):
+        r = client.post("/v1/clean", files=[("files", ("song.mp3", mp3, "audio/mpeg"))], data=data)
+        return _wait_done(client, r.json()["job_id"])
+
+    off = _post({})
+    assert off["summary"]["by_status"].get("skipped") == 1
+    on = _post({"media": "true"})
+    assert on["summary"]["by_status"].get("skipped", 0) == 0   # attempted (cleaned or error, not skipped)
+
+
+def test_recurse_flag_gates_zip(client, dirty_pdf):
+    import io as _io
+    import zipfile as _zip
+
+    buf = _io.BytesIO()
+    with _zip.ZipFile(buf, "w") as z:
+        z.writestr("inner/doc.pdf", dirty_pdf.read_bytes())
+
+    def _post(data):
+        r = client.post("/v1/clean", files=[("files", ("bundle.zip", buf.getvalue(), "application/zip"))],
+                        data=data)
+        return _wait_done(client, r.json()["job_id"])
+
+    assert _post({})["summary"]["by_status"].get("skipped") == 1
+    assert _post({"recurse": "true"})["summary"]["by_status"].get("cleaned") == 1
+
+
 def test_clean_job_lifecycle(client, dirty_pdf, dirty_docx):
     r = client.post(
         "/v1/clean",

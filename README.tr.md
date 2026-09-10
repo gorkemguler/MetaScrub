@@ -208,9 +208,12 @@ metascrub api           # http://127.0.0.1:8000/  ·  interaktif dokümanlar /do
 ```
 
 ```bash
-# gönder
+# bu sunucu neyi temizleyebilir, hangi opsiyonel araçlar yüklü?
+curl -sS http://127.0.0.1:8000/v1/formats
+
+# gönder  (recurse: .zip/.tar/.7z/.eml içine bak · media: ses/video de)
 curl -sS -X POST http://127.0.0.1:8000/v1/clean \
-  -F files=@sizinti.pdf -F files=@rapor.docx -F report_lang=tr
+  -F files=@sizinti.pdf -F files=@rapor.docx -F report_lang=tr -F recurse=true
 # -> {"job_id": "...", "links": {...}}
 
 # durum sorgula
@@ -222,6 +225,7 @@ curl -sSL -o temiz.zip http://127.0.0.1:8000/v1/clean/<job_id>/download
 
 İşler sınırlı bir arka plan thread havuzunda çalışır; `--max-workers` / `--max-pending` ile
 boyutlandırılır. Yüklemeler `--max-upload-mb` / `--max-files` sınırlarıyla diske akıtılır.
+`GET /v1/formats` ve `GET /v1/health`, API anahtarı ayarlı olsa bile açıktır.
 
 **Kimlik doğrulama:** `metascrub api --api-key ANAHTAR` (ya da `METASCRUB_API_KEY`) bu
 anahtarı `/v1/health` dışında her `/v1` route'unda ister — `X-API-Key: ANAHTAR` ya da

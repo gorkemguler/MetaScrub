@@ -9,7 +9,8 @@ from .office import OfficeEngine
 from .pdf import PdfEngine
 from .svg import SvgEngine
 
-__all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies", "tool_versions"]
+__all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies",
+           "tool_versions", "format_support"]
 
 # Imported lazily inside engine_for to avoid an import cycle
 # (container.py -> engines/__init__ -> container.py).
@@ -45,6 +46,43 @@ def supported_extensions() -> frozenset[str]:
     for engine in _REAL_ENGINES:
         out |= set(engine.extensions)
     return frozenset(out | _get_container_engine().extensions)
+
+
+def _module_present(name: str) -> bool:
+    import importlib.util
+
+    return importlib.util.find_spec(name) is not None
+
+
+def format_support() -> dict:
+    """A machine-readable summary of what MetaScrub can scrub right now:
+    extensions per engine, and which optional pieces are installed. Drives
+    `GET /v1/formats` and the web UI's format hint.
+    """
+    from .exiftool import exiftool_available
+
+    engines = {e.name: sorted(e.extensions) for e in _REAL_ENGINES}
+    engines[_get_container_engine().name] = sorted(_get_container_engine().extensions)
+    optional = {
+        "exiftool": exiftool_available(),          # images + mp4-family video
+        "libreoffice": _soffice_present(),         # legacy .doc/.xls/.ppt fallback
+        "mutagen": _module_present("mutagen"),     # audio tags
+        "pillow": _module_present("PIL"),          # image fallback when exiftool is absent
+        "py7zr": _module_present("py7zr"),         # .7z recursion
+        "extract_msg": _module_present("extract_msg"),  # .msg inspection
+    }
+    return {
+        "extensions": sorted(supported_extensions()),
+        "engines": engines,
+        "optional": optional,
+        "tool_versions": tool_versions(),
+    }
+
+
+def _soffice_present() -> bool:
+    from .legacy_office import soffice_path
+
+    return soffice_path() is not None
 
 
 def missing_dependencies(exts: set[str]) -> list[str]:

@@ -154,8 +154,13 @@ Ordered batches, each landing as its own commit:
    - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
      launcher / *Open With* handler, `zenity` picker),
      `install-desktop.sh`; the Nautilus script stays.
-8. **Web/API parity** — `--recurse` / `--media` on the web form and the
-   API; a `GET /v1/formats` endpoint; refreshed screenshots.
+8. ~~**Web/API parity** — `--recurse` / `--media` on the web form and the
+   API; a `GET /v1/formats` endpoint; refreshed screenshots.~~ **Done.**
+   Web form has *audio/video* + *look inside archives* checkboxes;
+   `POST /v1/clean` takes `recurse` / `media`; `GET /v1/formats` (and web
+   `/formats`) report extensions per engine + which optional deps are
+   present. `clean_file_list` now honours `cfg.filetypes` as an
+   allow-list so the toggles actually gate. Screenshots refreshed.
 9. **Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
    `ghcr.io/gorkemguler/metascrub` on a tag; document the nginx/Caddy
    reverse-proxy recipe next to `--api-key`.

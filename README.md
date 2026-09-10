@@ -208,9 +208,12 @@ metascrub api           # http://127.0.0.1:8000/  ·  interactive docs at /docs
 ```
 
 ```bash
-# submit
+# what can this server scrub, and which optional tools are installed?
+curl -sS http://127.0.0.1:8000/v1/formats
+
+# submit  (recurse: look inside .zip/.tar/.7z/.eml · media: also audio/video)
 curl -sS -X POST http://127.0.0.1:8000/v1/clean \
-  -F files=@leak.pdf -F files=@report.docx -F report_lang=en
+  -F files=@leak.pdf -F files=@report.docx -F report_lang=en -F recurse=true
 # -> {"job_id": "...", "links": {...}}
 
 # poll
@@ -221,7 +224,8 @@ curl -sSL -o cleaned.zip http://127.0.0.1:8000/v1/clean/<job_id>/download
 ```
 
 Jobs run in a bounded background thread pool; `--max-workers` / `--max-pending` size it.
-Uploads stream to disk with `--max-upload-mb` / `--max-files` caps.
+Uploads stream to disk with `--max-upload-mb` / `--max-files` caps. `GET /v1/formats` and
+`GET /v1/health` are open even when an API key is set.
 
 **Auth:** `metascrub api --api-key KEY` (or `METASCRUB_API_KEY`) requires that key on every
 `/v1` route except `/v1/health` — send it as `X-API-Key: KEY` or `Authorization: Bearer KEY`.

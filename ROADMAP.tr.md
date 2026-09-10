@@ -151,8 +151,13 @@ Sıralı batch'ler, her biri kendi commit'i:
    - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
      başlatıcı / *Birlikte Aç* işleyici, `zenity` seçici),
      `install-desktop.sh`; Nautilus betiği kalıyor.
-8. **Web/API eşitliği** — web formunda ve API'de `--recurse` / `--media`;
-   `GET /v1/formats` endpoint'i; yenilenmiş ekran görüntüleri.
+8. ~~**Web/API eşitliği** — web formunda ve API'de `--recurse` / `--media`;
+   `GET /v1/formats` endpoint'i; yenilenmiş ekran görüntüleri.~~
+   **Bitti.** Web formunda *ses/video* + *arşivlerin içine bak* kutuları;
+   `POST /v1/clean` `recurse` / `media` alır; `GET /v1/formats` (ve web
+   `/formats`) motor başına uzantıları + hangi opsiyonel bağımlılıkların
+   yüklü olduğunu bildirir. `clean_file_list` artık `cfg.filetypes`'ı bir
+   izin listesi olarak uyguluyor. Ekran görüntüleri yenilendi.
 9. **Yayın hattı** — `.github/workflows/docker.yml` tag'de
    `ghcr.io/gorkemguler/metascrub` build+push; `--api-key` yanında
    nginx/Caddy reverse-proxy tarifi.
