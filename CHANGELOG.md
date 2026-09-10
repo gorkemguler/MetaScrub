@@ -40,6 +40,8 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
   (tags + cover art via `mutagen`, `metascrub[media]`) and
   `.mp4/.mov/.m4v/.mkv/.webm` (metadata atoms via exiftool, track kept).
   HEIC via `pillow-heif` in the Pillow fallback.
+- **Containers**: `--recurse` descends into `.zip` archives and `.eml`
+  emails, scrubbing each member/attachment with its own engine (depth-limited).
 - `metascrub clean --check` (exit 3 on metadata), `.pre-commit-hooks.yaml`,
   `action.yml` GitHub Action, and right-click installers in `platform/`.
 

@@ -144,8 +144,11 @@ Hâlâ açık:
 
 ## Bir gün — daha büyük bahisler
 
-- **Özyinelemeli konteynerler** — ekli `.docx` olan bir PDF, belge dolu bir
-  `.zip`, ekli bir `.eml` / `.msg`: her parçaya in, temizle, yeniden paketle.
+- **Özyinelemeli konteynerler** — *ilk sürüm tamam*: `metascrub clean
+  --recurse` `.zip` arşivlerine ve `.eml` e-postalarına iner
+  (`engines/container.py`), her üyeyi temizler, yeniden paketler, derinlik
+  sınırlı. Hâlâ açık: `.msg` (Outlook), ve bir PDF'nin *kendi*
+  `/EmbeddedFiles`'ının temizlenmiş kopyalarını yeniden gömme.
 - **İçerik tarafı işaretleme** — çıktıda MetaScout'un `--scan-content`'ini
   çalıştır ve gövde metninde hâlâ PII varsa uyar. MetaScrub yine içeriği
   düzenlemez ama orada olduğunu söyleyebilir.

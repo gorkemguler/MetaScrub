@@ -11,6 +11,19 @@ from .svg import SvgEngine
 
 __all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies", "tool_versions"]
 
+# Imported lazily inside engine_for to avoid an import cycle
+# (container.py -> engines/__init__ -> container.py).
+_container_engine = None
+
+
+def _get_container_engine():
+    global _container_engine
+    if _container_engine is None:
+        from .container import ContainerEngine
+
+        _container_engine = ContainerEngine()
+    return _container_engine
+
 
 _REAL_ENGINES: tuple[Engine, ...] = (
     PdfEngine(), OfficeEngine(), LegacyOfficeEngine(), ImageEngine(), SvgEngine(), MediaEngine(),
@@ -22,6 +35,8 @@ def engine_for(ext: str) -> Engine | None:
     for engine in _REAL_ENGINES:
         if ext in engine.extensions:
             return engine
+    if ext in _get_container_engine().extensions:
+        return _get_container_engine()
     return None
 
 
@@ -29,7 +44,7 @@ def supported_extensions() -> frozenset[str]:
     out: set[str] = set()
     for engine in _REAL_ENGINES:
         out |= set(engine.extensions)
-    return frozenset(out)
+    return frozenset(out | _get_container_engine().extensions)
 
 
 def missing_dependencies(exts: set[str]) -> list[str]:

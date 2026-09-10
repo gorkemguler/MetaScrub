@@ -36,6 +36,10 @@ AUDIO_EXTENSIONS = frozenset({"mp3", "m4a", "aac", "flac", "wav", "ogg", "opus",
 VIDEO_EXTENSIONS = frozenset({"mp4", "m4v", "mov", "mkv", "webm", "avi", "3gp"})
 MEDIA_EXTENSIONS = AUDIO_EXTENSIONS | VIDEO_EXTENSIONS
 
+# Containers whose members are themselves scrubbable — descended into with
+# `metascrub clean --recurse`. Not in DEFAULT_FILETYPES.
+CONTAINER_EXTENSIONS = frozenset({"zip", "eml"})
+
 
 # Named bundles of `metascrub clean` settings. Explicit flags still win;
 # `--policy` only shifts the defaults.
@@ -106,6 +110,10 @@ class CleanConfig:
 
     # Files scrubbed in parallel (thread pool). 1 = sequential.
     jobs: int = 1
+
+    # Descend into .zip / .eml and scrub each member. Depth-limited.
+    recurse: bool = False
+    _recurse_depth: int = 0  # internal — guards against zip bombs / loops
 
     # Aggressive, opt-in: also blank things that are arguably *content*
     # but are, in practice, a PII leak.

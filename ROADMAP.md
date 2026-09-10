@@ -144,9 +144,10 @@ Still open:
 
 ## Someday — bigger bets
 
-- **Recursive containers** — a PDF with an attached `.docx`, a `.zip` of
-  documents, an `.eml` / `.msg` with attachments: descend and scrub each
-  part, repackage.
+- **Recursive containers** — *first cut done*: `metascrub clean --recurse`
+  descends into `.zip` archives and `.eml` emails (`engines/container.py`),
+  scrubs each member, repacks, depth-limited. Still open: `.msg` (Outlook),
+  and re-embedding scrubbed copies of a PDF's *own* `/EmbeddedFiles`.
 - **Content-side flagging** — call MetaScout's `--scan-content` on the
   output and warn if PII still sits in the *body* text. MetaScrub still
   won't edit content, but it can tell you it's there.

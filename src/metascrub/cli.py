@@ -98,6 +98,8 @@ def main(ctx: click.Context) -> None:
               help="Comma-separated extensions to pick up when walking a directory.")
 @click.option("--media", is_flag=True, default=False,
               help="Also pick up audio/video files (mp3, m4a, mp4, mov, mkv, ...).")
+@click.option("--recurse", is_flag=True, default=False,
+              help="Descend into .zip archives and .eml emails and scrub each member.")
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
 @click.option("--in-place", is_flag=True, default=False,
               help="Overwrite originals instead of writing cleaned copies (irreversible).")
@@ -136,10 +138,10 @@ def main(ctx: click.Context) -> None:
 @click.option("--policy", type=click.Choice(sorted(POLICIES)), default=None,
               help="Named preset: publish (all opt-ins), internal (keep titles), minimal (default).")
 @click.pass_context
-def clean(ctx, paths, filetypes, media, recursive, in_place, backup, quarantine, jobs, output_dir,
-          keep_fields, dry_run, verify, keep_color_profile, keep_orientation, overwrite, pdf_password,
-          strip_pdf_id, strip_form_values, strip_office_authors, json_report, html_report,
-          report_lang, yes, check, policy):
+def clean(ctx, paths, filetypes, media, recurse, recursive, in_place, backup, quarantine, jobs,
+          output_dir, keep_fields, dry_run, verify, keep_color_profile, keep_orientation, overwrite,
+          pdf_password, strip_pdf_id, strip_form_values, strip_office_authors, json_report,
+          html_report, report_lang, yes, check, policy):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
 
     By default originals are left untouched and cleaned copies are written
@@ -150,6 +152,9 @@ def clean(ctx, paths, filetypes, media, recursive, in_place, backup, quarantine,
     if media:
         from .config import MEDIA_EXTENSIONS
         ft_list = sorted(set(ft_list) | MEDIA_EXTENSIONS)
+    if recurse:
+        from .config import CONTAINER_EXTENSIONS
+        ft_list = sorted(set(ft_list) | CONTAINER_EXTENSIONS)
     roots = [os.fspath(p) for p in paths]
     base_dir = _common_base(roots)
     if check:
@@ -174,6 +179,7 @@ def clean(ctx, paths, filetypes, media, recursive, in_place, backup, quarantine,
         overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
         backup=backup, strip_form_values=strip_form_values,
         strip_office_authors=strip_office_authors, quarantine=quarantine, jobs=jobs,
+        recurse=recurse,
     )
 
     _banner()

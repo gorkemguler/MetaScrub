@@ -55,6 +55,7 @@ imza) asla değiştirilmez.
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes ve PNG/WebP metin blokları. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). exiftool yoksa HEIC `pillow-heif` ile de çalışır. |
 | **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .mkv .webm` | `mutagen` / ExifTool | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi — `pip install 'metascrub[media]'`. Video: metadata atom'ları (`ItemList`, `Keys`, `UserData`, XMP — sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`); track yapısı ve rotasyon matrisi korunur. Varsayılan taranmaz — **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). |
+| **Konteynerler** `.zip .eml` | stdlib `zipfile` / `email` | **`--recurse`** ile: bir zip'in desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
 
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
