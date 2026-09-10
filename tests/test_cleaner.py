@@ -42,6 +42,23 @@ def test_in_place_overwrites_original(dirty_pdf):
     assert not any(p.endswith(".metascrub-tmp") for p in os.listdir(dirty_pdf.parent))
 
 
+def test_backup_keeps_original_next_to_in_place_scrub(dirty_pdf):
+    original = dirty_pdf.read_bytes()
+    clean_paths([str(dirty_pdf)], CleanConfig(in_place=True, backup=True))
+
+    backup = dirty_pdf.with_name(dirty_pdf.name + ".orig")
+    assert backup.exists() and backup.read_bytes() == original
+    with pikepdf.open(str(dirty_pdf)) as pdf:            # the file itself was scrubbed
+        assert "/Info" not in pdf.trailer
+
+
+def test_backup_does_not_clobber_existing_orig(dirty_pdf):
+    backup = dirty_pdf.with_name(dirty_pdf.name + ".orig")
+    backup.write_bytes(b"an earlier original")
+    clean_paths([str(dirty_pdf)], CleanConfig(in_place=True, backup=True))
+    assert backup.read_bytes() == b"an earlier original"
+
+
 def test_unsupported_extension_reported(tmp_path):
     f = tmp_path / "note.rtf"
     f.write_text("hello")

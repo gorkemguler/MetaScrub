@@ -23,6 +23,17 @@ backlog.
   *(part of L3)*
 - **`--strip-pdf-id`** — a fresh random trailer `/ID` on every run, so two
   scrubbed copies of one file can't be correlated by it. *(part of L3)*
+- **Legacy `.doc / .xls / .ppt`** — `metascrub inspect` reads their
+  `SummaryInformation` / `DocumentSummaryInformation` via `olefile`;
+  `clean` converts them to `.docx/.xlsx/.pptx` with LibreOffice
+  (`soffice`) and runs the normal Office scrubber over the result. No
+  `soffice` on PATH → still `unsupported`, but with a message that says
+  exactly why. `--in-place` is refused (the format changes). *(closes L1)*
+- **SVG engine** — strips `<metadata>` (RDF/Dublin-Core author/title),
+  `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes,
+  and editor comments; the drawing is untouched. *(part of L7)*
+- **`--backup`** — with `--in-place`, keeps the untouched original as
+  `<name>.orig` (never clobbers an existing one).
 
 L3 now only leaves AcroForm field *values* and deep `xmpMM` history
 (doc/page-level XMP is already deleted wholesale).
@@ -35,12 +46,12 @@ These are real gaps in the current release, not bugs:
 
 | # | Gap | Notes |
 |---|-----|-------|
-| L1 | **Legacy `.doc / .xls / .ppt` not scrubbed** | Reported as `unsupported`. No safe stdlib-only strip for OLE2 Compound File Binary. |
 | L2 | **Document content is never touched** | Author names in tracked changes / comments, text typed into the body, text baked into an image — all out of scope by design. |
 | L3 | **PDF: AcroForm field values not scrubbed** | `/Info`, XMP, `/PieceInfo`, page metadata, annotations and embedded-file metadata are all handled now; a filled-in form field's *value* is still left as-is (it's arguably content). |
 | L5 | **Office: only `docProps/*` + `w:rsids`** | Not yet: tracked-change/comment authors, `docProps/thumbnail` in some layouts, external-link paths, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
-| L7 | **No SVG / audio / video engine** | `.svg` (editor comments, `<metadata>`), `.mp4/.mov/.mp3/.m4a` (exiftool can, we don't wire it up). |
+| L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
+| L11 | **Legacy Office needs LibreOffice** | `.doc/.xls/.ppt` scrubbing shells out to `soffice`; there's no pure-Python OLE2 rewriter, so without it those files stay `unsupported`. |
 | L8 | **Verify pass is heuristic** | The "ignore structural tags" list in `engines/exiftool.py` is hand-maintained; no golden corpus asserts `residual == []` broadly yet. |
 | L9 | **API/web have no authentication** | Documented, but there's no built-in token/key — you must front it with a proxy. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
@@ -51,21 +62,18 @@ These are real gaps in the current release, not bugs:
 
 - **AcroForm field values** — opt-in `--strip-form-values`: blank filled-in
   form fields (`/V`, `/DV`) whose value is user-entered PII. (closes L3)
-- **Legacy Office** — `olefile`-based zeroing of `\x05SummaryInformation` /
-  `\x05DocumentSummaryInformation`, with an optional LibreOffice-headless
-  convert-and-back path when `soffice` is present. (closes L1)
 - **Office authors** — opt-in `--strip-office-authors`: `w:ins`/`w:del`
   authors, `comments.xml` / `people.xml`, PowerPoint notes. (part of L5)
-- **SVG engine** — strip `<metadata>`, editor comments, `sodipodi:`/`inkscape:`
-  attributes. (part of L7)
+- **Pure-Python legacy Office** — a minimal OLE2 property-stream rewriter
+  so `.doc/.xls/.ppt` can be scrubbed without shelling out to LibreOffice.
+  (would close L11)
 - **Golden corpus** — a curated, license-clean set of real PDFs / Office
   docs / images checked into `tests/corpus/`, with a test that asserts every
   cleaned file re-scans to zero identifying metadata. (closes L8)
-- **`--backup`** — keep `<name>.orig` next to an `--in-place` scrub.
 - **`metascrub diff <runA> <runB>`** — compare two run reports, like
   MetaScout's `diff`, to track a directory over time.
 - CI: GitHub Actions matrix (Python 3.10–3.13 × macOS/Linux/Windows,
-  with and without exiftool), `ruff`, `mypy`.
+  with and without exiftool / LibreOffice), `ruff`, `mypy`.
 
 ## Next — v0.3–v0.5 (make it a service, make it fit in)
 

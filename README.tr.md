@@ -51,12 +51,12 @@ imza) asla değiştirilmez.
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar. |
+| **Eski Office** `.doc .xls .ppt` | `olefile` + LibreOffice | `inspect` `SummaryInformation` / `DocumentSummaryInformation`'ı okur (yazar, son kaydeden, şirket, şablon, tarihler). `clean` dosyayı `soffice` ile `.docx/.xlsx/.pptx`'e dönüştürüp Office motorunu üstünde çalıştırır — PATH'te LibreOffice ister, ve `--in-place` reddedilir (biçim değişiyor). |
+| **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes ve PNG/WebP metin blokları. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur ki görsel doğru görünsün (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). |
 
-Eski OLE2 `.doc / .xls / .ppt` tanınır ama **desteklenmiyor** olarak raporlanır — önce modern
-biçime dönüştürün.
-
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
+`--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
 
 ## Kurulum
 
@@ -73,7 +73,9 @@ brew install exiftool                        # macOS
 sudo apt install libimage-exiftool-perl      # Debian / Ubuntu
 ```
 
-PDF ve Office temizliği saf Python'dur, ek bir şey gerekmez.
+Eski `.doc/.xls/.ppt` temizliği için **LibreOffice** (`soffice`) `PATH`'te olmalı —
+`brew install --cask libreoffice` / `apt install libreoffice`. PDF, modern Office, ODF ve
+SVG temizliği saf Python'dur, ek bir şey gerekmez.
 
 > Python 3.10+ desteklenir. `pikepdf` için henüz wheel'i olmayan yepyeni bir Python'da 3.12
 > altında kurun.
@@ -116,7 +118,7 @@ metascrub clean a.pdf b.docx c.jpg --out ./temiz
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (şifreli PDF'ler — temizlenmiş kopya şifresiz yazılır),
-`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`).
+`--strip-pdf-id` (her çalıştırmada taze rastgele `/ID`), `--backup` (`--in-place` ile `<ad>.orig` sakla).
 
 **Çıkış kodları** (CI kapısı olarak kullanılabilsin diye): `0` temiz · `1` bir dosya hata
 verdi · `2` bir temizlenmiş dosya doğrulama taramasında hâlâ metadata taşıyordu.

@@ -65,6 +65,8 @@ def main() -> None:
 @click.option("--recursive/--no-recursive", default=True, show_default=True)
 @click.option("--in-place", is_flag=True, default=False,
               help="Overwrite originals instead of writing cleaned copies (irreversible).")
+@click.option("--backup", is_flag=True, default=False,
+              help="With --in-place, keep the untouched original as <name>.orig.")
 @click.option("--out", "output_dir", default="./metascrub_cleaned", show_default=True,
               envvar="METASCRUB_OUTPUT_DIR", type=click.Path(),
               help="Where cleaned copies and the run report are written.")
@@ -86,7 +88,7 @@ def main() -> None:
 @click.option("--report-lang", type=click.Choice(["en", "tr"]), default="en", show_default=True,
               envvar="METASCRUB_REPORT_LANG")
 @click.option("--yes", "-y", is_flag=True, default=False, help="Skip the --in-place confirmation.")
-def clean(paths, filetypes, recursive, in_place, output_dir, keep_fields, dry_run, verify,
+def clean(paths, filetypes, recursive, in_place, backup, output_dir, keep_fields, dry_run, verify,
           keep_color_profile, keep_orientation, overwrite, pdf_password, strip_pdf_id,
           json_report, html_report, report_lang, yes):
     """Scrub metadata from every supported file in PATHS (files and/or directories).
@@ -104,6 +106,7 @@ def clean(paths, filetypes, recursive, in_place, output_dir, keep_fields, dry_ru
         keep_fields=list(keep_fields), dry_run=dry_run, verify=verify,
         keep_color_profile=keep_color_profile, keep_orientation=keep_orientation,
         overwrite=overwrite, pdf_password=pdf_password, strip_pdf_id=strip_pdf_id,
+        backup=backup,
     )
 
     _banner()

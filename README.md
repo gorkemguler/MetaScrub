@@ -51,12 +51,12 @@ signature) is never modified.
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revision, timestamps), `docProps/app.xml` (Company, Manager, Template path), `docProps/custom.xml`, the embedded thumbnail, and Word revision-save-id fingerprints (`w:rsids`) from `settings.xml`. Dangling relationships and content-type overrides are pruned; per-member zip timestamps are normalised. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields. |
+| **Legacy Office** `.doc .xls .ppt` | `olefile` + LibreOffice | `inspect` reads `SummaryInformation` / `DocumentSummaryInformation` (author, last-saved-by, company, template, dates). `clean` converts the file to `.docx/.xlsx/.pptx` via `soffice` and runs the Office engine over it — needs LibreOffice on `PATH`, and `--in-place` is refused (the format changes). |
+| **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core author/title/licence), `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes, and editor comments (`<!-- Created with … -->`). The drawing itself is untouched. |
 | **Images** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | All EXIF / IPTC / XMP / GPS / MakerNotes and PNG/WebP text chunks. The ICC colour profile and EXIF orientation are kept by default so the picture still renders correctly (`--no-keep-color-profile` / `--no-keep-orientation` to drop those too). |
 
-Legacy OLE2 `.doc / .xls / .ppt` are recognised but reported as **unsupported** — convert them
-to the modern format first.
-
 `--keep Title` (repeatable) spares a named field from the otherwise-aggressive strip.
+`--backup` keeps `<name>.orig` next to an `--in-place` scrub.
 
 ## Install
 
@@ -73,7 +73,9 @@ brew install exiftool                        # macOS
 sudo apt install libimage-exiftool-perl      # Debian / Ubuntu
 ```
 
-PDF and Office scrubbing are pure Python and need nothing extra.
+Scrubbing legacy `.doc/.xls/.ppt` needs **LibreOffice** (`soffice`) on `PATH` — `brew install
+--cask libreoffice` / `apt install libreoffice`. PDF, modern Office, ODF and SVG scrubbing
+are pure Python and need nothing extra.
 
 > Python 3.10+ is supported. On a brand-new Python where `pikepdf` has no wheel yet, install
 > under 3.12 instead.
@@ -116,7 +118,7 @@ metascrub clean a.pdf b.docx c.jpg --out ./clean
 Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (encrypted PDFs — the cleaned copy is written unencrypted),
-`--strip-pdf-id` (fresh random `/ID` per run).
+`--strip-pdf-id` (fresh random `/ID` per run), `--backup` (keep `<name>.orig` with `--in-place`).
 
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
 still carried metadata on the verify re-scan.

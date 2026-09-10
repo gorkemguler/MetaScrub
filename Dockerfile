@@ -21,8 +21,10 @@ LABEL org.opencontainers.image.title="MetaScrub" \
       org.opencontainers.image.licenses="MIT"
 
 # libimage-exiftool-perl: required for image scrubbing (EXIF/IPTC/XMP/GPS).
-# PDF and Office scrubbing are pure Python (pikepdf / zipfile) and need no
-# system package.
+# PDF, modern Office, ODF and SVG scrubbing are pure Python and need no
+# system package. Scrubbing legacy .doc/.xls/.ppt needs LibreOffice — add
+# `libreoffice-core libreoffice-writer libreoffice-calc libreoffice-impress`
+# to the line below if you need it (adds a few hundred MB).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libimage-exiftool-perl \
     && rm -rf /var/lib/apt/lists/*

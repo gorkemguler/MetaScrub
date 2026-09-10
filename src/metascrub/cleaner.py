@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-import tempfile
+import shutil
 from typing import Callable
 
 from .config import CleanConfig
@@ -98,8 +98,15 @@ def _clean_one(
 
         if result.status == "cleaned" and result.out_path:
             if cfg.verify:
-                result.residual = [f"{r.namespace}:{r.field}" for r in engine.probe(result.out_path, cfg)]
+                # Re-dispatch by the *output* extension — an engine may
+                # write a different format than it reads (legacy .doc -> .docx).
+                verify_engine = engine_for(_ext(result.out_path)) or engine
+                result.residual = [
+                    f"{r.namespace}:{r.field}" for r in verify_engine.probe(result.out_path, cfg)
+                ]
             if cfg.in_place:
+                if cfg.backup:
+                    _make_backup(path)
                 os.replace(result.out_path, path)
                 result.out_path = path
                 result.bytes_after = _size(path)
@@ -145,6 +152,14 @@ def _is_within(path: str, root: str) -> bool:
     path = os.path.realpath(path)
     root = os.path.realpath(root)
     return path == root or path.startswith(root + os.sep)
+
+
+def _make_backup(path: str) -> None:
+    """Copy `path` to `path + '.orig'` before an in-place scrub, unless a
+    backup is already there (never clobber an earlier original)."""
+    dest = path + ".orig"
+    if not os.path.exists(dest):
+        shutil.copy2(path, dest)
 
 
 def _cleanup(path: str | None) -> None:

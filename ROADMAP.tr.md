@@ -24,6 +24,17 @@ bir yapılacaklar listesi.
 - **`--strip-pdf-id`** — her çalıştırmada taze rastgele bir trailer `/ID`;
   böylece bir dosyanın iki temizlenmiş kopyası bununla ilişkilendirilemez.
   *(L3'ün bir kısmı)*
+- **Eski `.doc / .xls / .ppt`** — `metascrub inspect` bunların
+  `SummaryInformation` / `DocumentSummaryInformation`'ını `olefile` ile
+  okur; `clean` bunları LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e
+  dönüştürüp normal Office temizleyicisini üstünde çalıştırır. PATH'te
+  `soffice` yoksa yine `unsupported` — ama tam olarak nedenini söyleyen
+  bir mesajla. `--in-place` reddedilir (biçim değişiyor). *(L1'i kapatır)*
+- **SVG motoru** — `<metadata>` (RDF/Dublin-Core yazar/başlık),
+  `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri,
+  ve editör yorumları silinir; çizime dokunulmaz. *(L7'nin bir kısmı)*
+- **`--backup`** — `--in-place` ile, dokunulmamış orijinali `<ad>.orig`
+  olarak saklar (mevcut olanı asla ezmez).
 
 L3'te artık yalnız AcroForm alan *değerleri* ve derin `xmpMM` geçmişi
 kaldı (belge/sayfa düzeyi XMP zaten toptan siliniyor).
@@ -36,12 +47,12 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 | # | Eksik | Not |
 |---|-------|-----|
-| L1 | **Eski `.doc / .xls / .ppt` temizlenmiyor** | `unsupported` olarak raporlanıyor. OLE2 Compound File Binary için güvenli, yalnız-stdlib bir temizlik yok. |
 | L2 | **Belge içeriğine hiç dokunulmuyor** | Değişiklik takibi / yorumlardaki yazar adları, gövdeye yazılmış metin, görselin içine gömülü metin — tasarım gereği kapsam dışı. |
 | L3 | **PDF: AcroForm alan değerleri temizlenmiyor** | `/Info`, XMP, `/PieceInfo`, sayfa metadata'sı, annotation'lar ve gömülü-dosya metadata'sı artık hallediliyor; doldurulmuş bir form alanının *değeri* hâlâ olduğu gibi kalıyor (bu tartışmalı biçimde içerik). |
 | L5 | **Office: yalnız `docProps/*` + `w:rsids`** | Henüz yok: değişiklik-takibi/yorum yazarları, bazı düzenlerde `docProps/thumbnail`, dış-bağlantı yolları, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
-| L7 | **SVG / ses / video motoru yok** | `.svg` (editör yorumları, `<metadata>`), `.mp4/.mov/.mp3/.m4a` (exiftool yapabilir, bağlamadık). |
+| L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
+| L11 | **Eski Office LibreOffice gerektiriyor** | `.doc/.xls/.ppt` temizliği `soffice`'e devrediyor; saf-Python bir OLE2 yeniden yazıcısı yok, o yüzden onsuz bu dosyalar `unsupported` kalıyor. |
 | L8 | **Doğrulama geçişi sezgisel** | `engines/exiftool.py`'daki "yapısal etiketleri yok say" listesi elle tutuluyor; henüz `residual == []`'i geniş çapta doğrulayan bir altın külliyat yok. |
 | L9 | **API/web'de kimlik doğrulama yok** | Belgelendi ama yerleşik token/anahtar yok — önüne proxy koymanız gerekir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
@@ -53,21 +64,18 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 - **AcroForm alan değerleri** — opt-in `--strip-form-values`: değeri
   kullanıcı girişi PII olan doldurulmuş form alanlarını (`/V`, `/DV`)
   boşalt. (L3'ü kapatır)
-- **Eski Office** — `olefile` ile `\x05SummaryInformation` /
-  `\x05DocumentSummaryInformation` akışlarını sıfırlama; `soffice` varsa
-  opsiyonel LibreOffice-headless dönüştür-geri-al yolu. (L1'i kapatır)
 - **Office yazarları** — opt-in `--strip-office-authors`: `w:ins`/`w:del`
   yazarları, `comments.xml` / `people.xml`, PowerPoint notları. (L5'in bir kısmı)
-- **SVG motoru** — `<metadata>`, editör yorumları, `sodipodi:`/`inkscape:`
-  öznitelikleri. (L7'nin bir kısmı)
+- **Saf-Python eski Office** — LibreOffice'e devretmeden `.doc/.xls/.ppt`
+  temizlenebilsin diye minimal bir OLE2 property-stream yeniden yazıcısı.
+  (L11'i kapatır)
 - **Altın külliyat** — `tests/corpus/` içine eklenen, lisansı temiz gerçek
   PDF / Office / görsel seti; her temizlenmiş dosyanın sıfır kimlik
   metadata'sına indiğini doğrulayan test. (L8'i kapatır)
-- **`--backup`** — `--in-place` temizlikte `<ad>.orig` bırak.
 - **`metascrub diff <runA> <runB>`** — iki çalıştırma raporunu karşılaştır
   (MetaScout'un `diff`'i gibi), bir dizini zaman içinde izle.
 - CI: GitHub Actions matrisi (Python 3.10–3.13 × macOS/Linux/Windows,
-  exiftool'lu ve exiftool'suz), `ruff`, `mypy`.
+  exiftool'lu/exiftool'suz ve LibreOffice'li/siz), `ruff`, `mypy`.
 
 ## Sırada — v0.3–v0.5 (servisleştir, ortama otur)
 

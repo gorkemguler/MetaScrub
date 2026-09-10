@@ -9,6 +9,7 @@ DEFAULT_FILETYPES = [
     "pdf",
     "doc", "docx", "xls", "xlsx", "ppt", "pptx",
     "odt", "ods", "odp",
+    "svg",
     "jpg", "jpeg", "png", "tif", "tiff", "heic", "webp",
 ]
 
@@ -25,6 +26,7 @@ LEGACY_OFFICE_EXTENSIONS = frozenset({"doc", "xls", "ppt"})
 
 IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "tif", "tiff", "heic", "webp"})
 PDF_EXTENSIONS = frozenset({"pdf"})
+SVG_EXTENSIONS = frozenset({"svg"})
 
 
 @dataclass
@@ -71,6 +73,10 @@ class CleanConfig:
     # one on every scrub, so two scrubbed copies of the same file can't be
     # correlated by their document identifier either.
     strip_pdf_id: bool = False
+
+    # --in-place only: keep the untouched original next to the scrubbed
+    # file as "<name>.orig" (never overwrites an existing .orig).
+    backup: bool = False
 
     def wants_field(self, name: str) -> bool:
         """True if `name` should be preserved rather than stripped."""

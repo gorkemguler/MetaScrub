@@ -1,46 +1,25 @@
 from __future__ import annotations
 
-from ..config import LEGACY_OFFICE_EXTENSIONS
 from ..models import FieldChange
 from .base import Engine, new_result
 from .exiftool import exiftool_available, exiftool_version
 from .image import ImageEngine
+from .legacy_office import LegacyOfficeEngine, soffice_path
 from .office import OfficeEngine
 from .pdf import PdfEngine
+from .svg import SvgEngine
 
-__all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies"]
-
-
-class _UnsupportedEngine:
-    """Stand-in for a recognised-but-not-scrubbable format. Reports the
-    file so it shows up in the run, but writes nothing.
-    """
-
-    name = "office"
-
-    def __init__(self, extensions: frozenset[str], reason: str) -> None:
-        self.extensions = extensions
-        self._reason = reason
-
-    def probe(self, path: str, cfg=None) -> list[FieldChange]:
-        return []
-
-    def strip(self, src: str, dst: str, cfg):
-        return new_result(src, None, self.name, "unsupported", reason=self._reason)
+__all__ = ["Engine", "engine_for", "supported_extensions", "missing_dependencies", "tool_versions"]
 
 
-_LEGACY_OFFICE = _UnsupportedEngine(
-    LEGACY_OFFICE_EXTENSIONS,
-    "legacy OLE2 format (.doc/.xls/.ppt) — convert to .docx/.xlsx/.pptx first",
+_REAL_ENGINES: tuple[Engine, ...] = (
+    PdfEngine(), OfficeEngine(), LegacyOfficeEngine(), ImageEngine(), SvgEngine(),
 )
-
-_REAL_ENGINES: tuple[Engine, ...] = (PdfEngine(), OfficeEngine(), ImageEngine())
-_ALL_ENGINES: tuple[object, ...] = (*_REAL_ENGINES, _LEGACY_OFFICE)
 
 
 def engine_for(ext: str) -> Engine | None:
     ext = ext.lower().lstrip(".")
-    for engine in _ALL_ENGINES:
+    for engine in _REAL_ENGINES:
         if ext in engine.extensions:
             return engine  # type: ignore[return-value]
     return None
@@ -48,7 +27,7 @@ def engine_for(ext: str) -> Engine | None:
 
 def supported_extensions() -> frozenset[str]:
     out: set[str] = set()
-    for engine in _ALL_ENGINES:
+    for engine in _REAL_ENGINES:
         out |= set(engine.extensions)
     return frozenset(out)
 
@@ -58,12 +37,17 @@ def missing_dependencies(exts: set[str]) -> list[str]:
     set of file extensions to be scrubbable. Empty when everything's ready.
     """
     missing: list[str] = []
-    needs_exiftool = any(e in ImageEngine.extensions for e in exts)
-    if needs_exiftool and not exiftool_available():
+    if any(e in ImageEngine.extensions for e in exts) and not exiftool_available():
         missing.append(
             "exiftool binary (image scrubbing) — `brew install exiftool` (macOS) "
             "or `apt install libimage-exiftool-perl` (Debian/Ubuntu). "
             "Without it MetaScrub falls back to Pillow, if installed, for jpg/png only."
+        )
+    if any(e in LegacyOfficeEngine.extensions for e in exts) and soffice_path() is None:
+        missing.append(
+            "LibreOffice (`soffice`) — needed to scrub legacy .doc/.xls/.ppt "
+            "(they're converted to .docx/.xlsx/.pptx). Without it those files are reported "
+            "'unsupported'; modern Office files don't need it."
         )
     return missing
 

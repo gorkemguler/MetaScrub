@@ -167,6 +167,34 @@ def dirty_docx(tmp_path):
     return path
 
 
+def _soffice() -> str | None:
+    return shutil.which("soffice") or shutil.which("libreoffice")
+
+
+needs_soffice = pytest.mark.skipif(_soffice() is None, reason="LibreOffice (soffice) not installed")
+
+
+@pytest.fixture
+def legacy_doc(tmp_path, dirty_docx):
+    """A real OLE2 .doc, produced by round-tripping the dirty .docx fixture
+    through LibreOffice (the author/title survive the conversion)."""
+    if _soffice() is None:
+        pytest.skip("LibreOffice (soffice) not installed")
+    import subprocess
+
+    profile = tmp_path / "loprofile"
+    subprocess.run(
+        [_soffice(), "--headless", "--norestore", "--nolockcheck",
+         f"-env:UserInstallation=file://{profile}",
+         "--convert-to", "doc", "--outdir", str(tmp_path), str(dirty_docx)],
+        capture_output=True, timeout=120, check=False,
+    )
+    doc = tmp_path / "memo.doc"
+    if not doc.is_file():
+        pytest.skip("LibreOffice conversion did not produce a .doc")
+    return doc
+
+
 @pytest.fixture
 def dirty_odt(tmp_path):
     path = tmp_path / "notes.odt"
