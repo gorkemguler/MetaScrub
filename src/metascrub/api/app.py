@@ -89,9 +89,10 @@ def create_app(*, output_dir: str = "./metascrub_cleaned", max_workers: int = 2,
     files + report as a zip. Every job runs in a bounded background thread
     pool so POST returns immediately; max_pending caps queued+running jobs.
 
-    `api_key`, when set, is required on every `/v1/*` route except
-    `/v1/health` — as `X-API-Key: <key>` or `Authorization: Bearer <key>`.
-    `max_upload_mb` / `max_files` bound a single request.
+    `api_key`, when set, is required on every `/v1/*` route except the
+    open capability routes `/v1/health` and `/v1/formats` — as
+    `X-API-Key: <key>` or `Authorization: Bearer <key>`. `max_upload_mb` /
+    `max_files` bound a single request.
     """
     os.makedirs(output_dir, exist_ok=True)
     store = JobStore(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending,

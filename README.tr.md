@@ -228,29 +228,37 @@ boyutlandırılır. Yüklemeler `--max-upload-mb` / `--max-files` sınırlarıyl
 `GET /v1/formats` ve `GET /v1/health`, API anahtarı ayarlı olsa bile açıktır.
 
 **Kimlik doğrulama:** `metascrub api --api-key ANAHTAR` (ya da `METASCRUB_API_KEY`) bu
-anahtarı `/v1/health` dışında her `/v1` route'unda ister — `X-API-Key: ANAHTAR` ya da
-`Authorization: Bearer ANAHTAR` olarak gönderin. Hem `api` hem `web`, kimlik doğrulama
-yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`0.0.0.0`, bir LAN IP'si);
-`--insecure` ile geçebilir, önüne proxy koyabilir, API'yi anahtarlayabilir ya da
-`127.0.0.1`'de kalabilirsiniz.
+anahtarı `/v1/health` ve `/v1/formats` dışında her `/v1` route'unda ister — `X-API-Key:
+ANAHTAR` ya da `Authorization: Bearer ANAHTAR` olarak gönderin. Hem `api` hem `web`, kimlik
+doğrulama yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`0.0.0.0`, bir LAN IP'si);
+desteklenen yol `127.0.0.1`'e bağlayıp önüne bir ters proxy koymaktır —
+**[docs/reverse-proxy.md](docs/reverse-proxy.md)** hazır nginx / Caddy yapılandırmaları içerir.
 
 ## Docker
 
+Yayınlanmış imajı çekin (her sürümde amd64 + arm64 için derlenir):
+
 ```bash
-docker build -t metascrub .
-
-# web arayüzü
-docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metascrub_cleaned:/data" metascrub
-
-# REST API
-docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metascrub_cleaned:/data" metascrub \
-  api --host 0.0.0.0 --port 8000 --output-dir /data
-
-# tek seferlik: bağlanmış bir klasörü temizle
-docker run --rm -v "$(pwd)/belgeler:/work" metascrub clean /work --out /work/cleaned
+docker pull ghcr.io/gorkemguler/metascrub:latest
 ```
 
-Ya da `docker compose up --build` (web arayüzü); `docker compose --profile api up metascrub-api` (API).
+```bash
+# web arayüzü
+docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metascrub_cleaned:/data" \
+  ghcr.io/gorkemguler/metascrub:latest
+
+# REST API
+docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metascrub_cleaned:/data" \
+  ghcr.io/gorkemguler/metascrub:latest api --host 0.0.0.0 --port 8000 --output-dir /data
+
+# tek seferlik: bağlanmış bir klasörü temizle
+docker run --rm -v "$(pwd)/belgeler:/work" ghcr.io/gorkemguler/metascrub:latest \
+  clean /work --out /work/cleaned
+```
+
+Ya da yerelde derleyin: `docker build -t metascrub .`. `docker compose up --build` web
+arayüzünü, `docker compose --profile api up metascrub-api` API'yi çalıştırır. Açmadan önce
+önüne proxy koyun — [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
 ## Ne kadar kapsamlı?
 

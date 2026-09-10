@@ -161,9 +161,20 @@ Ordered batches, each landing as its own commit:
    `/formats`) report extensions per engine + which optional deps are
    present. `clean_file_list` now honours `cfg.filetypes` as an
    allow-list so the toggles actually gate. Screenshots refreshed.
-9. **Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
+9. ~~**Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
    `ghcr.io/gorkemguler/metascrub` on a tag; document the nginx/Caddy
-   reverse-proxy recipe next to `--api-key`.
+   reverse-proxy recipe next to `--api-key`.~~ **Done.**
+   `docker.yml` builds a multi-arch image and pushes `:<version>` /
+   `:<major.minor>` / `:latest` (tags) and `:edge` (main) to GHCR;
+   `docs/reverse-proxy.md` has the nginx + Caddy configs, linked from the
+   README.
+
+---
+
+**The v0.3 gap-closing sweep above is complete.** What's left is
+release-day / infra work that needs the maintainer's accounts (actually
+publish to PyPI + GHCR + the winget/Homebrew channels, notarise the
+macOS app) or is deferred polish — see below.
 
 ### `metascrub watch` — the FTP/SFTP drop-box daemon — **done**
 - `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`

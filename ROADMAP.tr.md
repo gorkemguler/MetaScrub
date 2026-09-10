@@ -158,9 +158,19 @@ Sıralı batch'ler, her biri kendi commit'i:
    `/formats`) motor başına uzantıları + hangi opsiyonel bağımlılıkların
    yüklü olduğunu bildirir. `clean_file_list` artık `cfg.filetypes`'ı bir
    izin listesi olarak uyguluyor. Ekran görüntüleri yenilendi.
-9. **Yayın hattı** — `.github/workflows/docker.yml` tag'de
+9. ~~**Yayın hattı** — `.github/workflows/docker.yml` tag'de
    `ghcr.io/gorkemguler/metascrub` build+push; `--api-key` yanında
-   nginx/Caddy reverse-proxy tarifi.
+   nginx/Caddy reverse-proxy tarifi.~~ **Bitti.** `docker.yml` çok-mimari
+   bir imaj derleyip GHCR'ye `:<sürüm>` / `:<major.minor>` / `:latest`
+   (tag'ler) ve `:edge` (main) iter; `docs/reverse-proxy.md` nginx +
+   Caddy yapılandırmalarını içerir, README'den bağlı.
+
+---
+
+**Yukarıdaki v0.3 eksik-kapatma taraması tamamlandı.** Kalanlar
+yayın-günü / altyapı işleri (PyPI + GHCR + winget/Homebrew kanallarına
+gerçekten yayınlamak, macOS uygulamasını noterletmek) ya da ertelenmiş
+cila — aşağıya bakın.
 
 ### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u — **tamam**
 - `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`

@@ -228,10 +228,11 @@ Uploads stream to disk with `--max-upload-mb` / `--max-files` caps. `GET /v1/for
 `GET /v1/health` are open even when an API key is set.
 
 **Auth:** `metascrub api --api-key KEY` (or `METASCRUB_API_KEY`) requires that key on every
-`/v1` route except `/v1/health` — send it as `X-API-Key: KEY` or `Authorization: Bearer KEY`.
-Both `api` and `web` **refuse to bind a non-loopback host** (`0.0.0.0`, a LAN IP) with no
-auth unless you pass `--insecure`; put a reverse proxy in front, or key the API, or stay on
-`127.0.0.1`.
+`/v1` route except `/v1/health` and `/v1/formats` — send it as `X-API-Key: KEY` or
+`Authorization: Bearer KEY`. Both `api` and `web` **refuse to bind a non-loopback host**
+(`0.0.0.0`, a LAN IP) with no auth unless you pass `--insecure`; the supported way to expose
+either is to bind `127.0.0.1` and put a reverse proxy in front —
+**[docs/reverse-proxy.md](docs/reverse-proxy.md)** has ready nginx / Caddy configs.
 
 ```bash
 metascrub api --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
@@ -240,21 +241,29 @@ curl -H "X-API-Key: $KEY" -F files=@leak.pdf http://server:8000/v1/clean
 
 ## Docker
 
+Pull the published image (built for amd64 + arm64 on every release):
+
 ```bash
-docker build -t metascrub .
-
-# web UI
-docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metascrub_cleaned:/data" metascrub
-
-# REST API
-docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metascrub_cleaned:/data" metascrub \
-  api --host 0.0.0.0 --port 8000 --output-dir /data
-
-# one-off: scrub a mounted folder
-docker run --rm -v "$(pwd)/docs:/work" metascrub clean /work --out /work/cleaned
+docker pull ghcr.io/gorkemguler/metascrub:latest
 ```
 
-Or `docker compose up --build` (web UI); `docker compose --profile api up metascrub-api` (API).
+```bash
+# web UI
+docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metascrub_cleaned:/data" \
+  ghcr.io/gorkemguler/metascrub:latest
+
+# REST API
+docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metascrub_cleaned:/data" \
+  ghcr.io/gorkemguler/metascrub:latest api --host 0.0.0.0 --port 8000 --output-dir /data
+
+# one-off: scrub a mounted folder
+docker run --rm -v "$(pwd)/docs:/work" ghcr.io/gorkemguler/metascrub:latest \
+  clean /work --out /work/cleaned
+```
+
+Or build locally: `docker build -t metascrub .`. `docker compose up --build` runs the web UI;
+`docker compose --profile api up metascrub-api` the API. Put a proxy in front before exposing
+either — see [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
 ## How thorough is it?
 

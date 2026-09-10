@@ -6,6 +6,13 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **Container publishing**: `.github/workflows/docker.yml` builds a
+  multi-arch (amd64 + arm64) image and pushes it to
+  `ghcr.io/gorkemguler/metascrub` — `:<version>` + `:<major.minor>` +
+  `:latest` on a `v*` tag, `:edge` on `main`. No secrets (GITHUB_TOKEN).
+- **`docs/reverse-proxy.md`**: ready nginx and Caddy configs for putting
+  the loopback-bound web UI / API behind TLS + auth, linked from the
+  README's auth section.
 - **Web / API parity with `--recurse` / `--media`**: the local web form
   has *Also scrub audio / video* and *Look inside archives* checkboxes,
   and `POST /v1/clean` takes `recurse` / `media` form fields. `GET
