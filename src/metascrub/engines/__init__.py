@@ -4,7 +4,7 @@ from ..models import FieldChange
 from .base import Engine, new_result
 from .exiftool import exiftool_available, exiftool_version
 from .image import ImageEngine
-from .legacy_office import LegacyOfficeEngine, soffice_path
+from .legacy_office import LegacyOfficeEngine
 from .office import OfficeEngine
 from .pdf import PdfEngine
 from .svg import SvgEngine
@@ -42,12 +42,6 @@ def missing_dependencies(exts: set[str]) -> list[str]:
             "exiftool binary (image scrubbing) — `brew install exiftool` (macOS) "
             "or `apt install libimage-exiftool-perl` (Debian/Ubuntu). "
             "Without it MetaScrub falls back to Pillow, if installed, for jpg/png only."
-        )
-    if any(e in LegacyOfficeEngine.extensions for e in exts) and soffice_path() is None:
-        missing.append(
-            "LibreOffice (`soffice`) — needed to scrub legacy .doc/.xls/.ppt "
-            "(they're converted to .docx/.xlsx/.pptx). Without it those files are reported "
-            "'unsupported'; modern Office files don't need it."
         )
     return missing
 

@@ -51,7 +51,7 @@ imza) asla değiştirilmez.
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar. |
-| **Eski Office** `.doc .xls .ppt` | `olefile` + LibreOffice | `inspect` `SummaryInformation` / `DocumentSummaryInformation`'ı okur (yazar, son kaydeden, şirket, şablon, tarihler). `clean` dosyayı `soffice` ile `.docx/.xlsx/.pptx`'e dönüştürüp Office motorunu üstünde çalıştırır — PATH'te LibreOffice ister, ve `--in-place` reddedilir (biçim değişiyor). |
+| **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları — yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler — **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaScrub LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes ve PNG/WebP metin blokları. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur ki görsel doğru görünsün (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). |
 
@@ -78,9 +78,9 @@ brew install exiftool                        # macOS
 sudo apt install libimage-exiftool-perl      # Debian / Ubuntu
 ```
 
-Eski `.doc/.xls/.ppt` temizliği için **LibreOffice** (`soffice`) `PATH`'te olmalı —
-`brew install --cask libreoffice` / `apt install libreoffice`. PDF, modern Office, ODF ve
-SVG temizliği saf Python'dur, ek bir şey gerekmez.
+PDF, Office (modern **ve** eski `.doc/.xls/.ppt`), ODF ve SVG temizliği saf Python'dur, ek
+bir şey gerekmez. **LibreOffice** (`soffice`) yalnızca yerinde yamalayıcının
+ayrıştıramadığı eski bir konteyner için yedek olarak kullanılır.
 
 > Python 3.10+ desteklenir. `pikepdf` için henüz wheel'i olmayan yepyeni bir Python'da 3.12
 > altında kurun.

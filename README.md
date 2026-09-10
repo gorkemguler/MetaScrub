@@ -51,7 +51,7 @@ signature) is never modified.
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. |
 | **Office** `.docx .xlsx .pptx` | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revision, timestamps), `docProps/app.xml` (Company, Manager, Template path), `docProps/custom.xml`, the embedded thumbnail, and Word revision-save-id fingerprints (`w:rsids`) from `settings.xml`. Dangling relationships and content-type overrides are pruned; per-member zip timestamps are normalised. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields. |
-| **Legacy Office** `.doc .xls .ppt` | `olefile` + LibreOffice | `inspect` reads `SummaryInformation` / `DocumentSummaryInformation` (author, last-saved-by, company, template, dates). `clean` converts the file to `.docx/.xlsx/.pptx` via `soffice` and runs the Office engine over it — needs LibreOffice on `PATH`, and `--in-place` is refused (the format changes). |
+| **Legacy Office** `.doc .xls .ppt` | `olefile` (pure Python) | The `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property streams — author, last-saved-by, company, manager, template, title, timestamps, custom properties — are patched out **in place**: same file size, same format, same structure. `--in-place` works. If a container can't be parsed, MetaScrub falls back to a LibreOffice (`soffice`) re-render to `.docx/.xlsx/.pptx`. |
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core author/title/licence), `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes, and editor comments (`<!-- Created with … -->`). The drawing itself is untouched. |
 | **Images** `.jpg .jpeg .png .tif .tiff .heic .webp` | [ExifTool](https://exiftool.org) | All EXIF / IPTC / XMP / GPS / MakerNotes and PNG/WebP text chunks. The ICC colour profile and EXIF orientation are kept by default so the picture still renders correctly (`--no-keep-color-profile` / `--no-keep-orientation` to drop those too). |
 
@@ -78,9 +78,9 @@ brew install exiftool                        # macOS
 sudo apt install libimage-exiftool-perl      # Debian / Ubuntu
 ```
 
-Scrubbing legacy `.doc/.xls/.ppt` needs **LibreOffice** (`soffice`) on `PATH` — `brew install
---cask libreoffice` / `apt install libreoffice`. PDF, modern Office, ODF and SVG scrubbing
-are pure Python and need nothing extra.
+PDF, Office (modern **and** legacy `.doc/.xls/.ppt`), ODF and SVG scrubbing are pure Python
+and need nothing extra. **LibreOffice** (`soffice`) is only used as a fallback for a legacy
+container the in-place patcher can't parse.
 
 > Python 3.10+ is supported. On a brand-new Python where `pikepdf` has no wheel yet, install
 > under 3.12 instead.

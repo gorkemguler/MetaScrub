@@ -12,6 +12,27 @@ from ..config import CleanConfig, LEGACY_OFFICE_EXTENSIONS
 from ..models import FieldChange
 from .base import new_result
 from .office import OfficeEngine
+from .ole2 import scrub_ole2
+
+# OLE property id -> the OleMetadata attribute name probe() reports.
+_PROP_LABEL = {
+    2: "title", 3: "subject", 4: "author", 5: "keywords", 6: "comments",
+    7: "template", 8: "last_saved_by", 9: "revision_number", 11: "last_printed",
+    12: "create_time", 13: "last_saved_time", 18: "creating_application",
+    14: "manager", 15: "company",
+}
+
+
+def _label_removed(pairs: list[tuple[str, str]], before: list[FieldChange]) -> list[FieldChange]:
+    """Turn ('SummaryInformation', 'property 4') into a FieldChange using
+    the friendly name + old value from probe() where we can match it."""
+    by_field = {fc.field: fc.before for fc in before}
+    out: list[FieldChange] = []
+    for ns, raw in pairs:
+        pid = int(raw.rsplit(" ", 1)[-1]) if raw.startswith("property ") else None
+        label = _PROP_LABEL.get(pid, raw)
+        out.append(FieldChange(ns, label, by_field.get(label, "<blanked>")))
+    return out
 
 # OleMetadata attributes that identify a person / org / machine, as
 # opposed to counts and structural flags. Reported by probe(); all of them
@@ -66,40 +87,44 @@ class LegacyOfficeEngine:
             return new_result(src, None, self.name, "unsupported",
                               reason=f"unsupported legacy format '.{ext}'")
 
-        if cfg.in_place:
-            return new_result(
-                src, None, self.name, "skipped",
-                reason=f"legacy .{ext} can't be scrubbed in place — the format changes to .{target}; "
-                       "run without --in-place",
-            )
+        before = self.probe(src)
+        os.makedirs(os.path.dirname(dst) or ".", exist_ok=True)
 
+        # Primary path: patch the OLE2 property streams in place. Keeps the
+        # original format (so --in-place works) and needs nothing external.
+        try:
+            changed, pairs = scrub_ole2(src, dst)
+            result = new_result(src, dst, self.name, "cleaned", removed=_label_removed(pairs, before))
+            if not changed and not before:
+                result.reason = "no legacy metadata found"
+            return result
+        except Exception as exc:  # noqa: BLE001 - fall through to LibreOffice
+            ole_error = str(exc)
+
+        # Fallback: a full LibreOffice re-render to OOXML (also clears
+        # format-internal username records the in-place patch can't reach).
+        if cfg.in_place:
+            return new_result(src, None, self.name, "error",
+                              error=f"in-place scrub of .{ext} failed ({ole_error}); "
+                                    "run without --in-place to try the LibreOffice fallback")
         soffice = soffice_path()
         if soffice is None:
             return new_result(
                 src, None, self.name, "unsupported",
-                reason=f"legacy OLE2 .{ext} — install LibreOffice (soffice) to auto-convert and "
-                       f"scrub, or convert to .{target} yourself first",
+                reason=f"couldn't scrub .{ext} in place ({ole_error}) and LibreOffice "
+                       f"(soffice) isn't installed for the fallback",
             )
-
-        before = self.probe(src)
-        # We invent the output name (extension changes), so make sure its
-        # directory exists rather than relying on the caller having created
-        # it for the original path.
         out_path = os.path.splitext(dst)[0] + "." + target
         os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-
         with tempfile.TemporaryDirectory(prefix="metascrub-lo-") as tmp:
             converted = _libreoffice_convert(soffice, src, target, tmp)
             if converted is None or not os.path.isfile(converted):
                 return new_result(src, None, self.name, "error",
                                   error="LibreOffice conversion produced no output")
             inner = OfficeEngine().strip(converted, out_path, cfg)
-
         if inner.status != "cleaned":
             inner.src_path = src
-            inner.reason = inner.reason or "LibreOffice conversion + scrub failed"
             return inner
-
         result = new_result(src, out_path, self.name, "cleaned",
                             removed=before or inner.removed, kept=inner.kept)
         result.residual = inner.residual

@@ -24,12 +24,14 @@ bir yapılacaklar listesi.
 - **`--strip-pdf-id`** — her çalıştırmada taze rastgele bir trailer `/ID`;
   böylece bir dosyanın iki temizlenmiş kopyası bununla ilişkilendirilemez.
   *(L3'ün bir kısmı)*
-- **Eski `.doc / .xls / .ppt`** — `metascrub inspect` bunların
-  `SummaryInformation` / `DocumentSummaryInformation`'ını `olefile` ile
-  okur; `clean` bunları LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e
-  dönüştürüp normal Office temizleyicisini üstünde çalıştırır. PATH'te
-  `soffice` yoksa yine `unsupported` — ama tam olarak nedenini söyleyen
-  bir mesajla. `--in-place` reddedilir (biçim değişiyor). *(L1'i kapatır)*
+- **Eski `.doc / .xls / .ppt`** — saf-Python, yerinde bir temizleyici
+  (`engines/ole2.py`) `\x05SummaryInformation` /
+  `\x05DocumentSummaryInformation` property akışlarını — yazar, son
+  kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları ve özel
+  özellikler — dosyanın boyutunu ya da yapısını değiştirmeden yamalar;
+  böylece orijinal biçim korunur ve `--in-place` çalışır. LibreOffice
+  (`soffice`) artık yalnızca yamalayıcının ayrıştıramadığı bir konteyner
+  için *yedek* (ve OOXML'e yeniden render eder). *(L1 ve L11'i kapatır)*
 - **SVG motoru** — `<metadata>` (RDF/Dublin-Core yazar/başlık),
   `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri,
   ve editör yorumları silinir; çizime dokunulmaz. *(L7'nin bir kısmı)*
@@ -58,7 +60,7 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 | L5 | **Office: bazı parçalar hâlâ kapsanmıyor** | `--strip-office-authors` artık değişiklik-takibi/yorum yazarlarını hallediyor; hâlâ dokunulmayan: sıra dışı düzenlerde `docProps/thumbnail`, dış-bağlantı hedef yolları, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Görseller `exiftool` binary'si gerektiriyor** | Pillow yedeği yalnız jpg/png/webp yapar, korunmadıkça ICC profilini düşürür, animasyonlu biçimleri bozabilir. |
 | L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
-| L11 | **Eski Office LibreOffice gerektiriyor** | `.doc/.xls/.ppt` temizliği `soffice`'e devrediyor; saf-Python bir OLE2 yeniden yazıcısı yok, o yüzden onsuz bu dosyalar `unsupported` kalıyor. |
+| L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
 | L8 | **Doğrulama geçişi sezgisel** | `engines/exiftool.py`'daki "yapısal etiketleri yok say" listesi elle tutuluyor; henüz `residual == []`'i geniş çapta doğrulayan bir altın külliyat yok. |
 | L9 | **API/web'de kimlik doğrulama yok** | Belgelendi ama yerleşik token/anahtar yok — önüne proxy koymanız gerekir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
@@ -67,9 +69,6 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 
 ## Şimdi — v0.2 (kapsam + güven)
 
-- **Saf-Python eski Office** — LibreOffice'e devretmeden `.doc/.xls/.ppt`
-  temizlenebilsin diye minimal bir OLE2 property-stream yeniden yazıcısı.
-  (L11'i kapatır)
 - **Altın külliyat** — `tests/corpus/` içine eklenen, lisansı temiz gerçek
   PDF / Office / görsel seti; her temizlenmiş dosyanın sıfır kimlik
   metadata'sına indiğini doğrulayan test. (L8'i kapatır)

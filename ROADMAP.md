@@ -23,12 +23,14 @@ backlog.
   *(part of L3)*
 - **`--strip-pdf-id`** — a fresh random trailer `/ID` on every run, so two
   scrubbed copies of one file can't be correlated by it. *(part of L3)*
-- **Legacy `.doc / .xls / .ppt`** — `metascrub inspect` reads their
-  `SummaryInformation` / `DocumentSummaryInformation` via `olefile`;
-  `clean` converts them to `.docx/.xlsx/.pptx` with LibreOffice
-  (`soffice`) and runs the normal Office scrubber over the result. No
-  `soffice` on PATH → still `unsupported`, but with a message that says
-  exactly why. `--in-place` is refused (the format changes). *(closes L1)*
+- **Legacy `.doc / .xls / .ppt`** — a pure-Python, in-place scrubber
+  (`engines/ole2.py`) patches the `\x05SummaryInformation` /
+  `\x05DocumentSummaryInformation` property streams — author,
+  last-saved-by, company, manager, template, title, timestamps and
+  custom properties — without changing the file's size or structure, so
+  the original format is kept and `--in-place` works. LibreOffice
+  (`soffice`) is now only a *fallback* for a container the patcher can't
+  parse (and it re-renders to OOXML). *(closes L1 and L11)*
 - **SVG engine** — strips `<metadata>` (RDF/Dublin-Core author/title),
   `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes,
   and editor comments; the drawing is untouched. *(part of L7)*
@@ -57,7 +59,7 @@ These are real gaps in the current release, not bugs:
 | L5 | **Office: some parts still not covered** | `--strip-office-authors` now handles tracked-change / comment authors; still not touched: `docProps/thumbnail` in unusual layouts, external-link target paths, `.docm/.xlsm` `vbaProject.bin`. |
 | L6 | **Images need the `exiftool` binary** | The Pillow fallback only does jpg/png/webp, drops the ICC profile unless kept, and can break animated formats. |
 | L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
-| L11 | **Legacy Office needs LibreOffice** | `.doc/.xls/.ppt` scrubbing shells out to `soffice`; there's no pure-Python OLE2 rewriter, so without it those files stay `unsupported`. |
+| L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
 | L8 | **Verify pass is heuristic** | The "ignore structural tags" list in `engines/exiftool.py` is hand-maintained; no golden corpus asserts `residual == []` broadly yet. |
 | L9 | **API/web have no authentication** | Documented, but there's no built-in token/key — you must front it with a proxy. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
@@ -66,9 +68,6 @@ These are real gaps in the current release, not bugs:
 
 ## Now — v0.2 (coverage + confidence)
 
-- **Pure-Python legacy Office** — a minimal OLE2 property-stream rewriter
-  so `.doc/.xls/.ppt` can be scrubbed without shelling out to LibreOffice.
-  (would close L11)
 - **Golden corpus** — a curated, license-clean set of real PDFs / Office
   docs / images checked into `tests/corpus/`, with a test that asserts every
   cleaned file re-scans to zero identifying metadata. (closes L8)
