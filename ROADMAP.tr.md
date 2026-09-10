@@ -58,6 +58,17 @@ bir yapılacaklar listesi.
   Daha şimdiden gerçek bir bug yakaladı — ODF `probe` `<meta>`'yı yanlış
   ad-alanında arıyordu, yani `inspect` / dry-run / verify `.odt/.ods`
   metadata'sına kördü.
+- **Araçlar** — `ruff` + `mypy` (ikisi de temiz), GitHub Actions CI
+  matrisi (py 3.10–3.13 × Linux/macOS/Windows), `slow` pytest işareti +
+  session-kapsamlı eski-`.doc` fixture'ı (`pytest -q` ~60 sn → ~12 sn),
+  `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`.
+- **API kimlik doğrulama + sınırlar** — `metascrub api --api-key` (env
+  `METASCRUB_API_KEY`) `/v1/health` dışında her `/v1` route'unda gerekli
+  (`X-API-Key` ya da `Authorization: Bearer`). Yüklemeler doğrudan geçici
+  bir dosyaya akıtılır (tüm grup asla bellekte değil), `--max-upload-mb` /
+  `--max-files` sınırlarıyla → 413. Hem `web` hem `api`, kimlik doğrulama
+  yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`--insecure`
+  hariç). *(L9'u kapatır)*
 
 ---
 
@@ -73,31 +84,18 @@ Bunlar mevcut sürümdeki gerçek eksikler, hata değil:
 | L7 | **Ses / video motoru yok** | SVG artık hallediliyor; `.mp4/.mov/.mp3/.m4a` hâlâ değil (exiftool yapabilir — bağlanmadı). |
 | L11 | **Eski Office: biçim-içi kullanıcı adları** | OLE2 yamalayıcısı property akışlarını temizler (`inspect` / Explorer'ın gösterdiği); `.xls` `WRITEACCESS` ya da `.ppt` `CurrentUserAtom`'a ulaşmaz. LibreOffice yedeği ulaşır (tam yeniden render). |
 | L8 | **exiftool yok-say listesi elle tutuluyor** | `engines/exiftool.py`'nin "yapısal etiket" izin listesi hâlâ elle tutuluyor; altın külliyat sık durumları koruyor ama egzotik bir kamera etiketi sızabilir. |
-| L9 | **API/web'de kimlik doğrulama yok** | Belgelendi ama yerleşik token/anahtar yok — önüne proxy koymanız gerekir. |
 | L10 | **Her şey tek süreç, bellek içi çalışıyor** | Büyük ağaçlar için paralellik yok; API iş kaydı yeniden başlatmada kaybolur. |
 
 ---
 
-## Şimdi — v0.2 (kapsam + güven)
-
-- CI: GitHub Actions matrisi (Python 3.10–3.13 × macOS/Linux/Windows,
-  exiftool'lu/exiftool'suz ve LibreOffice'li/siz), `ruff`, `mypy`.
-- LibreOffice'e bağımlı testleri `slow` işaretle ki varsayılan `pytest`
-  hızlı kalsın.
-
-## Sırada — v0.3–v0.5 (servisleştir, ortama otur)
+## Şimdi — v0.3 (servisleştir)
 
 ### Servis sağlamlaştırma ("Linux sunucu / FTP kutusu" senaryosu)
-- **API için kimlik doğrulama** — statik API-anahtarı header'ı + belgelenmiş
-  nginx/Caddy reverse-proxy tarifi; `--i-know` verilmedikçe loopback-dışı
-  bağlanmayı reddet. (L9'u kapatır)
-- **Akışlı yükleme** — istek gövdelerini belleğe `await f.read()` yerine
-  doğrudan diske yaz; istek başına dosya-sayısı ve boyut sınırları.
-- **Kalıcı işler** — SQLite tabanlı iş kaydı; eski çalıştırma dizinleri için
-  TTL temizliği. (L10'un bir kısmı)
-- **Konteyner** — root olmayan kullanıcı, `HEALTHCHECK`, GHCR'a sürümlü
-  imajlar.
-- Yapılandırılmış JSON log; opsiyonel `/metrics`.
+- **Kalıcı işler** — SQLite tabanlı iş kaydı; yeniden başlatmada durum
+  korunsun. Eski çalıştırma dizinleri için TTL temizliği. (L10'un bir kısmı)
+- **Konteyner** — root olmayan kullanıcı, `HEALTHCHECK`, GHCR'a sürümlü imaj.
+- Yapılandırılmış JSON log (`--log-json`); opsiyonel `/metrics`.
+- `--api-key` yanında belgelenmiş bir nginx/Caddy reverse-proxy tarifi.
 
 ### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u
 - `metascrub watch <dir> [--pattern] [--in-place | --to <dir>] [--move-back]`

@@ -178,8 +178,14 @@ curl -sSL -o temiz.zip http://127.0.0.1:8000/v1/clean/<job_id>/download
 ```
 
 İşler sınırlı bir arka plan thread havuzunda çalışır; `--max-workers` / `--max-pending` ile
-boyutlandırılır. **Yerleşik kimlik doğrulama yoktur** — önüne API anahtarı / mTLS'li bir
-reverse proxy koyun, ya da yalnızca özel (Tailscale/WireGuard) bir ağda çalıştırın.
+boyutlandırılır. Yüklemeler `--max-upload-mb` / `--max-files` sınırlarıyla diske akıtılır.
+
+**Kimlik doğrulama:** `metascrub api --api-key ANAHTAR` (ya da `METASCRUB_API_KEY`) bu
+anahtarı `/v1/health` dışında her `/v1` route'unda ister — `X-API-Key: ANAHTAR` ya da
+`Authorization: Bearer ANAHTAR` olarak gönderin. Hem `api` hem `web`, kimlik doğrulama
+yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`0.0.0.0`, bir LAN IP'si);
+`--insecure` ile geçebilir, önüne proxy koyabilir, API'yi anahtarlayabilir ya da
+`127.0.0.1`'de kalabilirsiniz.
 
 ## Docker
 

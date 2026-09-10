@@ -289,6 +289,21 @@ def diff(run_a, run_b, as_json):
 
 # --------------------------------------------------------------------------- web / api
 
+_LOOPBACK = {"127.0.0.1", "localhost", "::1", ""}
+
+
+def _loopback_guard(host: str, protected: bool, insecure: bool, what: str) -> None:
+    """Refuse to bind a non-loopback address without either an auth
+    mechanism (`protected`) or an explicit --insecure."""
+    if host in _LOOPBACK or protected or insecure:
+        return
+    console.print(
+        f"[bold red]Refusing to bind {what} to {host} with no authentication.[/bold red]\n"
+        "Neither the web UI nor the API has a login. Put an authenticating reverse proxy in\n"
+        "front, use `--api-key` (API only), stay on 127.0.0.1, or pass --insecure to override."
+    )
+    sys.exit(2)
+
 
 @main.command()
 @click.option("--host", default="127.0.0.1", show_default=True)
@@ -296,13 +311,16 @@ def diff(run_a, run_b, as_json):
 @click.option("--output-dir", default="./metascrub_cleaned", show_default=True,
               envvar="METASCRUB_OUTPUT_DIR", type=click.Path())
 @click.option("--open-browser/--no-open-browser", default=True)
-def web(host, port, output_dir, open_browser):
+@click.option("--insecure", is_flag=True, default=False,
+              help="Allow binding a non-loopback host despite there being no authentication.")
+def web(host, port, output_dir, open_browser, insecure):
     """Launch the local drag-and-drop web UI."""
     from .web import run_server
 
     _banner()
+    _loopback_guard(host, protected=False, insecure=insecure, what="the web UI")
     console.print(f"[bold]MetaScrub web UI[/bold] on [bold]http://{host}:{port}/[/bold]")
-    console.print("[dim]Local only — do not expose this to the internet.[/dim]\n")
+    console.print("[dim]No authentication — keep it on 127.0.0.1 or behind a proxy.[/dim]\n")
     run_server(host=host, port=port, output_dir=output_dir, open_browser=open_browser)
 
 
@@ -314,7 +332,13 @@ def web(host, port, output_dir, open_browser):
               envvar="METASCRUB_OUTPUT_DIR", type=click.Path())
 @click.option("--max-workers", default=2, show_default=True)
 @click.option("--max-pending", default=50, show_default=True)
-def api(host, port, output_dir, max_workers, max_pending):
+@click.option("--api-key", envvar="METASCRUB_API_KEY", default=None,
+              help="Require this key on every /v1 route (X-API-Key or Bearer) except /v1/health.")
+@click.option("--max-upload-mb", default=200, show_default=True, help="Cap on a single request's total upload.")
+@click.option("--max-files", default=50, show_default=True, help="Cap on files per request.")
+@click.option("--insecure", is_flag=True, default=False,
+              help="Allow binding a non-loopback host with no --api-key.")
+def api(host, port, output_dir, max_workers, max_pending, api_key, max_upload_mb, max_files, insecure):
     """Launch the MetaScrub REST API (job-based). Requires: pip install 'metascrub[api]'."""
     try:
         import uvicorn
@@ -326,9 +350,11 @@ def api(host, port, output_dir, max_workers, max_pending):
         sys.exit(1)
 
     _banner()
-    console.print(f"[bold]MetaScrub API[/bold] on [bold]http://{host}:{port}/[/bold]  (docs: /docs)")
-    console.print("[dim]No built-in authentication — see the README before exposing this.[/dim]\n")
-    app = create_app(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending)
+    _loopback_guard(host, protected=bool(api_key), insecure=insecure, what="the API")
+    auth = "API key required" if api_key else "NO authentication"
+    console.print(f"[bold]MetaScrub API[/bold] on [bold]http://{host}:{port}/[/bold]  (docs: /docs) — {auth}")
+    app = create_app(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending,
+                     api_key=api_key, max_upload_mb=max_upload_mb, max_files=max_files)
     uvicorn.run(app, host=host, port=port, log_level="warning")
 
 

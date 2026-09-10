@@ -73,3 +73,24 @@ def test_report_409_before_done(client, dirty_pdf, monkeypatch):
     # immediately (job likely still queued/running)
     early = client.get(f"/v1/clean/{job_id}/report.json")
     assert early.status_code in (200, 409)  # fast machines may already be done
+
+
+def test_api_key_enforced(tmp_path, dirty_pdf):
+    app = create_app(output_dir=str(tmp_path / "o"), api_key="sekret")
+    with TestClient(app) as c:
+        assert c.get("/v1/health").status_code == 200          # health stays open
+        assert c.get("/v1/clean").status_code == 401           # no key
+        assert c.get("/v1/clean", headers={"X-API-Key": "nope"}).status_code == 401
+        ok = c.post("/v1/clean", files=[("files", ("f.pdf", dirty_pdf.read_bytes(), "application/pdf"))],
+                    headers={"Authorization": "Bearer sekret"})
+        assert ok.status_code == 202
+        assert c.get("/v1/clean", headers={"X-API-Key": "sekret"}).status_code == 200
+
+
+def test_upload_limits(tmp_path, dirty_pdf):
+    app = create_app(output_dir=str(tmp_path / "o"), max_files=2, max_upload_mb=1)
+    with TestClient(app) as c:
+        three = [("files", (f"f{i}.pdf", dirty_pdf.read_bytes(), "application/pdf")) for i in range(3)]
+        assert c.post("/v1/clean", files=three).status_code == 413
+        big = [("files", ("big.pdf", b"%PDF-1.4\n" + b"0" * (2 * 1024 * 1024), "application/pdf"))]
+        assert c.post("/v1/clean", files=big).status_code == 413

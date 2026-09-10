@@ -179,8 +179,18 @@ curl -sSL -o cleaned.zip http://127.0.0.1:8000/v1/clean/<job_id>/download
 ```
 
 Jobs run in a bounded background thread pool; `--max-workers` / `--max-pending` size it.
-There is **no built-in authentication** — run it behind a reverse proxy with an API key /
-mTLS, or on a private (Tailscale/WireGuard) network only.
+Uploads stream to disk with `--max-upload-mb` / `--max-files` caps.
+
+**Auth:** `metascrub api --api-key KEY` (or `METASCRUB_API_KEY`) requires that key on every
+`/v1` route except `/v1/health` — send it as `X-API-Key: KEY` or `Authorization: Bearer KEY`.
+Both `api` and `web` **refuse to bind a non-loopback host** (`0.0.0.0`, a LAN IP) with no
+auth unless you pass `--insecure`; put a reverse proxy in front, or key the API, or stay on
+`127.0.0.1`.
+
+```bash
+metascrub api --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
+curl -H "X-API-Key: $KEY" -F files=@leak.pdf http://server:8000/v1/clean
+```
 
 ## Docker
 

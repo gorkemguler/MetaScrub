@@ -55,6 +55,16 @@ backlog.
   asserts each scrubs to zero residual. *(closes L8)* It already caught a
   real bug — the ODF `probe` looked for `<meta>` in the wrong namespace,
   so `inspect` / dry-run / verify were blind to `.odt/.ods` metadata.
+- **Tooling** — `ruff` + `mypy` (both clean), a GitHub Actions CI matrix
+  (py 3.10–3.13 × Linux/macOS/Windows), a `slow` pytest marker + a
+  session-scoped legacy-`.doc` fixture (`pytest -q` ~60 s → ~12 s),
+  `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`.
+- **API auth + limits** — `metascrub api --api-key` (env
+  `METASCRUB_API_KEY`) required on every `/v1` route bar `/v1/health`, as
+  `X-API-Key` or `Authorization: Bearer`. Uploads stream straight to a
+  temp file (never the whole batch in memory) with `--max-upload-mb` /
+  `--max-files` caps → 413. Both `web` and `api` **refuse to bind a
+  non-loopback host** with no auth unless `--insecure`. *(closes L9)*
 
 ---
 
@@ -70,31 +80,18 @@ These are real gaps in the current release, not bugs:
 | L7 | **No audio / video engine** | SVG is handled now; `.mp4/.mov/.mp3/.m4a` still aren't (exiftool can — not yet wired up). |
 | L11 | **Legacy Office: format-internal usernames** | The OLE2 patcher clears the property streams (what `inspect` / Explorer show); it doesn't reach `.xls` `WRITEACCESS` or `.ppt` `CurrentUserAtom`. The LibreOffice fallback does (full re-render). |
 | L8 | **exiftool ignore-list is hand-maintained** | `engines/exiftool.py`'s "structural tag" allow-list is still curated by hand; the golden corpus now guards the common cases but an exotic camera tag could slip through. |
-| L9 | **API/web have no authentication** | Documented, but there's no built-in token/key — you must front it with a proxy. |
 | L10 | **Everything runs single-process, in-memory** | No parallelism for big trees; the API job registry is lost on restart. |
 
 ---
 
-## Now — v0.2 (coverage + confidence)
-
-- CI: GitHub Actions matrix (Python 3.10–3.13 × macOS/Linux/Windows,
-  with and without exiftool / LibreOffice), `ruff`, `mypy`.
-- Mark the LibreOffice-dependent tests `slow` so the default `pytest` run
-  stays fast.
-
-## Next — v0.3–v0.5 (make it a service, make it fit in)
+## Now — v0.3 (make it a service)
 
 ### Service hardening (the "run it on a Linux server / FTP box" story)
-- **Auth for the API** — static API-key header + a documented nginx/Caddy
-  reverse-proxy recipe; refuse to bind non-loopback without one unless
-  `--i-know` is passed. (closes L9)
-- **Streaming uploads** — write request bodies straight to disk instead of
-  `await f.read()` into memory; per-request file-count and size caps.
-- **Durable jobs** — SQLite-backed job registry so status/logs survive a
+- **Durable jobs** — SQLite-backed job registry so status survives a
   restart; TTL cleanup of old run directories. (part of L10)
-- **Container** — non-root user, `HEALTHCHECK`, versioned images published
-  to GHCR, `docker scout` clean.
-- Structured JSON logging; optional `/metrics`.
+- **Container** — non-root user, `HEALTHCHECK`, versioned images to GHCR.
+- Structured JSON logging (`--log-json`); optional `/metrics`.
+- A documented nginx/Caddy reverse-proxy recipe next to `--api-key`.
 
 ### `metascrub watch` — the FTP/SFTP drop-box daemon
 - `metascrub watch <dir> [--pattern] [--in-place | --to <dir>] [--move-back]`
