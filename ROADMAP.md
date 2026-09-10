@@ -128,9 +128,11 @@ Ordered batches, each landing as its own commit:
 4. ~~**Consistency + packaging** — `inspect --recurse/--media`; `py.typed`;
    `--exclude GLOB`; `--no-follow-symlinks`; `--progress` (rich bar);
    full `tool_versions()` (mutagen/olefile/soffice); `--debug` re-raise;
-   `.editorconfig` / `CODEOWNERS` / issue+PR templates; `ruff format` in
-   CI.~~ **Done.** All of the above shipped; `ruff format` was applied
-   repo-wide in its own commit and `ruff format --check` gates CI.
+   `.editorconfig` / `CODEOWNERS` / issue+PR templates.~~ **Done.**
+   `ruff format` was evaluated and **not** adopted: the codebase uses a
+   deliberate hand-aligned style (grouped list literals, compact
+   multi-arg calls) that `ruff format` flattens, and `ruff check` already
+   gates correctness in CI. `.editorconfig` records the 120-col width.
 5. **Video EBML/RIFF** — a minimal `.mkv/.webm` EBML `Tags` stripper and
    `.avi` RIFF `LIST/INFO` + `IDIT` stripper (exiftool can't write these).
    *(closes L7)*
