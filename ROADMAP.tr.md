@@ -116,9 +116,12 @@ Sıralı batch'ler, her biri kendi commit'i:
    paketinin (dizi biçimi ya da tek `xdp:xdp` akışı) `<xfa:data>` gövdesi
    boşaltılıyor; şablon, datasets sarmalayıcısı ve `<dd:dataDescription>`
    şeması korunuyor.
-3. **`watch` sağlamlaştırma** — lockfile (dizin başına tek watcher),
+3. ~~**`watch` sağlamlaştırma** — lockfile (dizin başına tek watcher),
    `--pattern` glob filtresi, kaybolan dosyalar için state budama,
-   `--jobs` geçişi.
+   `--jobs` geçişi.~~ **Bitti.** `.metascrub-watch.lock` (PID damgalı, ölü
+   sahibin kilidini çalar); tekrarlanabilir `--pattern GLOB`; `-j/--jobs N`
+   (birikmiş iş tek `clean_paths` çağrısında); kaybolan dosya kayıtları
+   her taramada budanır.
 4. **Tutarlılık + paketleme** — `inspect --recurse/--media`; `py.typed`;
    `--exclude GLOB`; `--no-follow-symlinks`; `--progress`; tam
    `tool_versions()`; `--debug` re-raise; `.editorconfig` / `CODEOWNERS` /

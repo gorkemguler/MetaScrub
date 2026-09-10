@@ -377,6 +377,10 @@ def diff(run_a, run_b, as_json):
               help="Write cleaned copies here instead of scrubbing in place.")
 @click.option("--move-processed", default=None, type=click.Path(),
               help="Move each original here after it's scrubbed.")
+@click.option("--pattern", "patterns", multiple=True, metavar="GLOB",
+              help="Only pick up files whose name matches this glob (repeatable).")
+@click.option("--jobs", "-j", default=1, show_default=True, type=int,
+              help="Scrub up to N settled files in parallel per scan.")
 @click.option("--interval", default=5.0, show_default=True, help="Seconds between scans.")
 @click.option("--settle", default=2.0, show_default=True,
               help="A file must be unchanged this long before it's touched (half-finished uploads).")
@@ -387,33 +391,41 @@ def diff(run_a, run_b, as_json):
 @click.option("--strip-office-authors", is_flag=True, default=False)
 @click.option("--backup", is_flag=True, default=False, help="Keep <name>.orig when scrubbing in place.")
 @click.option("--verify/--no-verify", default=True, show_default=True)
-def watch(directory, filetypes, recursive, to_dir, move_processed, interval, settle, once,
-          keep_fields, strip_pdf_id, strip_form_values, strip_office_authors, backup, verify):
+def watch(directory, filetypes, recursive, to_dir, move_processed, patterns, jobs, interval,
+          settle, once, keep_fields, strip_pdf_id, strip_form_values, strip_office_authors,
+          backup, verify):
     """Keep DIRECTORY scrubbed — a poll loop for an FTP/SFTP drop folder.
 
     A file is only touched once it has stopped changing for --settle
     seconds, so a partial upload is safe. State is kept in
     DIRECTORY/.metascrub-watch.json so a restart doesn't re-scrub
     everything; a file re-dropped with a newer timestamp is handled again.
+    A lock file keeps a second watcher off the same directory.
     """
-    from .watch import Watcher
+    from .watch import Watcher, WatchLock, WatchLockError
 
     ft_list = [f.strip().lower().lstrip(".") for f in filetypes.split(",") if f.strip()]
     cfg = CleanConfig(
         filetypes=ft_list, recursive=recursive, keep_fields=list(keep_fields), verify=verify,
-        strip_pdf_id=strip_pdf_id, strip_form_values=strip_form_values,
+        jobs=max(1, jobs), strip_pdf_id=strip_pdf_id, strip_form_values=strip_form_values,
         strip_office_authors=strip_office_authors, backup=backup,
     )
     w = Watcher(directory, cfg, interval=interval, settle=settle, to_dir=to_dir,
-                move_processed=move_processed, recursive=recursive, log=_log)
+                move_processed=move_processed, recursive=recursive,
+                patterns=list(patterns), log=_log)
 
     _banner()
-    if once:
-        n = w.scan_once()
-        console.print(f"[dim]scrubbed {n} file(s)[/dim]")
-        return
-    console.print(f"[bold]MetaScrub watch[/bold] on [bold]{w.dir}[/bold] — Ctrl-C to stop\n")
-    w.run_forever()
+    try:
+        with WatchLock(directory):
+            if once:
+                n = w.scan_once()
+                console.print(f"[dim]scrubbed {n} file(s)[/dim]")
+                return
+            console.print(f"[bold]MetaScrub watch[/bold] on [bold]{w.dir}[/bold] — Ctrl-C to stop\n")
+            w.run_forever()
+    except WatchLockError as exc:
+        console.print(f"[red]{exc}[/red]")
+        sys.exit(1)
 
 
 # --------------------------------------------------------------------------- web / api

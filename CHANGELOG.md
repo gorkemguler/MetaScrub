@@ -6,6 +6,12 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 ## [Unreleased]
 
 ### Added
+- **`metascrub watch` hardening**: a PID-stamped `.metascrub-watch.lock`
+  keeps a second watcher off the same directory (a lock held by a dead
+  process is stolen); `--pattern GLOB` (repeatable) filters what's picked
+  up; `-j/--jobs N` scrubs a settled backlog through the thread pool in
+  one pass; state entries for files that have since vanished are pruned
+  each scan so `.metascrub-watch.json` can't grow without bound.
 - **PDF XFA forms**: `--strip-form-values` now also blanks the
   `<xfa:data>` subtree of every `/AcroForm/XFA` packet (array form or a
   single `xdp:xdp` stream) — that's the data typed into an XFA form. The

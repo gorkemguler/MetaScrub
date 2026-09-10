@@ -160,14 +160,18 @@ regained metadata — drop it in a cron job.
 
 ```bash
 metascrub watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
-metascrub watch ./inbox --once        # one pass, for cron
+metascrub watch ./inbox --once                       # one pass, for cron
+metascrub watch ./inbox --pattern 'invoice-*.pdf' -j 4   # filter + parallel backlog
 ```
 
 A poll loop for an FTP/SFTP landing zone: a file is only touched once it has stopped
 changing for `--settle` seconds (a half-finished upload is never scrubbed), state lives in
 `<dir>/.metascrub-watch.json` so a restart doesn't reprocess everything, and a file
-re-dropped with a newer timestamp is handled again. Scrubs in place by default; `--to DIR`
-writes cleaned copies instead. A systemd template unit is in
+re-dropped with a newer timestamp is handled again. A `.metascrub-watch.lock` file keeps a
+second watcher off the same directory (a lock left by a dead process is stolen).
+`--pattern GLOB` (repeatable) narrows what's picked up; `-j/--jobs N` scrubs a backlog in
+parallel; state entries for files that have since vanished are pruned each pass. Scrubs in
+place by default; `--to DIR` writes cleaned copies instead. A systemd template unit is in
 [`platform/linux/`](platform/linux/metascrub-watch@.service).
 
 ## Web UI

@@ -119,9 +119,12 @@ Ordered batches, each landing as its own commit:
    `<xfa:data>` body blanked; the template, the datasets wrapper and its
    `<dd:dataDescription>` schema are kept. *(closes the XFA hole in L2's
    opt-in exception)*
-3. **`watch` hardening** — lockfile (one watcher per dir), `--pattern`
+3. ~~**`watch` hardening** — lockfile (one watcher per dir), `--pattern`
    glob filter, prune state entries for vanished files, `--jobs`
-   pass-through.
+   pass-through.~~ **Done.** `.metascrub-watch.lock` (PID-stamped, steals
+   a dead owner's lock); repeatable `--pattern GLOB`; `-j/--jobs N`
+   (settled backlog scrubbed in one `clean_paths` call); vanished-file
+   state entries pruned per scan.
 4. **Consistency + packaging** — `inspect --recurse/--media`; `py.typed`;
    `--exclude GLOB`; `--no-follow-symlinks`; `--progress` (rich bar);
    full `tool_versions()` (mutagen/olefile/soffice); `--debug` re-raise;

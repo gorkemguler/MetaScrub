@@ -6,10 +6,16 @@ never touched — it is scrubbed in place (or copied to `--to`), optionally
 moving the original into `--move-processed`. A small JSON state file in the
 watched directory records what's been handled so a restart doesn't
 re-scrub everything; a file re-dropped with a newer mtime is handled
-again.
+again, and entries for files that have since vanished are pruned.
+
+A lock file (`.metascrub-watch.lock`, holding the owner PID) keeps two
+watchers off the same directory; a lock left by a dead process is stolen.
+`--pattern GLOB` narrows what's picked up; `--jobs N` scrubs a backlog in
+parallel.
 """
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import shutil
@@ -22,11 +28,86 @@ from .config import CleanConfig
 from .scanner import iter_files
 
 _STATE_NAME = ".metascrub-watch.json"
+_LOCK_NAME = ".metascrub-watch.lock"
+_INTERNAL = frozenset({_STATE_NAME, _LOCK_NAME})
 LogFn = Callable[[str], None]
 
 
 def _noop(_m: str) -> None:
     pass
+
+
+class WatchLockError(RuntimeError):
+    """Raised when another live `metascrub watch` already owns the directory."""
+
+
+class WatchLock:
+    """A PID-stamped lock file so two watchers can't fight over one drop
+    directory. A lock whose owner PID is gone is treated as stale and
+    stolen, so a killed watcher never wedges the folder."""
+
+    def __init__(self, directory: str) -> None:
+        self.path = os.path.join(os.path.abspath(directory), _LOCK_NAME)
+        self._held = False
+
+    def acquire(self) -> None:
+        for _ in range(2):
+            try:
+                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            except FileExistsError:
+                if self._stale():
+                    try:
+                        os.unlink(self.path)
+                    except OSError:
+                        pass
+                    continue
+                raise WatchLockError(
+                    f"another metascrub watch is already running on {os.path.dirname(self.path)!r} "
+                    f"(lock file {self.path}); remove it by hand if that's not true"
+                ) from None
+            else:
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    fh.write(f"{os.getpid()}\n")
+                self._held = True
+                return
+        raise WatchLockError(f"could not acquire watch lock at {self.path}")
+
+    def _stale(self) -> bool:
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                pid = int((fh.read().strip() or "0").splitlines()[0])
+        except (OSError, ValueError, IndexError):
+            return True
+        if pid <= 0:
+            return True
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        except PermissionError:
+            return False
+        except OSError:
+            return False
+        return False
+
+    def release(self) -> None:
+        if not self._held:
+            return
+        try:
+            with open(self.path, encoding="utf-8") as fh:
+                owner = int((fh.read().strip() or "0").splitlines()[0])
+            if owner == os.getpid():
+                os.unlink(self.path)
+        except (OSError, ValueError, IndexError):
+            pass
+        self._held = False
+
+    def __enter__(self) -> WatchLock:
+        self.acquire()
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        self.release()
 
 
 class Watcher:
@@ -40,6 +121,7 @@ class Watcher:
         to_dir: str | None = None,
         move_processed: str | None = None,
         recursive: bool = True,
+        patterns: list[str] | None = None,
         log: LogFn = _noop,
     ) -> None:
         self.dir = os.path.abspath(directory)
@@ -49,6 +131,7 @@ class Watcher:
         self.to_dir = os.path.abspath(to_dir) if to_dir else None
         self.move_processed = os.path.abspath(move_processed) if move_processed else None
         self.recursive = recursive
+        self.patterns = [p for p in (patterns or []) if p]
         self.log = log
         self._state_path = os.path.join(self.dir, _STATE_NAME)
         self._done: dict[str, float] = _load_state(self._state_path)
@@ -73,8 +156,10 @@ class Watcher:
     def scan_once(self) -> int:
         """One pass. Returns the number of files scrubbed this pass."""
         now = time.time()
-        files = [f for f in iter_files([self.dir], self.cfg.filetypes, recursive=self.recursive)
-                 if os.path.basename(f) != _STATE_NAME]
+        files = [
+            f for f in iter_files([self.dir], self.cfg.filetypes, recursive=self.recursive)
+            if os.path.basename(f) not in _INTERNAL and self._matches(f)
+        ]
         ready: list[str] = []
         seen_now: dict[str, tuple[float, float]] = {}
 
@@ -92,15 +177,31 @@ class Watcher:
                 ready.append(path)
         self._pending = seen_now
 
-        scrubbed = 0
-        for path in ready:
-            if self._scrub_one(path):
-                scrubbed += 1
-        if scrubbed:
+        pruned = self._prune_state()
+        scrubbed = self._scrub_ready(ready) if ready else 0
+        if scrubbed or pruned:
             _save_state(self._state_path, self._done)
         return scrubbed
 
-    def _scrub_one(self, path: str) -> bool:
+    def _matches(self, path: str) -> bool:
+        if not self.patterns:
+            return True
+        name = os.path.basename(path)
+        return any(fnmatch.fnmatch(name, pat) for pat in self.patterns)
+
+    def _prune_state(self) -> bool:
+        """Drop state entries whose file is gone — otherwise a long-lived
+        watcher's `.metascrub-watch.json` grows without bound."""
+        gone = [p for p in self._done if not os.path.exists(p)]
+        for p in gone:
+            del self._done[p]
+        if gone:
+            self.log(f"pruned {len(gone)} stale state entr{'y' if len(gone) == 1 else 'ies'}")
+        return bool(gone)
+
+    def _scrub_ready(self, ready: list[str]) -> int:
+        """Scrub every settled file in one `clean_paths` call so `--jobs`
+        (cfg.jobs) can spread a backlog across the thread pool."""
         cfg = _clone(self.cfg)
         if self.to_dir:
             cfg.in_place = False
@@ -108,30 +209,35 @@ class Watcher:
         else:
             cfg.in_place = True
 
-        report = clean_paths([path], cfg, base_dir=self.dir, log=self.log)
-        if not report.results:
-            return False
-        r = report.results[0]
-        if r.status == "error":
-            self.log(f"! {path}: {r.error}")
-            return False
+        report = clean_paths(ready, cfg, base_dir=self.dir, log=self.log)
+        by_path = {os.path.realpath(r.src_path): r for r in report.results}
 
-        try:
-            self._done[path] = os.stat(r.out_path or path).st_mtime
-        except OSError:
-            self._done[path] = time.time()
+        scrubbed = 0
+        for path in ready:
+            r = by_path.get(os.path.realpath(path))
+            if r is None:
+                continue
+            if r.status == "error":
+                self.log(f"! {path}: {r.error}")
+                continue
 
-        if self.move_processed and r.status in ("cleaned", "skipped", "unsupported"):
-            os.makedirs(self.move_processed, exist_ok=True)
-            dest = _free_name(os.path.join(self.move_processed, os.path.basename(path)))
             try:
-                shutil.move(path, dest)
-                self._done.pop(path, None)
-                self.log(f"moved original -> {dest}")
-            except OSError as exc:
-                self.log(f"! could not move {path}: {exc}")
-        self.log(f"{path}: {r.status} ({len(r.removed)} field(s))")
-        return True
+                self._done[path] = os.stat(r.out_path or path).st_mtime
+            except OSError:
+                self._done[path] = time.time()
+
+            if self.move_processed and r.status in ("cleaned", "skipped", "unsupported"):
+                os.makedirs(self.move_processed, exist_ok=True)
+                dest = _free_name(os.path.join(self.move_processed, os.path.basename(path)))
+                try:
+                    shutil.move(path, dest)
+                    self._done.pop(path, None)
+                    self.log(f"moved original -> {dest}")
+                except OSError as exc:
+                    self.log(f"! could not move {path}: {exc}")
+            self.log(f"{path}: {r.status} ({len(r.removed)} field(s))")
+            scrubbed += 1
+        return scrubbed
 
 
 def _load_state(path: str) -> dict[str, float]:

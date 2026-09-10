@@ -161,14 +161,18 @@ Bir şey metadata geri kazandıysa çıkış kodu `1` — bir cron işine koyun.
 
 ```bash
 metascrub watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
-metascrub watch ./inbox --once        # tek geçiş, cron için
+metascrub watch ./inbox --once                       # tek geçiş, cron için
+metascrub watch ./inbox --pattern 'invoice-*.pdf' -j 4   # filtre + paralel birikim
 ```
 
 Bir FTP/SFTP iniş bölgesi için poll döngüsü: bir dosyaya ancak `--settle` saniye boyunca
 değişmeyi bıraktıktan sonra dokunulur (yarım kalmış yükleme asla temizlenmez), durum
 `<dir>/.metascrub-watch.json`'da tutulur (yeniden başlatma her şeyi yeniden işlemez), ve
-daha yeni bir zaman damgasıyla tekrar bırakılan dosya yeniden işlenir. Varsayılan yerinde
-temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon unit'i
+daha yeni bir zaman damgasıyla tekrar bırakılan dosya yeniden işlenir. `.metascrub-watch.lock`
+dosyası aynı dizine ikinci bir watcher'ı sokmaz (ölü bir sürecin bıraktığı kilit çalınır).
+`--pattern GLOB` (tekrarlanabilir) neyin alınacağını daraltır; `-j/--jobs N` birikmiş işi
+paralel temizler; artık var olmayan dosyaların durum kayıtları her geçişte budanır. Varsayılan
+yerinde temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon unit'i
 [`platform/linux/`](platform/linux/metascrub-watch@.service)'de.
 
 ## Web arayüzü
