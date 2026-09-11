@@ -19,6 +19,20 @@ onto its Finder icon or its Dock icon; double-click it to pick files with
 a dialog. A notification reports the result. Delete the `.app` to remove
 it. Source: `MetaCLS-droplet.applescript`.
 
+### Drop window: `MetaCLS Drop.app`
+
+```bash
+platform/macos/build-drop-app.sh       # -> /Applications/MetaCLS Drop.app
+```
+
+The macOS counterpart to Windows' `MetaCLS-drop.ps1`: opens a real
+window you leave open and drop files onto, with a live results log —
+unlike `MetaCLS.app` above, which has no window and pops a file picker
+when double-clicked. Needs PyObjC, so the build script sets up its own
+venv (`~/Library/Application Support/MetaCLS/drop-venv`) rather than
+touching your global Python; that happens once, automatically. Delete
+the `.app` and the venv directory to remove it. Source: `metacls_drop.py`.
+
 ### Finder Quick Action
 
 ```bash

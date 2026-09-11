@@ -3,6 +3,17 @@
 All notable changes to MetaCLS. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
+## [Unreleased]
+
+### Added
+- **macOS: `MetaCLS Drop.app`**, a persistent drag-and-drop window (the
+  macOS counterpart to `platform/windows/MetaCLS-drop.ps1`) — open it,
+  leave it open, drop files onto the window, watch a live results log.
+  The existing `MetaCLS.app` droplet has no window and pops a file
+  picker on double-click, which surprised users expecting a Windows-like
+  drop target; both are now available. Built with PyObjC in its own venv
+  (`platform/macos/build-drop-app.sh`), so it doesn't touch global Python.
+
 ## [0.4.0] - 2026-09-11
 
 ### Added

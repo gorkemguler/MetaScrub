@@ -301,7 +301,8 @@ either; see [docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/
 
 All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)**, one install command each; everything scrubs in place:
 
-- **macOS**: a drag-and-drop `MetaCLS.app` (built with `osacompile`, no Xcode), plus a
+- **macOS**: a no-window drag-and-drop `MetaCLS.app` (built with `osacompile`, no
+  Xcode), a `MetaCLS Drop.app` **drop window** with a results log (PyObjC), plus a
   Finder **Quick Action**.
 - **Windows**: a WinForms **drop window**, a **Send to** menu entry, an Explorer
   **right-click** entry, and a `winget` manifest (template).

@@ -294,8 +294,9 @@ arayüzünü, `docker compose --profile api up metacls-api` API'yi çalıştır�
 Hepsi **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)** altında, her biri için tek kurulum komutu; hepsi
 yerinde temizler:
 
-- **macOS**: sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok) ve bir Finder
-  **Quick Action**.
+- **macOS**: penceresiz sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok),
+  sonuç listeli bir **bırakma penceresi** olan `MetaCLS Drop.app` (PyObjC), ve bir
+  Finder **Quick Action**.
 - **Windows**: bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
   Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
 - **Linux**: bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
