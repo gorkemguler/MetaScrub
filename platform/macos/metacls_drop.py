@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """MetaCLS Drop — a persistent drag-and-drop window, the macOS
-counterpart to platform/windows/MetaCLS-drop.ps1.
+counterpart to platform/windows/MetaCLS-drop.ps1. Styled to match the
+project's dark/green branding (see assets/banner.svg, assets/desktop-apps.svg).
 
     python3 metacls_drop.py
 
@@ -22,27 +23,52 @@ import subprocess
 import objc
 from AppKit import (
     NSApp,
+    NSAppearance,
     NSApplication,
     NSApplicationActivationPolicyRegular,
     NSBackingStoreBuffered,
+    NSBezelBorder,
+    NSBezierPath,
     NSColor,
     NSDragOperationCopy,
     NSDragOperationNone,
     NSFilenamesPboardType,
     NSFont,
+    NSFontAttributeName,
+    NSForegroundColorAttributeName,
     NSMakeRect,
+    NSParagraphStyleAttributeName,
+    NSRectFill,
     NSScrollView,
-    NSTextField,
+    NSTextAlignmentCenter,
     NSTextView,
     NSView,
+    NSViewHeightSizable,
+    NSViewWidthSizable,
     NSWindow,
     NSWindowStyleMaskClosable,
     NSWindowStyleMaskMiniaturizable,
     NSWindowStyleMaskResizable,
     NSWindowStyleMaskTitled,
 )
-from Foundation import NSObject
+from Foundation import NSAttributedString, NSMakePoint, NSMutableParagraphStyle, NSObject
 from PyObjCTools import AppHelper
+
+# The brand palette from assets/banner.svg / assets/desktop-apps.svg.
+BG = (0x0C / 255, 0x11 / 255, 0x10 / 255)
+PANEL = (0x13 / 255, 0x20 / 255, 0x1C / 255)
+BORDER = (0x22 / 255, 0x33 / 255, 0x2E / 255)
+GREEN = (0x2D / 255, 0xD4 / 255, 0xA7 / 255)
+GREEN_STRONG = (0x34 / 255, 0xD3 / 255, 0x99 / 255)
+INK = (0xE9 / 255, 0xEF / 255, 0xED / 255)
+MUTED = (0x93 / 255, 0xA5 / 255, 0xA0 / 255)
+DIM = (0x6F / 255, 0x84 / 255, 0x80 / 255)
+BAD = (0xF8 / 255, 0x71 / 255, 0x71 / 255)
+
+
+def _c(rgb, alpha=1.0):
+    r, g, b = rgb
+    return NSColor.colorWithSRGBRed_green_blue_alpha_(r, g, b, alpha)
 
 
 def find_metacls() -> str | None:
@@ -87,16 +113,114 @@ def scrub_paths(paths: list[str]) -> list[str]:
     return lines
 
 
-class DropView(NSView):
-    """The window's whole content view: accepts a Finder file drag and
-    forwards the dropped paths to the app delegate's log."""
+def _centered(text, font, color, rect):
+    style = NSMutableParagraphStyle.alloc().init()
+    style.setAlignment_(NSTextAlignmentCenter)
+    attrs = {
+        NSFontAttributeName: font,
+        NSForegroundColorAttributeName: color,
+        NSParagraphStyleAttributeName: style,
+    }
+    s = NSAttributedString.alloc().initWithString_attributes_(text, attrs)
+    h = s.size().height
+    y = rect.origin.y + (rect.size.height - h) / 2
+    s.drawInRect_(NSMakeRect(rect.origin.x, y, rect.size.width, h))
+
+
+class BrandHeaderView(NSView):
+    """The 'meta' + 'cls' wordmark and tagline, matching assets/banner.svg."""
+
+    def drawRect_(self, dirty):
+        b = self.bounds()
+        name_font = NSFont.boldSystemFontOfSize_(22)
+        meta = NSAttributedString.alloc().initWithString_attributes_(
+            "meta", {NSFontAttributeName: name_font, NSForegroundColorAttributeName: _c(INK)}
+        )
+        cls = NSAttributedString.alloc().initWithString_attributes_(
+            "cls", {NSFontAttributeName: name_font, NSForegroundColorAttributeName: _c(GREEN_STRONG)}
+        )
+        total_w = meta.size().width + cls.size().width
+        x = (b.size.width - total_w) / 2
+        top_y = b.size.height - 30
+        meta.drawAtPoint_(NSMakePoint(x, top_y))
+        cls.drawAtPoint_(NSMakePoint(x + meta.size().width, top_y))
+
+        tagline_rect = NSMakeRect(0, b.size.height - 52, b.size.width, 16)
+        _centered("strip the metadata · keep the document", NSFont.systemFontOfSize_(11), _c(DIM), tagline_rect)
+
+
+class DropZoneView(NSView):
+    """The dashed drop target, matching assets/desktop-apps.svg."""
+
+    def drawRect_(self, dirty):
+        b = self.bounds()
+        path = NSBezierPath.bezierPathWithRoundedRect_xRadius_yRadius_(
+            NSMakeRect(2, 2, b.size.width - 4, b.size.height - 4), 14, 14
+        )
+        path.setLineWidth_(2)
+        path.setLineDash_count_phase_((8.0, 7.0), 2, 0.0)
+        _c(GREEN, 0.55).setStroke()
+        path.stroke()
+
+        cx = b.size.width / 2
+        # metadata "wipe" strokes, fading out -- echoes the banner motif.
+        lines = [(60, 0.9), (46, 0.6), (30, 0.35)]
+        ly = b.size.height / 2 + 18
+        for width, alpha in lines:
+            line = NSBezierPath.bezierPath()
+            x0 = cx - 70
+            line.moveToPoint_(NSMakePoint(x0, ly))
+            line.lineToPoint_(NSMakePoint(x0 + width, ly))
+            line.setLineWidth_(7)
+            line.setLineCapStyle_(1)  # round
+            _c(GREEN, alpha).setStroke()
+            line.stroke()
+            ly -= 16
+
+        # a small document icon with a folded corner.
+        doc_w, doc_h = 40, 52
+        doc_x = cx + 10
+        doc_y = b.size.height / 2 - doc_h / 2 + 6
+        doc = NSBezierPath.bezierPathWithRoundedRect_xRadius_yRadius_(
+            NSMakeRect(doc_x, doc_y, doc_w, doc_h), 4, 4
+        )
+        _c(BG).setFill()
+        doc.fill()
+        _c(GREEN_STRONG).setStroke()
+        doc.setLineWidth_(2)
+        doc.stroke()
+        fold = NSBezierPath.bezierPath()
+        fold.moveToPoint_(NSMakePoint(doc_x + doc_w - 13, doc_y + doc_h))
+        fold.lineToPoint_(NSMakePoint(doc_x + doc_w, doc_y + doc_h - 13))
+        fold.lineToPoint_(NSMakePoint(doc_x + doc_w - 13, doc_y + doc_h - 13))
+        fold.closePath()
+        _c(GREEN_STRONG).setFill()
+        fold.fill()
+
+        _centered("Drag & drop to scrub", NSFont.boldSystemFontOfSize_(14), _c(INK),
+                  NSMakeRect(0, 34, b.size.width, 20))
+        _centered("Scrubbed in place -- nothing else leaves this window.",
+                  NSFont.systemFontOfSize_(11), _c(DIM), NSMakeRect(0, 14, b.size.width, 16))
+
+
+class RootView(NSView):
+    """The window's whole content view: dark background, and the Finder
+    file-drag target (the whole window accepts a drop, not just the
+    drawn drop zone -- mirrors the Windows drop form)."""
 
     def initWithFrame_(self, frame):
-        self = objc.super(DropView, self).initWithFrame_(frame)
+        self = objc.super(RootView, self).initWithFrame_(frame)
         if self is None:
             return None
         self.registerForDraggedTypes_([NSFilenamesPboardType])
         return self
+
+    def isFlipped(self):
+        return False
+
+    def drawRect_(self, dirty):
+        _c(BG).setFill()
+        NSRectFill(self.bounds())
 
     def draggingEntered_(self, sender):
         pasteboard = sender.draggingPasteboard()
@@ -123,7 +247,8 @@ class AppDelegate(NSObject):
     def applicationDidFinishLaunching_(self, notification):
         NSApp.setActivationPolicy_(NSApplicationActivationPolicyRegular)
 
-        rect = NSMakeRect(0, 0, 560, 420)
+        w, h = 600, 560
+        rect = NSMakeRect(0, 0, w, h)
         style = (
             NSWindowStyleMaskTitled
             | NSWindowStyleMaskClosable
@@ -133,44 +258,65 @@ class AppDelegate(NSObject):
         self.window = NSWindow.alloc().initWithContentRect_styleMask_backing_defer_(
             rect, style, NSBackingStoreBuffered, False
         )
-        self.window.setTitle_("MetaCLS — drop files to scrub metadata")
+        self.window.setTitle_("MetaCLS")
+        self.window.setAppearance_(NSAppearance.appearanceNamed_("NSAppearanceNameDarkAqua"))
+        self.window.setTitlebarAppearsTransparent_(True)
+        self.window.setBackgroundColor_(_c(BG))
         self.window.center()
         self.window.setDelegate_(self)
         self.window.setReleasedWhenClosed_(False)
+        self.window.setMinSize_((420, 380))
 
-        content = DropView.alloc().initWithFrame_(rect)
+        content = RootView.alloc().initWithFrame_(rect)
+        content.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable)
         self.window.setContentView_(content)
 
-        hint = NSTextField.alloc().initWithFrame_(NSMakeRect(16, 360, 528, 44))
-        hint.setStringValue_(
-            "Drop PDF / Office / image / SVG files here.\nThey are scrubbed in place."
-        )
-        hint.setEditable_(False)
-        hint.setBezeled_(False)
-        hint.setDrawsBackground_(False)
-        hint.setAlignment_(1)  # NSTextAlignmentCenter
-        hint.setFont_(NSFont.systemFontOfSize_(13))
-        content.addSubview_(hint)
+        header = BrandHeaderView.alloc().initWithFrame_(NSMakeRect(0, h - 70, w, 70))
+        header.setAutoresizingMask_(NSViewWidthSizable)
+        content.addSubview_(header)
 
-        scroll = NSScrollView.alloc().initWithFrame_(NSMakeRect(16, 16, 528, 332))
+        zone = DropZoneView.alloc().initWithFrame_(NSMakeRect(40, h - 70 - 220, w - 80, 200))
+        zone.setAutoresizingMask_(NSViewWidthSizable)
+        content.addSubview_(zone)
+
+        scroll = NSScrollView.alloc().initWithFrame_(NSMakeRect(20, 20, w - 40, h - 70 - 220 - 36))
+        scroll.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable)
         scroll.setHasVerticalScroller_(True)
-        scroll.setBorderType_(1)  # NSBezelBorder
-        scroll.setAutoresizingMask_(1 << 1 | 1 << 4)  # width + height sizable
+        scroll.setBorderType_(NSBezelBorder)
+        scroll.setDrawsBackground_(True)
+        scroll.setBackgroundColor_(_c(PANEL))
 
         self.log = NSTextView.alloc().initWithFrame_(scroll.contentView().bounds())
+        self.log.setAutoresizingMask_(NSViewWidthSizable)
         self.log.setEditable_(False)
-        self.log.setFont_(NSFont.userFixedPitchFontOfSize_(11))
-        self.log.setBackgroundColor_(NSColor.textBackgroundColor())
+        self.log.setDrawsBackground_(True)
+        self.log.setBackgroundColor_(_c(PANEL))
+        self.log.setTextContainerInset_((6, 6))
         scroll.setDocumentView_(self.log)
         content.addSubview_(scroll)
+
+        placeholder = NSAttributedString.alloc().initWithString_attributes_(
+            "Drop a file above to see results here.\n",
+            {NSFontAttributeName: NSFont.userFixedPitchFontOfSize_(11), NSForegroundColorAttributeName: _c(DIM)},
+        )
+        self.log.textStorage().appendAttributedString_(placeholder)
 
         self.window.makeKeyAndOrderFront_(None)
         NSApp.activateIgnoringOtherApps_(True)
 
     def appendResults_(self, lines):
         text = self.log.textStorage()
+        mono = NSFont.userFixedPitchFontOfSize_(11)
         for line in lines:
-            text.mutableString().appendString_(line + "\n")
+            if line.startswith("ok"):
+                color = _c(GREEN_STRONG)
+            elif line.startswith("FAIL") or line.startswith("!"):
+                color = _c(BAD)
+            else:
+                color = _c(MUTED)
+            attrs = {NSFontAttributeName: mono, NSForegroundColorAttributeName: color}
+            run = NSAttributedString.alloc().initWithString_attributes_(line + "\n", attrs)
+            text.appendAttributedString_(run)
         self.log.scrollRangeToVisible_((text.length(), 0))
 
     def windowShouldClose_(self, sender):
