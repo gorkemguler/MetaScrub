@@ -15,12 +15,12 @@ metacls api --host 127.0.0.1 --port 8000 --output-dir /srv/metacls \
   --api-key "$(openssl rand -hex 24)" --run-ttl-days 30
 ```
 
-Uploads can be large — raise the proxy's body-size limit to match
+Uploads can be large; raise the proxy's body-size limit to match
 `--max-upload-mb` (API) or the web UI's 200 MB.
 
 ## Caddy
 
-`Caddyfile` — automatic HTTPS, HTTP basic auth in front of the web UI:
+`Caddyfile`: automatic HTTPS, HTTP basic auth in front of the web UI:
 
 ```caddy
 scrub.example.com {
@@ -36,7 +36,7 @@ scrub.example.com {
 ```
 
 For the **API**, callers already send `X-API-Key`, so you usually don't
-add basic auth — just proxy and cap the body:
+add basic auth, just proxy and cap the body:
 
 ```caddy
 scrub-api.example.com {
@@ -57,7 +57,7 @@ server {
     ssl_certificate     /etc/letsencrypt/live/scrub.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/scrub.example.com/privkey.pem;
 
-    # web UI only — the API authenticates itself, drop this block for it.
+    # web UI only: the API authenticates itself, drop this block for it.
     auth_basic           "MetaCLS";
     auth_basic_user_file /etc/nginx/metacls.htpasswd;   # htpasswd -c ... alice
 

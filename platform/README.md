@@ -3,12 +3,12 @@
 Right-click, drop-target and drop-folder integration for MetaCLS.
 `metacls` must be installed and on `PATH` (`pip install metacls`,
 `pipx install metacls`, or a venv you add to `PATH`). Everything here
-scrubs **in place** — the originals are overwritten with the cleaned
+scrubs **in place**: the originals are overwritten with the cleaned
 version.
 
 ## macOS
 
-### Drop app — `MetaCLS.app`
+### Drop app: `MetaCLS.app`
 
 ```bash
 platform/macos/build-app.sh            # -> /Applications/MetaCLS.app
@@ -32,13 +32,13 @@ metadata*. Remove it by deleting `~/Library/Services/Scrub metadata.workflow`.
 
 ## Windows
 
-### Drop window — `MetaCLS-drop.ps1`
+### Drop window: `MetaCLS-drop.ps1`
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File platform\windows\MetaCLS-drop.ps1
 ```
 
-A small WinForms window — drop files onto it (or pass them as arguments)
+A small WinForms window: drop files onto it (or pass them as arguments)
 and they're scrubbed, with a per-file result list.
 
 ### Send-to menu
@@ -64,8 +64,8 @@ Office / image / SVG files (current user, no admin).
 ### winget
 
 `platform/windows/winget/` holds a manifest for `GorkemGuler.MetaCLS`,
-ready to submit to `winget-pkgs` once a release ships a Windows artifact —
-see the README there.
+ready to submit to `winget-pkgs` once a release ships a Windows artifact.
+See the README there.
 
 ## Linux
 
@@ -95,5 +95,5 @@ Nemo/Caja paths).
 ### Drop-folder daemon
 
 `platform/linux/metacls-watch@.service` is a systemd template unit for
-`metacls watch` — see the
-[README](../README.md#watch--keep-a-drop-folder-scrubbed).
+`metacls watch`: see the
+[README](https://github.com/gorkemguler/MetaCLS/blob/main/README.md#watch-keep-a-drop-folder-scrubbed).

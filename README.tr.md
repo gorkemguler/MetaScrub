@@ -11,17 +11,17 @@
 
 <p align="center">
   PDF, Office ve görsel dosyalarından toplu metadata temizliği.<br>
-  Metadata'yı sil, belgeyi koru — öncesi/sonrası kanıt raporuyla.
+  Metadata'yı sil, belgeyi koru, öncesi/sonrası kanıt raporuyla.
 </p>
 
 <p align="center">
   <sub><a href="https://github.com/gorkemguler/MetaScout">MetaScout</a> ile birlikte çalışır: MetaScout sızıntıyı <i>bulur</i>, MetaCLS <i>giderir</i>.</sub>
 </p>
 
-<p align="center"><sub><a href="README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
+<p align="center"><sub><a href="https://github.com/gorkemguler/MetaCLS/blob/main/README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS öncesi/sonrası raporu, 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
 </p>
 
 ---
@@ -35,13 +35,13 @@ görür. Şimdi birilerinin bu dosyaları **gerçekten temizlemesi** gerekir. İ
 Bir klasöre yönlendirin (ya da web arayüzüne dosya sürükleyin, ya da API'ye POST edin) ve:
 
 1. Desteklenen her dosyada gömülü metadata'yı **tarar**,
-2. Varsayılan olarak **agresif** biçimde **siler** — temizlenmiş kopyalar yazar (orijinaller
+2. Varsayılan olarak **agresif** biçimde **siler**, temizlenmiş kopyalar yazar (orijinaller
    dokunulmaz) ya da yerinde üzerine yazar,
 3. Her temizlenmiş dosyayı yeniden tarayarak **doğrular**, ve
-4. Dosya bazında ne silindiğini JSON ve şık bir HTML sayfası olarak **raporlar** — güvenlik
+4. Dosya bazında ne silindiğini JSON ve şık bir HTML sayfası olarak **raporlar**, güvenlik
    ekibine kanıt olarak verebilirsiniz.
 
-Yalnızca **metadata**'ya dokunur — belgenin görünür içeriği (gövde metni, görseller, taranmış
+Yalnızca **metadata**'ya dokunur: belgenin görünür içeriği (gövde metni, görseller, taranmış
 imza) asla değiştirilmez.
 
 ## Ne siler?
@@ -50,18 +50,18 @@ imza) asla değiştirilmez.
 | --- | --- | --- |
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. `--strip-form-values` ile: AcroForm alan değerleri ve XFA `<xfa:data>` paketi de. |
 | **Office** `.docx .xlsx .pptx` (+ makro içeren `.docm .xlsm .pptm` ve şablonlar `.dotx .dotm .xltx .xltm .potx .potm`) | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. `vbaProject.bin` **korunur** (makroyu bozmak, içinde bir isim saklanma ihtimalinden kötüdür) ve rapor dosyanın kısmen temizlendiğini bildirir. |
-| **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar — ayrıca `Thumbnails/` önizleme görseli (ilk sayfanın render edilmiş anlık görüntüsü) ve `META-INF/manifest.xml` içindeki girdisi. |
-| **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları — yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler — **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaCLS LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
+| **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml`: initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar, ayrıca `Thumbnails/` önizleme görseli (ilk sayfanın render edilmiş anlık görüntüsü) ve `META-INF/manifest.xml` içindeki girdisi. |
+| **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları (yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler) **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaCLS LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .gif .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes, PNG/WebP metin blokları ve JPEG/GIF yorum bloğu. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). exiftool yoksa HEIC `pillow-heif` ile de çalışır. |
-| **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / saf Python | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi — `pip install 'metacls[media]'`. MP4 ailesi video: exiftool metadata atom'larını temizler (`ItemList`, `Keys`, `UserData`, XMP — sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool bunlara yazamaz): tüm EBML `Tags` bloğu ve `Info` başlığı / tarihleri / muxer-ve-writer uygulama adları yerinde boşaltılır — aynı uzunlukta `Void` / `JUNK` dolgusuyla üzerine yazılır, böylece dosya uzunluğu değişmez ve `--in-place` çalışır; track verisine dokunulmaz. Varsayılan taranmaz — **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). Oynatmayı kontrol edin. |
-| **Konteynerler** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (opsiyonel) | **`--recurse`** ile: bir arşivin desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. `.tar*` ayrıca üye başına uid/gid/kullanıcı-adı/mtime başlıklarını normalize eder (paketleyenin kimlik sızıntısı). `.7z` için `pip install 'metacls[archive]'` gerekir. `.msg` (Outlook) **salt-okunur** — `metacls inspect --recurse` içindekileri listeler (`metacls[msg]` gerekir); temizlemek için `.eml`'e aktarın. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
+| **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / saf Python | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi, `pip install 'metacls[media]'`. MP4 ailesi video: exiftool metadata atom'larını temizler (`ItemList`, `Keys`, `UserData`, XMP, sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool bunlara yazamaz): tüm EBML `Tags` bloğu ve `Info` başlığı / tarihleri / muxer-ve-writer uygulama adları yerinde boşaltılır, aynı uzunlukta `Void` / `JUNK` dolgusuyla üzerine yazılır, böylece dosya uzunluğu değişmez ve `--in-place` çalışır; track verisine dokunulmaz. Varsayılan taranmaz, **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). Oynatmayı kontrol edin. |
+| **Konteynerler** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (opsiyonel) | **`--recurse`** ile: bir arşivin desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. `.tar*` ayrıca üye başına uid/gid/kullanıcı-adı/mtime başlıklarını normalize eder (paketleyenin kimlik sızıntısı). `.7z` için `pip install 'metacls[archive]'` gerekir. `.msg` (Outlook) **salt-okunur**: `metacls inspect --recurse` içindekileri listeler (`metacls[msg]` gerekir); temizlemek için `.eml`'e aktarın. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
 
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
 
 İki **opt-in** bayrak metadata'nın ötesine, teknik olarak içerik olan kimlik verisine geçer:
-`--strip-form-values` PDF form değerlerini boşaltır — AcroForm alanları (`/V` `/DV`) ve önbellekli
+`--strip-form-values` PDF form değerlerini boşaltır, AcroForm alanları (`/V` `/DV`) ve önbellekli
 görünümleri, artı bir XFA formunun `<xfa:data>` paketi (XFA şablonu ve şeması korunur);
 `--strip-office-authors` Office değişiklik-takibi / yorum **yazar adları ve tarihlerini** boşaltır
 (değişiklik ve yorum metni kalır, kabul/ret hâlâ çalışır).
@@ -97,7 +97,7 @@ ayrıştıramadığı eski bir konteyner için yedek olarak kullanılır.
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-cli.svg" alt="terminalde metacls inspect ve metacls clean" width="90%">
 </p>
 
-### Inspect — dosyalarda ne var, göster (salt-okunur)
+### Inspect: dosyalarda ne var, göster (salt-okunur)
 
 ```bash
 metacls inspect ./yayinlanan-belgeler
@@ -129,11 +129,11 @@ metacls clean a.pdf b.docx c.jpg --out ./temiz
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (şifreli PDF'ler), `--strip-pdf-id`, `--backup` (`--in-place` ile `<ad>.orig` sakla),
-`--strip-form-values`, `--strip-office-authors` (opt-in — yukarıya bakın),
+`--strip-form-values`, `--strip-office-authors` (opt-in, yukarıya bakın),
 `--jobs N` (N dosyayı paralel temizle), `--quarantine DIR` (orijinali üzerine yaz ama önce
-`DIR/<tarih>/`'e taşı — kurtarılabilir, `--in-place`'ten güvenli),
+`DIR/<tarih>/`'e taşı, kurtarılabilir, `--in-place`'ten güvenli),
 `--policy publish|internal|minimal` (adlandırılmış presetler),
-`--exclude GLOB` (tekrarlanabilir — gezerken dosya/dizin atla),
+`--exclude GLOB` (tekrarlanabilir, gezerken dosya/dizin atla),
 `--no-follow-symlinks` (sembolik bağlı dosyayı temizleme), `--progress` (ilerleme çubuğu), ve
 grup düzeyinde `metacls --debug …` (ilk hatalı dosyada hatayı kaydetmek yerine yeniden fırlat).
 
@@ -141,7 +141,7 @@ grup düzeyinde `metacls --debug …` (ilk hatalı dosyada hatayı kaydetmek yer
 temizlemeden önce içindekileri görebilirsin.
 
 **Proje yapılandırması:** çalışma dizininde ya da bir üstünde (git köküne kadar) bir
-`.metacls.toml` komut başına varsayılanları belirler — CLI bayrakları ve env değişkenleri
+`.metacls.toml` komut başına varsayılanları belirler; CLI bayrakları ve env değişkenleri
 yine kazanır.
 
 ```toml
@@ -154,7 +154,7 @@ keep = ["Title"]
 **Çıkış kodları** (CI kapısı olarak): `0` temiz · `1` bir dosya hata verdi · `2` temizlenmiş
 dosya doğrulamada hâlâ metadata taşıyordu · `3` (`--check`) metadata bulundu.
 
-### Diff — bir dizini zaman içinde izle
+### Diff: bir dizini zaman içinde izle
 
 ```bash
 metacls clean ./yayin --out ./tarama-ocak     # ayda bir, tarihli dizinlere
@@ -162,11 +162,11 @@ metacls clean ./yayin --out ./tarama-subat
 metacls diff ./tarama-ocak ./tarama-subat     # ne değişti?
 ```
 
-İki çalıştırma arasında eklenen/silinen dosyaları ve — asıl faydalı kısım — metadata'sı
+İki çalıştırma arasında eklenen/silinen dosyaları ve, asıl faydalı kısım, metadata'sı
 **yeniden ortaya çıkan** dosyaları (birisi belgeyi editörde tekrar kaydetmiş) gösterir.
-Bir şey metadata geri kazandıysa çıkış kodu `1` — bir cron işine koyun.
+Bir şey metadata geri kazandıysa çıkış kodu `1`: bir cron işine koyun.
 
-### Watch — bir bırakma klasörünü temiz tut
+### Watch: bir bırakma klasörünü temiz tut
 
 ```bash
 metacls watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
@@ -182,7 +182,7 @@ dosyası aynı dizine ikinci bir watcher'ı sokmaz (ölü bir sürecin bıraktı
 `--pattern GLOB` (tekrarlanabilir) neyin alınacağını daraltır; `-j/--jobs N` birikmiş işi
 paralel temizler; artık var olmayan dosyaların durum kayıtları her geçişte budanır. Varsayılan
 yerinde temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon unit'i
-[`platform/linux/`](platform/linux/metacls-watch@.service)'de.
+[`platform/linux/`](https://github.com/gorkemguler/MetaCLS/blob/main/platform/linux/metacls-watch@.service)'de.
 
 ## Web arayüzü
 
@@ -190,12 +190,12 @@ yerinde temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon un
 metacls web           # http://127.0.0.1:8770/ açılır
 ```
 
-Dosyaları sayfaya sürükleyin, temizlenmiş halde geri alın — tek tek ya da zip olarak — dosya
+Dosyaları sayfaya sürükleyin, temizlenmiş halde geri alın, tek tek ya da zip olarak, dosya
 bazında öncesi/sonrası görünümü ve tam raporla birlikte. Önceki çalıştırmalar **Geçmiş**
-altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok** — ağa açmayın.
+altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok**. Ağa açmayın.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü, sürükle-bırak dosya alanı" width="90%">
 </p>
 
 ## REST API
@@ -228,11 +228,11 @@ boyutlandırılır. Yüklemeler `--max-upload-mb` / `--max-files` sınırlarıyl
 `GET /v1/formats` ve `GET /v1/health`, API anahtarı ayarlı olsa bile açıktır.
 
 **Kimlik doğrulama:** `metacls api --api-key ANAHTAR` (ya da `METACLS_API_KEY`) bu
-anahtarı `/v1/health` ve `/v1/formats` dışında her `/v1` route'unda ister — `X-API-Key:
+anahtarı `/v1/health` ve `/v1/formats` dışında her `/v1` route'unda ister, `X-API-Key:
 ANAHTAR` ya da `Authorization: Bearer ANAHTAR` olarak gönderin. Hem `api` hem `web`, kimlik
 doğrulama yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`0.0.0.0`, bir LAN IP'si);
-desteklenen yol `127.0.0.1`'e bağlayıp önüne bir ters proxy koymaktır —
-**[docs/reverse-proxy.md](docs/reverse-proxy.md)** hazır nginx / Caddy yapılandırmaları içerir.
+desteklenen yol `127.0.0.1`'e bağlayıp önüne bir ters proxy koymaktır.
+**[docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md)** hazır nginx / Caddy yapılandırmaları içerir.
 
 ## Docker
 
@@ -258,47 +258,46 @@ docker run --rm -v "$(pwd)/belgeler:/work" ghcr.io/gorkemguler/metacls:latest \
 
 Ya da yerelde derleyin: `docker build -t metacls .`. `docker compose up --build` web
 arayüzünü, `docker compose --profile api up metacls-api` API'yi çalıştırır. Açmadan önce
-önüne proxy koyun — [docs/reverse-proxy.md](docs/reverse-proxy.md).
+önüne proxy koyun: bkz. [docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md).
 
 ## Ne kadar kapsamlı?
 
-- **PDF** — incremental update değil, tam bir QPDF yeniden yazımı; böylece silinen `/Info` ve
+- **PDF**: incremental update değil, tam bir QPDF yeniden yazımı; böylece silinen `/Info` ve
   XMP eski bir xref bölümünde geride kalmaz. Annotation yazar/tarihleri ve gömülü-dosya
   metadata'sı da gider; annotation'ın görünür metni ve ekli dosyanın kendisi kalır.
-  **İmzalı PDF'ler bozulmadan atlanır** — temizlik imzayı geçersiz kılardı; temizlenmiş hali
+  **İmzalı PDF'ler bozulmadan atlanır**: temizlik imzayı geçersiz kılardı; temizlenmiş hali
   gerekiyorsa imzasız bir kopya yeniden dışa aktarın. **Şifreli PDF'ler** `--password`
   olmadan atlanır; onunla, temizlenmiş kopya şifresiz yazılır (sonuç bunu belirtir).
-- **Office / ODF** — metadata parçaları pakette yalnızca boşaltılmaz, silinir (ODF'de
+- **Office / ODF**: metadata parçaları pakette yalnızca boşaltılmaz, silinir (ODF'de
   boşaltılır) ve onlara giden referanslar temizlenir ki hiçbir şey boşa sarkmasın.
-- **Görseller** — bu iş için referans araç olan `exiftool -all=`.
+- **Görseller**: bu iş için referans araç olan `exiftool -all=`.
 - **`--verify`** (varsayılan açık) her temizlenmiş dosyayı yeniden tarar ve hâlâ duran her şeyi
   rapora yazar; öyleyse CLI `2` ile çıkar.
 
 ### Sınırlamalar
 
 - İçerik tasarım gereği kapsam dışı: belge gövdesindeki metin, görünür/taranmış imza, bir
-  görselin içine gömülü metin — MetaCLS bunlara dokunmaz. (MetaScout'un `--scan-content`'i
+  görselin içine gömülü metin: MetaCLS bunlara dokunmaz. (MetaScout'un `--scan-content`'i
   bunları bulur; kaldırılması manuel bir düzenlemedir.)
 - Eski `.doc / .xls / .ppt` temizlenmez (önce dönüştürün).
-- Sertifikalı bir sanitizasyon aracı değildir. Kritik işlerde çıktıyı kendiniz doğrulayın —
-  `metacls inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
+- Sertifikalı bir sanitizasyon aracı değildir. Kritik işlerde çıktıyı kendiniz doğrulayın: `metacls inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
 
 ## Masaüstü entegrasyonu
 
-Hepsi **[`platform/`](platform/)** altında, her biri için tek kurulum komutu — hepsi
+Hepsi **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)** altında, her biri için tek kurulum komutu; hepsi
 yerinde temizler:
 
-- **macOS** — sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok) ve bir Finder
+- **macOS**: sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok) ve bir Finder
   **Quick Action**.
-- **Windows** — bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
+- **Windows**: bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
   Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
-- **Linux** — bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
+- **Linux**: bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
   Nautilus/Nemo/Caja **betiği** ve bir `systemd` **watch** unit'i.
 
 ## CI / hook'lar
 
 `metacls clean --check`, `--dry-run` demektir ve bir dosya hâlâ metadata taşıyorsa **3**
-ile çıkar (temizse 0, hatada 1) — pre-commit ve CI için bir kapı.
+ile çıkar (temizse 0, hatada 1), pre-commit ve CI için bir kapı.
 
 ```yaml
 # .pre-commit-config.yaml
@@ -317,10 +316,10 @@ ile çıkar (temizse 0, hatada 1) — pre-commit ve CI için bir kapı.
 
 ## Yol haritası
 
-Nelerin geldiği, bilinen sınırlamalar ve backlog için **[ROADMAP.tr.md](ROADMAP.tr.md)**
+Nelerin geldiği, bilinen sınırlamalar ve backlog için **[ROADMAP.tr.md](https://github.com/gorkemguler/MetaCLS/blob/main/ROADMAP.tr.md)**
 (inotify watch, SFTP modu, `--jobs`, `--quarantine`, `.metacls.toml`, politika profilleri,
 ses/video, PyPI, özyinelemeli konteyner temizliği).
 
 ## Lisans
 
-MIT — bkz. [LICENSE](LICENSE).
+MIT, bkz. [LICENSE](https://github.com/gorkemguler/MetaCLS/blob/main/LICENSE).

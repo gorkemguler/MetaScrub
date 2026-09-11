@@ -27,7 +27,7 @@ Out of scope: MetaCLS does not scrub document *body content* by design
 (see the README); a comment's text or a form's default value surviving is
 expected unless `--strip-form-values` / `--strip-office-authors` is used.
 The web UI and API have **no authentication** by design and must be put
-behind a proxy — that is documented, not a vulnerability.
+behind a proxy. That is documented behaviour, not a vulnerability.
 
 ## Supported versions
 

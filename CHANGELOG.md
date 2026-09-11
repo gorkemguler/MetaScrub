@@ -3,19 +3,19 @@
 All notable changes to MetaCLS. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
-## [0.3.1] — 2026-09-11
+## [0.3.1] - 2026-09-11
 
 ### Fixed
 - README images (`banner.svg`, the three screenshots) and every relative
   link to another repo file (`ROADMAP.md`, `LICENSE`, `docs/`,
   `platform/`) used repo-relative paths. GitHub resolves those against
   the repo, but PyPI renders the description standalone with no such
-  base — the banner and screenshots didn't load on
+  base. The banner and screenshots didn't load on
   [pypi.org/project/metacls](https://pypi.org/project/metacls/) and the
   doc links 404'd. Rewritten to absolute `github.com/gorkemguler/MetaCLS`
   URLs, which render correctly on both GitHub and PyPI.
 
-## [0.3.0] — 2026-09-11
+## [0.3.0] - 2026-09-11
 
 The v0.3 "gap-closing sweep": nine batches closing format, container,
 platform and deployment gaps. Tag `v0.3.0` to fire the PyPI + GHCR
@@ -24,7 +24,7 @@ publish workflows.
 ### Added
 - **Container publishing**: `.github/workflows/docker.yml` builds a
   multi-arch (amd64 + arm64) image and pushes it to
-  `ghcr.io/gorkemguler/metacls` — `:<version>` + `:<major.minor>` +
+  `ghcr.io/gorkemguler/metacls`: `:<version>` + `:<major.minor>` +
   `:latest` on a `v*` tag, `:edge` on `main`. No secrets (GITHUB_TOKEN).
 - **`docs/reverse-proxy.md`**: ready nginx and Caddy configs for putting
   the loopback-bound web UI / API behind TLS + auth, linked from the
@@ -37,21 +37,20 @@ publish workflows.
   (exiftool, LibreOffice, mutagen, py7zr, extract-msg) are installed.
   Screenshots refreshed.
 - **Native drop apps** in `platform/`:
-  - macOS: `MetaCLS.app`, a drag-and-drop droplet built with
-    `osacompile` (no Xcode) — `platform/macos/build-app.sh`.
+  - macOS: `MetaCLS.app`, a drag-and-drop droplet built by
+    `platform/macos/build-app.sh` (`osacompile`, no Xcode).
   - Windows: `MetaCLS-drop.ps1` (a WinForms drop window),
     `install-sendto.ps1` (a *Send to* menu entry), and a `winget`
     manifest template under `platform/windows/winget/`.
   - Linux: `metacls.desktop` + `metacls-drop.sh` (a `.desktop`
-    launcher / *Open With* handler with a `zenity` picker) —
-    `platform/linux/install-desktop.sh`.
+    launcher / *Open With* handler with a `zenity` picker), installed
+    by `platform/linux/install-desktop.sh`.
 - **More `--recurse` containers**: `.tar` and its compressed forms
-  (`.tar.gz` / `.tgz` / `.tar.bz2` / `.tar.xz`, via stdlib `tarfile`) —
-  members are scrubbed and the per-member `uid` / `gid` / `uname` /
+  (`.tar.gz` / `.tgz` / `.tar.bz2` / `.tar.xz`, via stdlib `tarfile`).
+  Members are scrubbed and the per-member `uid` / `gid` / `uname` /
   `gname` / `mtime` headers (the packer's own identity) are normalised
   to zero. `.7z` via optional `py7zr` (`metacls[archive]`). `.msg`
-  (Outlook) via optional `extract-msg` (`metacls[msg]`) is **read-only**
-  — `inspect --recurse` lists what's inside; `clean` skips it (rewriting
+  (Outlook) via optional `extract-msg` (`metacls[msg]`) is **read-only**: `inspect --recurse` lists what's inside; `clean` skips it (rewriting
   the CFB is out of scope).
 - **Matroska / WebM / AVI metadata** (`engines/ebml_riff.py`): exiftool
   can't write these, so a pure-Python in-place scrubber blanks the EBML
@@ -62,14 +61,14 @@ publish workflows.
   `.avi` and `.3gp` join the `--media` extension set.
 - **Walk controls**: `--exclude GLOB` (repeatable; matches a name or a
   path relative to the walk root, prunes whole directories) and
-  `--no-follow-symlinks` (don't scrub a symlinked file found in a walk —
+  `--no-follow-symlinks` (don't scrub a symlinked file found in a walk;
   writing through it would escape the tree) on `clean` and `inspect`.
-- **`--progress`** on `clean` — a `rich` bar for large trees.
-- **`metacls --debug`** (group-level) — re-raise on the first failing
+- **`--progress`** on `clean`: a `rich` bar for large trees.
+- **`metacls --debug`** (group-level): re-raise on the first failing
   file instead of recording it as an `error` result.
-- **`inspect --media` / `inspect --recurse`** — mirror `clean`, so you
+- **`inspect --media` / `inspect --recurse`**: mirror `clean`, so you
   can look inside an archive or at a video before scrubbing.
-- **`py.typed`** — the package now ships its type information.
+- **`py.typed`**: the package now ships its type information.
 - `tool_versions()` (embedded in every report) now also reports
   `olefile`, `mutagen`, `pillow` and the LibreOffice path.
 - Repo: `.editorconfig`, `CODEOWNERS`, issue forms + a PR template; CI
@@ -82,7 +81,7 @@ publish workflows.
   each scan so `.metacls-watch.json` can't grow without bound.
 - **PDF XFA forms**: `--strip-form-values` now also blanks the
   `<xfa:data>` subtree of every `/AcroForm/XFA` packet (array form or a
-  single `xdp:xdp` stream) — that's the data typed into an XFA form. The
+  single `xdp:xdp` stream); that's the data typed into an XFA form. The
   XFA template (form definition), the `datasets` wrapper and its
   `<dd:dataDescription>` schema are kept, and `NeedAppearances` is set.
 - **Format coverage**: macro-enabled Office (`.docm .xlsm .pptm`) and
@@ -96,7 +95,7 @@ publish workflows.
 ### Changed
 - Web UI / REST API: an uploaded audio, video or archive file is now
   `skipped` unless the matching toggle (*audio / video*, *look inside
-  archives*) is on — matching what `--media` / `--recurse` gate on the
+  archives*) is on, matching what `--media` / `--recurse` gate on the
   CLI. Previously any uploaded type was scrubbed regardless.
 
 ### Fixed
@@ -106,7 +105,7 @@ publish workflows.
   structural; the JPEG/GIF `Comment` block is now tracked as a real leak
   (it had been filtered out with the rest of the `File` group).
 
-## [0.2.0] — 2026-09-10
+## [0.2.0] - 2026-09-10
 
 ### Added
 - **PDF**: annotation authors + timestamps (`/T` `/M` `/CreationDate`),
@@ -120,12 +119,12 @@ publish workflows.
   for an unparseable container.
 - **SVG** engine: strips `<metadata>`, `sodipodi:` / `inkscape:` /
   Adobe-Illustrator elements and attributes, and editor comments.
-- **Office**: opt-in `--strip-office-authors` — blanks tracked-change /
+- **Office**: opt-in `--strip-office-authors`: blanks tracked-change /
   comment author names + dates across Word / PowerPoint / Excel; the text
   is kept.
-- `metacls diff <runA> <runB>` — compare two run reports; exit 1 when a
+- `metacls diff <runA> <runB>`: compare two run reports; exit 1 when a
   file regained metadata.
-- `--backup` — keep `<name>.orig` next to an `--in-place` scrub.
+- `--backup`: keep `<name>.orig` next to an `--in-place` scrub.
 - Golden-corpus test (`tests/test_corpus.py`), `ruff` + `mypy` config, a
   GitHub Actions CI matrix, and a `slow` pytest marker.
 - **REST API**: `--api-key` (env `METACLS_API_KEY`) on every `/v1` route
@@ -138,7 +137,7 @@ publish workflows.
 - `--jobs N` (parallel scrub), `--quarantine DIR` (dated recoverable
   originals), `--policy publish|internal|minimal`, and a `.metacls.toml`
   project config.
-- `metacls watch <dir>` — scrub an FTP/SFTP drop folder on a poll loop.
+- `metacls watch <dir>`: scrub an FTP/SFTP drop folder on a poll loop.
 - **Audio/video**: `--media` scans `.mp3/.m4a/.flac/.ogg/.opus/.wav/.aiff`
   (tags + cover art via `mutagen`, `metacls[media]`) and
   `.mp4/.mov/.m4v/.mkv/.webm` (metadata atoms via exiftool, track kept).
@@ -153,10 +152,10 @@ publish workflows.
   `inspect` / dry-run / verify were blind to `.odt/.ods` metadata (the
   scrub itself was unaffected).
 - Web UI: a run under a symlinked `--output-dir` (e.g. `/tmp` on macOS)
-  404'd on every `/report`, `/zip`, `/file` — the traversal guard now
+  404'd on every `/report`, `/zip`, `/file`: the traversal guard now
   compares realpaths on both sides.
 
-## [0.1.0] — 2026-09-09
+## [0.1.0] - 2026-09-09
 
 Initial release: CLI (`clean`, `inspect`), local Flask web UI, job-based
 FastAPI service. PDF (pikepdf), Office/ODF (stdlib zipfile) and image

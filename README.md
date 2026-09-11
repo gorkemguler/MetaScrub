@@ -11,7 +11,7 @@
 
 <p align="center">
   Bulk metadata scrubbing for PDF, Office and image files.<br>
-  Strip the metadata, keep the document — with a before/after proof report.
+  Strip the metadata, keep the document, with a before/after proof report.
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 <p align="center"><sub>🇬🇧 English · <a href="https://github.com/gorkemguler/MetaCLS/blob/main/README.tr.md">🇹🇷 Türkçe</a></sub></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS before/after report — 3 files, 18 metadata fields removed, 0 residual" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS before/after report, 3 files, 18 metadata fields removed, 0 residual" width="90%">
 </p>
 
 ---
@@ -35,13 +35,13 @@ coordinates. Now someone has to actually **clean those files**. That's MetaCLS.
 Point it at a folder (or drag files into the web UI, or POST them to the API) and it:
 
 1. **scans** every supported file for embedded metadata,
-2. **strips** it — aggressively by default — writing cleaned copies (originals untouched) or
+2. **strips** it, aggressively by default, writing cleaned copies (originals untouched) or
    overwriting in place,
 3. **verifies** each cleaned file by re-scanning it, and
 4. **reports** exactly what was removed, per file, as JSON and a styled HTML page you can hand
    to a security team as evidence.
 
-It only touches **metadata** — the document's visible content (body text, images, a scanned
+It only touches **metadata**: the document's visible content (body text, images, a scanned
 signature) is never modified.
 
 ## What it removes
@@ -50,18 +50,18 @@ signature) is never modified.
 | --- | --- | --- |
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` dictionary (Author, Title, Producer, Creator, CreationDate, …), the XMP metadata packet, `/PieceInfo` and other application-private data, page-level metadata, annotation authors + timestamps (`/T` `/M` `/CreationDate`), and the description + timestamps on embedded-file attachments. The file is **fully rewritten**, so values sitting in superseded cross-reference sections can't be recovered from the output. Encrypted PDFs need `--password`. With `--strip-form-values`: AcroForm field values and the XFA `<xfa:data>` packet too. |
 | **Office** `.docx .xlsx .pptx` (+ macro-enabled `.docm .xlsm .pptm` and templates `.dotx .dotm .xltx .xltm .potx .potm`) | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revision, timestamps), `docProps/app.xml` (Company, Manager, Template path), `docProps/custom.xml`, the embedded thumbnail, and Word revision-save-id fingerprints (`w:rsids`) from `settings.xml`. Dangling relationships and content-type overrides are pruned; per-member zip timestamps are normalised. `vbaProject.bin` is **kept** (breaking macros is worse than the small chance a name hides in it) and the report flags that the file was only partly scrubbed. |
-| **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields — plus the `Thumbnails/` preview image (a rendered snapshot of the first page) and its `META-INF/manifest.xml` entry. |
-| **Legacy Office** `.doc .xls .ppt` | `olefile` (pure Python) | The `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property streams — author, last-saved-by, company, manager, template, title, timestamps, custom properties — are patched out **in place**: same file size, same format, same structure. `--in-place` works. If a container can't be parsed, MetaCLS falls back to a LibreOffice (`soffice`) re-render to `.docx/.xlsx/.pptx`. |
+| **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml`: initial-creator, creator, generator, editing-cycles/duration, timestamps, document statistics, user-defined fields, plus the `Thumbnails/` preview image (a rendered snapshot of the first page) and its `META-INF/manifest.xml` entry. |
+| **Legacy Office** `.doc .xls .ppt` | `olefile` (pure Python) | The `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property streams (author, last-saved-by, company, manager, template, title, timestamps, custom properties) are patched out **in place**: same file size, same format, same structure. `--in-place` works. If a container can't be parsed, MetaCLS falls back to a LibreOffice (`soffice`) re-render to `.docx/.xlsx/.pptx`. |
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core author/title/licence), `sodipodi:` / `inkscape:` / Adobe-Illustrator elements and attributes, and editor comments (`<!-- Created with … -->`). The drawing itself is untouched. |
 | **Images** `.jpg .jpeg .png .gif .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | All EXIF / IPTC / XMP / GPS / MakerNotes, PNG/WebP text chunks and the JPEG/GIF comment block. The ICC colour profile and EXIF orientation are kept by default so the picture still renders correctly (`--no-keep-color-profile` / `--no-keep-orientation` to drop those too). HEIC also works via `pillow-heif` when exiftool is absent. |
-| **Audio / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / pure Python | Audio: all tags (ID3 / Vorbis / iTunes) and embedded cover art — `pip install 'metacls[media]'`. MP4-family video: exiftool clears the metadata atoms (`ItemList`, `Keys`, `UserData`, XMP — artist, `Make`/`Model` from a phone, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool can't write these): the whole EBML `Tags` block and the `Info` title / dates / muxer-and-writer app names are blanked in place — overwritten with `Void` / `JUNK` padding of identical length, so the file length is unchanged and `--in-place` works; the track data is never touched. Not scanned by default — pass **`--media`** (or list the extensions in `--filetypes`). Spot-check playback. |
-| **Containers** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (optional) | With **`--recurse`**: each supported member of an archive, and each email attachment, is scrubbed with its own engine and the archive/message repacked. `.tar*` also has its per-member uid/gid/username/mtime headers normalised (a leak of the packer's identity). `.7z` needs `pip install 'metacls[archive]'`. `.msg` (Outlook) is **read-only** — `metacls inspect --recurse` lists what's inside (needs `metacls[msg]`); export to `.eml` to scrub. Non-scrubbable members pass through untouched. Nesting is followed (depth-limited). |
+| **Audio / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / pure Python | Audio: all tags (ID3 / Vorbis / iTunes) and embedded cover art, `pip install 'metacls[media]'`. MP4-family video: exiftool clears the metadata atoms (`ItemList`, `Keys`, `UserData`, XMP, artist, `Make`/`Model` from a phone, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool can't write these): the whole EBML `Tags` block and the `Info` title / dates / muxer-and-writer app names are blanked in place, overwritten with `Void` / `JUNK` padding of identical length, so the file length is unchanged and `--in-place` works; the track data is never touched. Not scanned by default, pass **`--media`** (or list the extensions in `--filetypes`). Spot-check playback. |
+| **Containers** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (optional) | With **`--recurse`**: each supported member of an archive, and each email attachment, is scrubbed with its own engine and the archive/message repacked. `.tar*` also has its per-member uid/gid/username/mtime headers normalised (a leak of the packer's identity). `.7z` needs `pip install 'metacls[archive]'`. `.msg` (Outlook) is **read-only**: `metacls inspect --recurse` lists what's inside (needs `metacls[msg]`); export to `.eml` to scrub. Non-scrubbable members pass through untouched. Nesting is followed (depth-limited). |
 
 `--keep Title` (repeatable) spares a named field from the otherwise-aggressive strip.
 `--backup` keeps `<name>.orig` next to an `--in-place` scrub.
 
 Two **opt-in** flags go past metadata into identity data that's technically content:
-`--strip-form-values` blanks PDF form values — AcroForm fields (`/V` `/DV`) and their cached
+`--strip-form-values` blanks PDF form values, AcroForm fields (`/V` `/DV`) and their cached
 appearance, plus the `<xfa:data>` packet of an XFA form (the XFA template and schema are kept);
 `--strip-office-authors` blanks Office tracked-change / comment **author names and dates**
 (the change and comment text stays, so accept/reject still works).
@@ -97,7 +97,7 @@ container the in-place patcher can't parse.
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-cli.svg" alt="metacls inspect and metacls clean in a terminal" width="90%">
 </p>
 
-### Inspect — see what's in the files (read-only)
+### Inspect: see what's in the files (read-only)
 
 ```bash
 metacls inspect ./published-docs
@@ -129,11 +129,11 @@ metacls clean a.pdf b.docx c.jpg --out ./clean
 Useful flags: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
 `--no-verify`, `--no-keep-color-profile`, `--no-keep-orientation`, `--report-lang en|tr`,
 `--password` (encrypted PDFs), `--strip-pdf-id`, `--backup` (keep `<name>.orig` with `--in-place`),
-`--strip-form-values`, `--strip-office-authors` (opt-in — see above),
+`--strip-form-values`, `--strip-office-authors` (opt-in, see above),
 `--jobs N` (scrub N files in parallel), `--quarantine DIR` (overwrite the original but move
-it to `DIR/<date>/` first — recoverable, safer than `--in-place`),
+it to `DIR/<date>/` first, recoverable, safer than `--in-place`),
 `--policy publish|internal|minimal` (named presets),
-`--exclude GLOB` (repeatable — skip files/dirs when walking),
+`--exclude GLOB` (repeatable, skip files/dirs when walking),
 `--no-follow-symlinks` (don't scrub a symlinked file), `--progress` (a progress bar), and the
 group-level `metacls --debug …` (re-raise on the first failing file instead of recording it).
 
@@ -141,7 +141,7 @@ group-level `metacls --debug …` (re-raise on the first failing file instead of
 video and see what's inside before scrubbing.
 
 **Project config:** a `.metacls.toml` in the working directory or a parent (up to the git
-root) sets defaults per command — CLI flags and env vars still win.
+root) sets defaults per command; CLI flags and env vars still win.
 
 ```toml
 [clean]
@@ -153,7 +153,7 @@ keep = ["Title"]
 **Exit codes** (so it works as a CI gate): `0` clean · `1` a file errored · `2` a cleaned file
 still carried metadata on the verify re-scan · `3` (`--check` only) metadata found.
 
-### Diff — track a directory over time
+### Diff: track a directory over time
 
 ```bash
 metacls clean ./published --out ./scan-jan     # once a month, into dated dirs
@@ -163,9 +163,9 @@ metacls diff ./scan-jan ./scan-feb             # what changed?
 
 Shows files added/removed between the two runs and, the useful part, files where metadata
 **reappeared** (someone re-saved the document in an editor). Exit code `1` if anything
-regained metadata — drop it in a cron job.
+regained metadata: drop it in a cron job.
 
-### Watch — keep a drop folder scrubbed
+### Watch: keep a drop folder scrubbed
 
 ```bash
 metacls watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
@@ -189,12 +189,12 @@ place by default; `--to DIR` writes cleaned copies instead. A systemd template u
 metacls web           # opens http://127.0.0.1:8770/
 ```
 
-Drag files onto the page, get them back scrubbed — individually or as a zip — with a
+Drag files onto the page, get them back scrubbed, individually or as a zip, with a
 per-file before/after view and the full report. Past runs are listed under **History**.
-Local, single-user, **no authentication** — don't expose it to a network.
+Local, single-user, **no authentication**. Don't expose it to a network.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI — drag-and-drop file drop zone" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI, drag-and-drop file drop zone" width="90%">
 </p>
 
 ## REST API
@@ -228,10 +228,10 @@ Uploads stream to disk with `--max-upload-mb` / `--max-files` caps. `GET /v1/for
 `GET /v1/health` are open even when an API key is set.
 
 **Auth:** `metacls api --api-key KEY` (or `METACLS_API_KEY`) requires that key on every
-`/v1` route except `/v1/health` and `/v1/formats` — send it as `X-API-Key: KEY` or
+`/v1` route except `/v1/health` and `/v1/formats`: send it as `X-API-Key: KEY` or
 `Authorization: Bearer KEY`. Both `api` and `web` **refuse to bind a non-loopback host**
 (`0.0.0.0`, a LAN IP) with no auth unless you pass `--insecure`; the supported way to expose
-either is to bind `127.0.0.1` and put a reverse proxy in front —
+either is to bind `127.0.0.1` and put a reverse proxy in front.
 **[docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md)** has ready nginx / Caddy configs.
 
 ```bash
@@ -263,48 +263,48 @@ docker run --rm -v "$(pwd)/docs:/work" ghcr.io/gorkemguler/metacls:latest \
 
 Or build locally: `docker build -t metacls .`. `docker compose up --build` runs the web UI;
 `docker compose --profile api up metacls-api` the API. Put a proxy in front before exposing
-either — see [docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md).
+either; see [docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md).
 
 ## How thorough is it?
 
-- **PDF** — a full QPDF rewrite, not an incremental update, so the removed `/Info` and XMP
+- **PDF**: a full QPDF rewrite, not an incremental update, so the removed `/Info` and XMP
   aren't left behind in an old xref section. Annotation authors/dates and embedded-file
   metadata go too; the annotation's visible text and the attached file itself stay.
-  **Signed PDFs are skipped, not broken** — scrubbing would invalidate the signature;
+  **Signed PDFs are skipped, not broken**: scrubbing would invalidate the signature;
   re-export an unsigned copy if you need it cleaned. **Encrypted PDFs** without `--password`
   are skipped; with it, the cleaned copy is written unencrypted (the result says so).
-- **Office / ODF** — the metadata parts are deleted from the package (or, for ODF, emptied),
+- **Office / ODF**: the metadata parts are deleted from the package (or, for ODF, emptied),
   not merely blanked, and the references to them are pruned so nothing dangles.
-- **Images** — `exiftool -all=`, which is the reference tool for this.
+- **Images**: `exiftool -all=`, which is the reference tool for this.
 - **`--verify`** (on by default) re-scans every cleaned file and lists anything still present
   in the report; the CLI exits `2` if so.
-- **Deterministic** — scrubbing the same file twice with the same options gives byte-identical
+- **Deterministic**: scrubbing the same file twice with the same options gives byte-identical
   output (checked in CI), so a scrub is auditable. `--strip-pdf-id` is the deliberate exception.
 
 ### Limitations
 
 - Content is out of scope by design: text in the document body, a visible/scanned signature,
-  text baked into an image — MetaCLS won't touch those. (MetaScout's `--scan-content` finds
+  text baked into an image. MetaCLS won't touch those. (MetaScout's `--scan-content` finds
   them; removing them is a manual edit.)
 - Legacy `.doc / .xls / .ppt` are not scrubbed (convert first).
-- Not a certified sanitisation tool. Verify anything high-stakes yourself — that's what
+- Not a certified sanitisation tool. Verify anything high-stakes yourself: that's what
   `metacls inspect` on the output, or a second pass with MetaScout, is for.
 
 ## Desktop integration
 
-All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)**, one install command each — everything scrubs in place:
+All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)**, one install command each; everything scrubs in place:
 
-- **macOS** — a drag-and-drop `MetaCLS.app` (built with `osacompile`, no Xcode), plus a
+- **macOS**: a drag-and-drop `MetaCLS.app` (built with `osacompile`, no Xcode), plus a
   Finder **Quick Action**.
-- **Windows** — a WinForms **drop window**, a **Send to** menu entry, an Explorer
+- **Windows**: a WinForms **drop window**, a **Send to** menu entry, an Explorer
   **right-click** entry, and a `winget` manifest (template).
-- **Linux** — a `.desktop` launcher / *Open With* handler (with a `zenity` picker), a
+- **Linux**: a `.desktop` launcher / *Open With* handler (with a `zenity` picker), a
   Nautilus/Nemo/Caja **script**, and a `systemd` **watch** unit.
 
 ## CI / hooks
 
 `metacls clean --check` implies `--dry-run` and exits **3** if any file still carries
-metadata (0 if clean, 1 on error) — a gate for pre-commit and CI.
+metadata (0 if clean, 1 on error), a gate for pre-commit and CI.
 
 ```yaml
 # .pre-commit-config.yaml
@@ -329,4 +329,4 @@ audio/video, PyPI, recursive-container scrubbing).
 
 ## License
 
-MIT — see [LICENSE](https://github.com/gorkemguler/MetaCLS/blob/main/LICENSE).
+MIT, see [LICENSE](https://github.com/gorkemguler/MetaCLS/blob/main/LICENSE).
