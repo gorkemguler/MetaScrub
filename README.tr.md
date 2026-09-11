@@ -200,8 +200,8 @@ altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok**. Ağa
 
 Sayfada ikinci bir form daha var: **Ya da FTP'den çek**. Bir sunucu adresi, uzak
 dizin ve isteğe bağlı kullanıcı bilgisi verin; MetaCLS eşleşen tüm dosyaları FTP
-ya da FTPS üzerinden çeker, temizler ve aynı öncesi/sonrası raporunu gösterir —
-elle indirip yükleme derdi yok. Parola yalnızca o istek için kullanılır, hiçbir
+ya da FTPS üzerinden çeker, temizler ve aynı öncesi/sonrası raporunu gösterir,
+elle indirip yükleme derdi olmadan. Parola yalnızca o istek için kullanılır, hiçbir
 yerde saklanmaz ya da loglanmaz. İsteğe bağlı bir onay kutusu, temizlenmiş
 kopyaları doğrudan aynı uzak yollara geri yükleyip orijinallerin üzerine yazar.
 
@@ -297,10 +297,11 @@ yerinde temizler:
 - **macOS**: penceresiz sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok),
   sonuç listeli bir **bırakma penceresi** olan `MetaCLS Drop.app` (PyObjC), ve bir
   Finder **Quick Action**.
-- **Windows**: bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
-  Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
-- **Linux**: bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
-  Nautilus/Nemo/Caja **betiği** ve bir `systemd` **watch** unit'i.
+- **Windows**: markalı bir WinForms **bırakma penceresi**, bir **Gönder** menüsü
+  girdisi, bir Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
+- **Linux**: markalı bir GTK3 **bırakma penceresi**, bir `.desktop` başlatıcı /
+  *Birlikte Aç* işleyici (`zenity` seçici ile), bir Nautilus/Nemo/Caja **betiği**
+  ve bir `systemd` **watch** unit'i.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/desktop-apps.svg" alt="macOS, Windows ve Linux için MetaCLS masaüstü uygulamalarının illüstrasyonu" width="90%">

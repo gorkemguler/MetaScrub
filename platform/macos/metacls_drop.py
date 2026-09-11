@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MetaCLS Drop — a persistent drag-and-drop window, the macOS
+"""MetaCLS Drop -- a persistent drag-and-drop window, the macOS
 counterpart to platform/windows/MetaCLS-drop.ps1. Styled to match the
 project's dark/green branding (see assets/banner.svg, assets/desktop-apps.svg).
 

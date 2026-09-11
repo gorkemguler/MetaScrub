@@ -26,7 +26,7 @@ platform/macos/build-drop-app.sh       # -> /Applications/MetaCLS Drop.app
 ```
 
 The macOS counterpart to Windows' `MetaCLS-drop.ps1`: opens a real
-window you leave open and drop files onto, with a live results log —
+window you leave open and drop files onto, with a live results log,
 unlike `MetaCLS.app` above, which has no window and pops a file picker
 when double-clicked. Needs PyObjC, so the build script sets up its own
 venv (`~/Library/Application Support/MetaCLS/drop-venv`) rather than
@@ -52,8 +52,10 @@ metadata*. Remove it by deleting `~/Library/Services/Scrub metadata.workflow`.
 powershell -ExecutionPolicy Bypass -File platform\windows\MetaCLS-drop.ps1
 ```
 
-A small WinForms window: drop files onto it (or pass them as arguments)
-and they're scrubbed, with a per-file result list.
+A WinForms window styled to match the project's dark/green branding
+(the "meta**cls**" wordmark, a dashed drop zone, a colour-coded result
+list): drop files onto it (or pass them as arguments) and they're
+scrubbed. On Windows 10 1809+/11 the title bar follows in dark mode too.
 
 ### Send-to menu
 
@@ -82,6 +84,18 @@ ready to submit to `winget-pkgs` once a release ships a Windows artifact.
 See the README there.
 
 ## Linux
+
+### Drop window: `metacls_drop_gtk.py`
+
+```bash
+python3 platform/linux/metacls_drop_gtk.py
+```
+
+The GTK3 counterpart to the macOS/Windows drop windows, styled the same
+way: a real window you leave open, drop files onto, and watch a
+colour-coded results log. Needs PyGObject (`python3-gi` on
+Debian/Ubuntu, `python3-gobject` on Fedora, `python-gobject` on Arch;
+usually already installed on GNOME/GTK desktops).
 
 ### Desktop launcher + "Open With" handler
 

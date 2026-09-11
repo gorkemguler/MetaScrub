@@ -199,7 +199,7 @@ Local, single-user, **no authentication**. Don't expose it to a network.
 
 The page also has a second form: **Or pull from FTP**. Point it at a host, remote
 directory, and optional credentials, and MetaCLS fetches every matching file over
-FTP or FTPS, scrubs it, and shows the same before/after report — no manual
+FTP or FTPS, scrubs it, and shows the same before/after report, with no manual
 download/upload round trip. The password is used once for that request and is
 never stored or logged. An opt-in checkbox uploads the scrubbed copies straight
 back to the same remote paths, overwriting the originals.
@@ -304,10 +304,11 @@ All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform
 - **macOS**: a no-window drag-and-drop `MetaCLS.app` (built with `osacompile`, no
   Xcode), a `MetaCLS Drop.app` **drop window** with a results log (PyObjC), plus a
   Finder **Quick Action**.
-- **Windows**: a WinForms **drop window**, a **Send to** menu entry, an Explorer
-  **right-click** entry, and a `winget` manifest (template).
-- **Linux**: a `.desktop` launcher / *Open With* handler (with a `zenity` picker), a
-  Nautilus/Nemo/Caja **script**, and a `systemd` **watch** unit.
+- **Windows**: a branded WinForms **drop window**, a **Send to** menu entry, an
+  Explorer **right-click** entry, and a `winget` manifest (template).
+- **Linux**: a branded GTK3 **drop window**, a `.desktop` launcher / *Open With*
+  handler (with a `zenity` picker), a Nautilus/Nemo/Caja **script**, and a `systemd`
+  **watch** unit.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/desktop-apps.svg" alt="Illustration of the MetaCLS native drop apps for macOS, Windows and Linux" width="90%">

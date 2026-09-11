@@ -7,19 +7,32 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
 ### Added
 - **macOS: `MetaCLS Drop.app`**, a persistent drag-and-drop window (the
-  macOS counterpart to `platform/windows/MetaCLS-drop.ps1`) — open it,
+  macOS counterpart to `platform/windows/MetaCLS-drop.ps1`). Open it,
   leave it open, drop files onto the window, watch a live results log.
   The existing `MetaCLS.app` droplet has no window and pops a file
   picker on double-click, which surprised users expecting a Windows-like
   drop target; both are now available. Built with PyObjC in its own venv
   (`platform/macos/build-drop-app.sh`), so it doesn't touch global Python.
+- **Linux: `platform/linux/metacls_drop_gtk.py`**, a GTK3 drop window,
+  the Linux counterpart to the macOS/Windows drop windows. Previously
+  Linux's only drop option was a one-shot `zenity` picker with no
+  persistent window.
+
+### Changed
+- **All three drop windows now share one look.** `MetaCLS Drop.app`
+  (macOS), `MetaCLS-drop.ps1` (Windows) and `metacls_drop_gtk.py`
+  (Linux) all got the same dark background, the "meta**cls**" wordmark
+  and tagline, a dashed drop zone with the wipe-stroke/document-icon
+  motif, and a colour-coded results log (green ok / red FAIL), matching
+  `assets/desktop-apps.svg` instead of each platform's plain default
+  widget styling.
 
 ## [0.4.0] - 2026-09-11
 
 ### Added
 - **Web UI: pull from FTP.** A second form on the local web UI ("Or pull
-  from FTP") fetches files from an FTP or FTPS server — host, remote
-  directory, optional credentials — scrubs them, and shows the usual
+  from FTP") fetches files from an FTP or FTPS server (host, remote
+  directory, optional credentials), scrubs them, and shows the usual
   before/after report. An opt-in "write back" toggle uploads the
   scrubbed copies to the same remote paths, overwriting the originals.
   Stdlib-only (`ftplib`), no new runtime dependency. The password is
