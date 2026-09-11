@@ -107,6 +107,53 @@ def test_report_reachable_when_output_dir_is_under_a_symlink(tmp_path, dirty_pdf
     assert c.get(f"/zip/{run_id}").status_code == 200
 
 
+def test_form_exposes_ftp_fields(client):
+    html = client.get("/").data
+    assert b'action="/clean-ftp"' in html
+    assert b'name="host"' in html and b'name="password"' in html
+
+
+def test_clean_ftp_rejects_missing_host(client):
+    r = client.post("/clean-ftp", data={"lang": "en"})
+    assert r.status_code == 400
+
+
+def test_clean_ftp_fetches_and_cleans(client, ftp_server, dirty_pdf):
+    (ftp_server["root"] / "leak.pdf").write_bytes(dirty_pdf.read_bytes())
+    r = client.post("/clean-ftp", data={
+        "lang": "en", "host": "127.0.0.1", "port": str(ftp_server["port"]),
+        "username": "tester", "password": "s3cret", "remote_dir": "/",
+        "ftp_recurse": "on",
+    })
+    assert r.status_code == 200
+    assert b"leak.pdf" in r.data
+    assert b"removed" in r.data
+
+
+def test_clean_ftp_wrong_password_shows_form_error(client, ftp_server, dirty_pdf):
+    (ftp_server["root"] / "leak.pdf").write_bytes(dirty_pdf.read_bytes())
+    r = client.post("/clean-ftp", data={
+        "lang": "en", "host": "127.0.0.1", "port": str(ftp_server["port"]),
+        "username": "tester", "password": "WRONG", "remote_dir": "/",
+    })
+    assert r.status_code == 400
+
+
+def test_clean_ftp_writeback_overwrites_remote_file(client, ftp_server, dirty_pdf):
+    remote = ftp_server["root"] / "leak.pdf"
+    remote.write_bytes(dirty_pdf.read_bytes())
+    r = client.post("/clean-ftp", data={
+        "lang": "en", "host": "127.0.0.1", "port": str(ftp_server["port"]),
+        "username": "tester", "password": "s3cret", "remote_dir": "/",
+        "ftp_recurse": "on", "writeback": "on",
+    })
+    assert r.status_code == 200
+
+    import pikepdf
+    with pikepdf.open(str(remote)) as pdf:
+        assert "/Author" not in pdf.docinfo
+
+
 def _latest_run(client) -> str:
     h = client.get("/history").data.decode()
     start = h.index("web-")

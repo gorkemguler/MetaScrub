@@ -3,6 +3,17 @@
 All notable changes to MetaCLS. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
+## [0.4.0] - 2026-09-11
+
+### Added
+- **Web UI: pull from FTP.** A second form on the local web UI ("Or pull
+  from FTP") fetches files from an FTP or FTPS server — host, remote
+  directory, optional credentials — scrubs them, and shows the usual
+  before/after report. An opt-in "write back" toggle uploads the
+  scrubbed copies to the same remote paths, overwriting the originals.
+  Stdlib-only (`ftplib`), no new runtime dependency. The password is
+  used once for the request and never stored or logged.
+
 ## [0.3.1] - 2026-09-11
 
 ### Fixed

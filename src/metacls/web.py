@@ -14,7 +14,14 @@ from ._theme import full_css
 from .cleaner import clean_file_list
 from .config import CONTAINER_EXTENSIONS, MEDIA_EXTENSIONS, CleanConfig
 from .engines import format_support, supported_extensions
+from .ftp_source import FtpFetchError, fetch_ftp, upload_ftp
 from .report import render_html_report, render_json_report
+
+# One FTP pull tops out here regardless of --max-files-style tuning
+# elsewhere -- this is a local convenience feature, not a bulk-import
+# pipeline, and an unbounded recursive listing is an easy way to wedge
+# the request.
+_FTP_MAX_FILES = 200
 
 # 200 MB per upload batch — a local single-user tool, but still worth
 # bounding so a stray multi-GB drop doesn't fill memory/disk.
@@ -52,6 +59,19 @@ _STR = {
         "sum_removed": "fields removed",
         "sum_files": "files",
         "sum_residual": "with residual",
+        "ftp_title": "Or pull from FTP",
+        "ftp_host": "Host",
+        "ftp_port": "Port",
+        "ftp_user": "Username (blank = anonymous)",
+        "ftp_pass": "Password",
+        "ftp_dir": "Remote directory",
+        "ftp_tls": "Use FTPS (TLS)",
+        "ftp_recurse": "Look in subdirectories too",
+        "ftp_writeback": "Also upload the cleaned copies back, overwriting the originals",
+        "ftp_submit": "Fetch and scrub",
+        "ftp_note": "The password is used once for this request only — never stored, "
+                    "never logged.",
+        "ftp_err_host": "FTP host is required.",
     },
     "tr": {
         "tagline": "dosyaları bırak, temizlenmiş halde geri al",
@@ -84,6 +104,19 @@ _STR = {
         "sum_removed": "alan silindi",
         "sum_files": "dosya",
         "sum_residual": "artık kalan",
+        "ftp_title": "Ya da FTP'den çek",
+        "ftp_host": "Sunucu",
+        "ftp_port": "Port",
+        "ftp_user": "Kullanıcı adı (boş = anonymous)",
+        "ftp_pass": "Parola",
+        "ftp_dir": "Uzak dizin",
+        "ftp_tls": "FTPS kullan (TLS)",
+        "ftp_recurse": "Alt dizinlere de bak",
+        "ftp_writeback": "Temizlenmiş kopyaları da geri yükle, orijinallerin üzerine yaz",
+        "ftp_submit": "Çek ve temizle",
+        "ftp_note": "Parola yalnızca bu istek için kullanılır — hiçbir yerde saklanmaz, "
+                    "loglanmaz.",
+        "ftp_err_host": "FTP sunucu adresi gerekli.",
     },
 }
 
@@ -102,6 +135,13 @@ label.msc-opt { display:flex; align-items:center; gap:8px; margin:10px 0; font-s
 @keyframes msc-spin { to { transform:rotate(360deg); } }
 select { background:var(--panel); color:var(--text); border:1px solid var(--border);
   border-radius:7px; padding:5px 8px; font-size:13px; }
+.msc-ftp-grid { display:grid; grid-template-columns:1fr 100px; gap:10px 14px; margin:14px 0; }
+.msc-ftp-grid > div { display:flex; flex-direction:column; gap:4px; }
+.msc-ftp-grid label { font-size:12px; color:var(--muted); }
+.msc-form input[type=text], .msc-form input[type=password], .msc-form input[type=number] {
+  background:var(--panel); color:var(--text); border:1px solid var(--border);
+  border-radius:7px; padding:7px 9px; font-size:13px; font-family:inherit; }
+.msc-hint { font-size:12px; color:var(--muted); margin-top:10px; }
 """
 
 
@@ -166,6 +206,31 @@ drop.onclick=function(){{inp.click();}};inp.onchange=show;
 drop.addEventListener('drop',function(ev){{inp.files=ev.dataTransfer.files;show();}});
 f.addEventListener('submit',function(){{if(inp.files.length){{btn.disabled=true;
   btn.innerHTML='<span class="msc-spin"></span>'+btn.dataset.working;}}}});
+</script>
+<form class="msc-card msc-form" method="post" action="/clean-ftp" id="ff">
+  <input type="hidden" name="lang" value="{lang}">
+  <h4>{s['ftp_title']}</h4>
+  <div class="msc-ftp-grid">
+    <div><label>{s['ftp_host']}</label><input type="text" name="host" placeholder="ftp.example.com" required></div>
+    <div><label>{s['ftp_port']}</label><input type="number" name="port" value="21" min="1" max="65535"></div>
+    <div><label>{s['ftp_user']}</label><input type="text" name="username" autocomplete="username"></div>
+    <div><label>{s['ftp_pass']}</label><input type="password" name="password" autocomplete="current-password"></div>
+  </div>
+  <div><label style="font-size:12px;color:var(--muted)">{s['ftp_dir']}</label>
+    <input type="text" name="remote_dir" value="/" style="width:100%;margin-top:4px"></div>
+  <label class="msc-opt" style="margin-top:12px"><input type="checkbox" name="use_tls"> {s['ftp_tls']}</label>
+  <label class="msc-opt"><input type="checkbox" name="ftp_recurse" checked> {s['ftp_recurse']}</label>
+  <label class="msc-opt"><input type="checkbox" name="ftp_media"> {s['opt_media']}</label>
+  <label class="msc-opt"><input type="checkbox" name="ftp_container_recurse"> {s['opt_recurse']}</label>
+  <label class="msc-opt"><input type="checkbox" name="writeback"> {s['ftp_writeback']}</label>
+  <button type="submit" class="msc-btn" id="fbtn" data-working="{s['working']}"
+    style="margin-top:14px">{s['ftp_submit']}</button>
+  <div class="msc-hint">{s['ftp_note']}</div>
+</form>
+<script>
+document.getElementById('ff').addEventListener('submit',function(){{
+  var b=document.getElementById('fbtn');b.disabled=true;
+  b.innerHTML='<span class="msc-spin"></span>'+b.dataset.working;}});
 </script>"""
     return _page(lang, "new", body)
 
@@ -296,6 +361,78 @@ def create_app(output_dir: str = "./metacls_cleaned") -> Flask:
             recurse=recurse,
         )
         report = clean_file_list(saved, cfg, base_dir=up_dir)
+
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(run_path, "report.json"), "w", encoding="utf-8") as fh:
+            fh.write(render_json_report(report))
+        with open(os.path.join(run_path, "report.html"), "w", encoding="utf-8") as fh:
+            fh.write(render_html_report(report, lang=_lang(request.form.get("report_lang"))))
+
+        return _results(lang, run_id, report)
+
+    @app.post("/clean-ftp")
+    def clean_ftp():
+        lang = _lang(request.form.get("lang"))
+        host = (request.form.get("host") or "").strip()
+        if not host:
+            return _form(lang, _STR[lang]["ftp_err_host"]), 400
+
+        recurse = bool(request.form.get("ftp_container_recurse"))
+        filetypes = list(CleanConfig().filetypes)
+        if request.form.get("ftp_media"):
+            filetypes = sorted(set(filetypes) | MEDIA_EXTENSIONS)
+        if recurse:
+            filetypes = sorted(set(filetypes) | CONTAINER_EXTENSIONS)
+
+        run_id = "ftp-" + datetime.now().strftime("%Y%m%d-%H%M%S-%f")[:-3]
+        run_path = os.path.join(state.output_dir, run_id)
+        up_dir = os.path.join(run_path, "uploads")
+        out_dir = os.path.join(run_path, "cleaned")
+        os.makedirs(up_dir, exist_ok=True)
+
+        try:
+            port = int(request.form.get("port") or 21)
+        except ValueError:
+            port = 21
+        username = request.form.get("username") or ""
+        password = request.form.get("password") or ""
+        remote_dir = request.form.get("remote_dir") or "/"
+        use_tls = bool(request.form.get("use_tls"))
+
+        try:
+            fetched = fetch_ftp(
+                host=host, port=port, username=username, password=password,
+                remote_dir=remote_dir, dest_dir=up_dir, extensions=set(filetypes),
+                use_tls=use_tls, recursive=bool(request.form.get("ftp_recurse")),
+                max_files=_FTP_MAX_FILES,
+            )
+        except FtpFetchError as exc:
+            return _form(lang, str(exc)), 400
+
+        cfg = CleanConfig(
+            filetypes=filetypes,
+            output_dir=out_dir,
+            keep_fields=["Title"] if request.form.get("keep_title") else [],
+            keep_color_profile=bool(request.form.get("keep_icc")),
+            recurse=recurse,
+        )
+        saved = [f.local_path for f in fetched.files]
+        report = clean_file_list(saved, cfg, base_dir=up_dir)
+
+        if request.form.get("writeback"):
+            by_src = {r.src_path: r for r in report.results}
+            to_upload = [
+                (f.remote_path, by_src[f.local_path].out_path)
+                for f in fetched.files
+                if f.local_path in by_src
+                and by_src[f.local_path].status == "cleaned"
+                and by_src[f.local_path].out_path
+            ]
+            try:
+                upload_ftp(host=host, port=port, username=username, password=password,
+                          remote_dir=remote_dir, files=to_upload, use_tls=use_tls)
+            except FtpFetchError:
+                pass  # cleaned copies are still on disk / downloadable either way
 
         os.makedirs(out_dir, exist_ok=True)
         with open(os.path.join(run_path, "report.json"), "w", encoding="utf-8") as fh:

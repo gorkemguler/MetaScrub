@@ -1,6 +1,6 @@
 [project]
 name = "metacls"
-version = "0.3.1"
+version = "0.4.0"
 description = "Bulk metadata scrubbing for PDF/Office/image files — the remediation companion to MetaScout."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -78,6 +78,7 @@ dev = [
     "uvicorn>=0.29",
     "python-multipart>=0.0.9",
     "Pillow>=10.0",
+    "pyftpdlib>=1.5",  # test-only: a local FTP server for test_ftp_source.py
 ]
 
 [project.urls]

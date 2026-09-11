@@ -176,6 +176,15 @@ release-day / infra work that needs the maintainer's accounts (actually
 publish to PyPI + GHCR + the winget/Homebrew channels, notarise the
 macOS app) or is deferred polish, see below.
 
+### v0.4: web UI FTP pull (**done**)
+- The web UI has a second form, "Or pull from FTP": host, remote
+  directory, optional credentials, TLS toggle. MetaCLS fetches every
+  matching file over FTP/FTPS, scrubs it, and shows the usual
+  before/after report; an opt-in "write back" toggle uploads the
+  scrubbed copies to the same remote paths. Stdlib-only (`ftplib`).
+- *Still to do:* the same as a `metacls clean --ftp ...` CLI/API
+  equivalent, and SFTP support (see the `watch` daemon note below).
+
 ### `metacls watch`: the FTP/SFTP drop-box daemon (**done**)
 - `metacls watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
 - Polling loop with a settle window (no half-uploaded files), a JSON state

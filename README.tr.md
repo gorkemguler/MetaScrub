@@ -198,6 +198,13 @@ altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok**. Ağa
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü, sürükle-bırak dosya alanı" width="90%">
 </p>
 
+Sayfada ikinci bir form daha var: **Ya da FTP'den çek**. Bir sunucu adresi, uzak
+dizin ve isteğe bağlı kullanıcı bilgisi verin; MetaCLS eşleşen tüm dosyaları FTP
+ya da FTPS üzerinden çeker, temizler ve aynı öncesi/sonrası raporunu gösterir —
+elle indirip yükleme derdi yok. Parola yalnızca o istek için kullanılır, hiçbir
+yerde saklanmaz ya da loglanmaz. İsteğe bağlı bir onay kutusu, temizlenmiş
+kopyaları doğrudan aynı uzak yollara geri yükleyip orijinallerin üzerine yazar.
+
 ## REST API
 
 Linux sunucusu, FTP bırakma kutusu, ya da temizlenmesi için dosya devreden bir CI hattı için:

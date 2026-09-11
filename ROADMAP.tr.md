@@ -172,6 +172,16 @@ yayın-günü / altyapı işleri (PyPI + GHCR + winget/Homebrew kanallarına
 gerçekten yayınlamak, macOS uygulamasını noterletmek) ya da ertelenmiş
 cila, aşağıya bakın.
 
+### v0.4: web arayüzünde FTP'den çekme (**tamam**)
+- Web arayüzünde ikinci bir form var, "Ya da FTP'den çek": sunucu, uzak
+  dizin, isteğe bağlı kullanıcı bilgisi, TLS anahtarı. MetaCLS eşleşen
+  tüm dosyaları FTP/FTPS üzerinden çeker, temizler ve her zamanki
+  öncesi/sonrası raporunu gösterir; isteğe bağlı bir "geri yükle"
+  anahtarı temizlenmiş kopyaları aynı uzak yollara geri yükler. Yalnızca
+  stdlib (`ftplib`).
+- *Hâlâ yapılacak:* aynısının bir `metacls clean --ftp ...` CLI/API
+  karşılığı, ve SFTP desteği (aşağıdaki `watch` daemon notuna bakın).
+
 ### `metacls watch`: FTP/SFTP bırakma-kutusu daemon'u (**tamam**)
 - `metacls watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
 - Settle penceresiyle poll döngüsü (yarım yüklenmiş dosya yok), yeniden

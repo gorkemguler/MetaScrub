@@ -332,3 +332,42 @@ def dirty_tree(tmp_path, dirty_pdf, dirty_docx, dirty_jpg):
     shutil.copy(dirty_docx, sub / "memo2.docx")
     (root / "notes.txt").write_text("not a supported type")
     return root
+
+
+@pytest.fixture
+def ftp_server(tmp_path):
+    """A local FTP server (pyftpdlib) rooted at an empty tmp dir, for
+    testing ftp_source.py / the web UI's "From FTP" form without a real
+    network. Yields {"root": Path, "port": int}; user tester/s3cret plus
+    anonymous, both writable (needed for the --writeback round trip)."""
+    pytest.importorskip("pyftpdlib")
+    import threading
+
+    from pyftpdlib.authorizers import DummyAuthorizer
+    from pyftpdlib.handlers import FTPHandler
+    from pyftpdlib.servers import FTPServer
+
+    root = tmp_path / "ftproot"
+    root.mkdir()
+    authorizer = DummyAuthorizer()
+    authorizer.add_user("tester", "s3cret", str(root), perm="elradfmw")
+    authorizer.add_anonymous(str(root), perm="elr")
+    handler = FTPHandler
+    handler.authorizer = authorizer
+    handler.banner = "metacls test FTP server"
+    server = FTPServer(("127.0.0.1", 0), handler)
+    port = server.address[1]
+
+    def _run() -> None:
+        try:
+            server.serve_forever()
+        except OSError:
+            pass  # close_all() below closes our fds out from under the poll loop
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+    try:
+        yield {"root": root, "port": port}
+    finally:
+        server.close_all()
+        thread.join(timeout=2)

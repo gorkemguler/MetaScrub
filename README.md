@@ -197,6 +197,13 @@ Local, single-user, **no authentication**. Don't expose it to a network.
   <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI, drag-and-drop file drop zone" width="90%">
 </p>
 
+The page also has a second form: **Or pull from FTP**. Point it at a host, remote
+directory, and optional credentials, and MetaCLS fetches every matching file over
+FTP or FTPS, scrubs it, and shows the same before/after report — no manual
+download/upload round trip. The password is used once for that request and is
+never stored or logged. An opt-in checkbox uploads the scrubbed copies straight
+back to the same remote paths, overwriting the originals.
+
 ## REST API
 
 For a Linux server, an FTP drop-box, or a CI pipeline that needs to hand files off to be
