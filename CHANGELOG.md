@@ -3,6 +3,18 @@
 All notable changes to MetaCLS. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
+## [0.3.1] — 2026-09-11
+
+### Fixed
+- README images (`banner.svg`, the three screenshots) and every relative
+  link to another repo file (`ROADMAP.md`, `LICENSE`, `docs/`,
+  `platform/`) used repo-relative paths. GitHub resolves those against
+  the repo, but PyPI renders the description standalone with no such
+  base — the banner and screenshots didn't load on
+  [pypi.org/project/metacls](https://pypi.org/project/metacls/) and the
+  doc links 404'd. Rewritten to absolute `github.com/gorkemguler/MetaCLS`
+  URLs, which render correctly on both GitHub and PyPI.
+
 ## [0.3.0] — 2026-09-11
 
 The v0.3 "gap-closing sweep": nine batches closing format, container,

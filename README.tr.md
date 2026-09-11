@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="MetaCLS" width="100%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/banner.svg" alt="MetaCLS" width="100%">
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 <p align="center"><sub><a href="README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
 
 <p align="center">
-  <img src="assets/screenshot-report.png" alt="MetaCLS öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
 </p>
 
 ---
@@ -94,7 +94,7 @@ ayrıştıramadığı eski bir konteyner için yedek olarak kullanılır.
 ## CLI
 
 <p align="center">
-  <img src="assets/screenshot-cli.svg" alt="terminalde metacls inspect ve metacls clean" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-cli.svg" alt="terminalde metacls inspect ve metacls clean" width="90%">
 </p>
 
 ### Inspect — dosyalarda ne var, göster (salt-okunur)
@@ -195,7 +195,7 @@ bazında öncesi/sonrası görünümü ve tam raporla birlikte. Önceki çalış
 altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok** — ağa açmayın.
 
 <p align="center">
-  <img src="assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
 </p>
 
 ## REST API

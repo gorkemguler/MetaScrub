@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="MetaCLS" width="100%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/banner.svg" alt="MetaCLS" width="100%">
 </p>
 
 <p align="center">
@@ -18,10 +18,10 @@
   <sub>Pairs with <a href="https://github.com/gorkemguler/MetaScout">MetaScout</a>: MetaScout <i>finds</i> the leaks, MetaCLS <i>fixes</i> them.</sub>
 </p>
 
-<p align="center"><sub>🇬🇧 English · <a href="README.tr.md">🇹🇷 Türkçe</a></sub></p>
+<p align="center"><sub>🇬🇧 English · <a href="https://github.com/gorkemguler/MetaCLS/blob/main/README.tr.md">🇹🇷 Türkçe</a></sub></p>
 
 <p align="center">
-  <img src="assets/screenshot-report.png" alt="MetaCLS before/after report — 3 files, 18 metadata fields removed, 0 residual" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-report.png" alt="MetaCLS before/after report — 3 files, 18 metadata fields removed, 0 residual" width="90%">
 </p>
 
 ---
@@ -94,7 +94,7 @@ container the in-place patcher can't parse.
 ## CLI
 
 <p align="center">
-  <img src="assets/screenshot-cli.svg" alt="metacls inspect and metacls clean in a terminal" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-cli.svg" alt="metacls inspect and metacls clean in a terminal" width="90%">
 </p>
 
 ### Inspect — see what's in the files (read-only)
@@ -181,7 +181,7 @@ second watcher off the same directory (a lock left by a dead process is stolen).
 `--pattern GLOB` (repeatable) narrows what's picked up; `-j/--jobs N` scrubs a backlog in
 parallel; state entries for files that have since vanished are pruned each pass. Scrubs in
 place by default; `--to DIR` writes cleaned copies instead. A systemd template unit is in
-[`platform/linux/`](platform/linux/metacls-watch@.service).
+[`platform/linux/`](https://github.com/gorkemguler/MetaCLS/blob/main/platform/linux/metacls-watch@.service).
 
 ## Web UI
 
@@ -194,7 +194,7 @@ per-file before/after view and the full report. Past runs are listed under **His
 Local, single-user, **no authentication** — don't expose it to a network.
 
 <p align="center">
-  <img src="assets/screenshot-web.png" alt="MetaCLS local web UI — drag-and-drop file drop zone" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI — drag-and-drop file drop zone" width="90%">
 </p>
 
 ## REST API
@@ -232,7 +232,7 @@ Uploads stream to disk with `--max-upload-mb` / `--max-files` caps. `GET /v1/for
 `Authorization: Bearer KEY`. Both `api` and `web` **refuse to bind a non-loopback host**
 (`0.0.0.0`, a LAN IP) with no auth unless you pass `--insecure`; the supported way to expose
 either is to bind `127.0.0.1` and put a reverse proxy in front —
-**[docs/reverse-proxy.md](docs/reverse-proxy.md)** has ready nginx / Caddy configs.
+**[docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md)** has ready nginx / Caddy configs.
 
 ```bash
 metacls api --host 0.0.0.0 --api-key "$(openssl rand -hex 24)"
@@ -263,7 +263,7 @@ docker run --rm -v "$(pwd)/docs:/work" ghcr.io/gorkemguler/metacls:latest \
 
 Or build locally: `docker build -t metacls .`. `docker compose up --build` runs the web UI;
 `docker compose --profile api up metacls-api` the API. Put a proxy in front before exposing
-either — see [docs/reverse-proxy.md](docs/reverse-proxy.md).
+either — see [docs/reverse-proxy.md](https://github.com/gorkemguler/MetaCLS/blob/main/docs/reverse-proxy.md).
 
 ## How thorough is it?
 
@@ -292,7 +292,7 @@ either — see [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
 ## Desktop integration
 
-All in **[`platform/`](platform/)**, one install command each — everything scrubs in place:
+All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform)**, one install command each — everything scrubs in place:
 
 - **macOS** — a drag-and-drop `MetaCLS.app` (built with `osacompile`, no Xcode), plus a
   Finder **Quick Action**.
@@ -323,10 +323,10 @@ metadata (0 if clean, 1 on error) — a gate for pre-commit and CI.
 
 ## Roadmap
 
-See **[ROADMAP.md](ROADMAP.md)** for what's shipped, the known limitations, and the backlog
+See **[ROADMAP.md](https://github.com/gorkemguler/MetaCLS/blob/main/ROADMAP.md)** for what's shipped, the known limitations, and the backlog
 (inotify watch, SFTP mode, `--jobs`, `--quarantine`, `.metacls.toml`, policy profiles,
 audio/video, PyPI, recursive-container scrubbing).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/gorkemguler/MetaCLS/blob/main/LICENSE).
