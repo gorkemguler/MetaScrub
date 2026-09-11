@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 
 from ..config import AUDIO_EXTENSIONS, MEDIA_EXTENSIONS, VIDEO_EXTENSIONS, CleanConfig
@@ -146,7 +147,7 @@ def _strip_audio(src: str, dst: str) -> tuple[bool, str]:
 
 
 def _ext(path: str) -> str:
-    base = path.rsplit("/", 1)[-1]
+    base = os.path.basename(path)
     return base.rsplit(".", 1)[-1].lower() if "." in base else ""
 
 

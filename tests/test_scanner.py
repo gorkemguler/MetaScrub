@@ -10,7 +10,7 @@ from metascrub.scanner import iter_files
 
 def test_walks_recursively_and_filters_by_extension(dirty_tree):
     files = iter_files([str(dirty_tree)], DEFAULT_FILETYPES)
-    names = sorted(f.rsplit("/", 1)[-1] for f in files)
+    names = sorted(os.path.basename(f) for f in files)
     assert names == ["forecast.pdf", "memo.docx", "memo2.docx", "photo.jpg"]
 
 
