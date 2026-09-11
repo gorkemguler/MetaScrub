@@ -197,7 +197,15 @@ class Watcher:
             if self._done.get(path) == st.st_mtime:
                 continue  # already scrubbed at this mtime
             prev = self._pending.get(path)
-            if prev == key and now - st.st_mtime >= self.settle:
+            # The two-poll `prev == key` check is what actually detects
+            # "unchanged since last poll", regardless of clocks; the
+            # wall-clock margin below is an *extra* safety window and is
+            # skipped entirely for settle<=0 — comparing time.time() to a
+            # filesystem mtime can disagree by a few ms (NTFS's mtime
+            # clock isn't the same clock, notably on Windows), which would
+            # otherwise make an already-unchanged file spuriously wait one
+            # more poll.
+            if prev == key and (self.settle <= 0 or now - st.st_mtime >= self.settle):
                 ready.append(path)
         self._pending = seen_now
 
