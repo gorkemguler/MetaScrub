@@ -1,6 +1,6 @@
 <p align="center"><sub>🇬🇧 English · <a href="ROADMAP.tr.md">🇹🇷 Türkçe</a></sub></p>
 
-# MetaScrub roadmap
+# MetaCLS roadmap
 
 Where the project stands and what's next. Grouped by theme; roughly
 ordered within each group. Nothing here is a promise — it's the working
@@ -10,7 +10,7 @@ backlog.
 
 ## Shipped since v0.1
 
-- **Encrypted PDFs** — `metascrub clean --password …` / `inspect --password`.
+- **Encrypted PDFs** — `metacls clean --password …` / `inspect --password`.
   Without a password an encrypted PDF is a clean `skipped` (not a raw
   error); a wrong password is a clear `error`; the scrubbed copy is
   written unencrypted and the result says so. *(closes L4)*
@@ -46,7 +46,7 @@ backlog.
   `comments.xml`, headers/footers, and the `people.xml` / `authors.xml` /
   `persons` registries (Word / PowerPoint / Excel); the change and
   comment *text* is kept so accept/reject still works. *(part of L5)*
-- **`metascrub diff <runA> <runB>`** — compares two run reports (or run
+- **`metacls diff <runA> <runB>`** — compares two run reports (or run
   dirs): files added / removed, and — the point — files where metadata
   *reappeared* between runs (someone re-saved the document). Exit code 1
   when any file regained metadata, for monitoring a tree over time.
@@ -59,8 +59,8 @@ backlog.
   (py 3.10–3.13 × Linux/macOS/Windows), a `slow` pytest marker + a
   session-scoped legacy-`.doc` fixture (`pytest -q` ~60 s → ~12 s),
   `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`.
-- **API auth + limits** — `metascrub api --api-key` (env
-  `METASCRUB_API_KEY`) required on every `/v1` route bar `/v1/health`, as
+- **API auth + limits** — `metacls api --api-key` (env
+  `METACLS_API_KEY`) required on every `/v1` route bar `/v1/health`, as
   `X-API-Key` or `Authorization: Bearer`. Uploads stream straight to a
   temp file (never the whole batch in memory) with `--max-upload-mb` /
   `--max-files` caps → 413. Both `web` and `api` **refuse to bind a
@@ -71,9 +71,9 @@ backlog.
   interrupted by a service restart`, and `--run-ttl-days N` prunes old
   finished jobs + their run dirs on startup. *(part of L10)*
 - **Container** — the image runs as a non-root user (uid 1000), has a
-  `HEALTHCHECK`, and `metascrub api --log-json` emits one JSON
+  `HEALTHCHECK`, and `metacls api --log-json` emits one JSON
   access-log line per request. `docker-compose` API service now takes
-  `METASCRUB_API_KEY` and a 30-day TTL.
+  `METACLS_API_KEY` and a 30-day TTL.
 - **Audio / video** — a new `MediaEngine` (opt-in via `--media`). Audio
   (`mp3/m4a/flac/ogg/opus/wav/aiff`) uses `mutagen` — every tag and
   embedded cover art. Video (`mp4/mov/m4v/...`) uses exiftool to clear
@@ -121,7 +121,7 @@ Ordered batches, each landing as its own commit:
    opt-in exception)*
 3. ~~**`watch` hardening** — lockfile (one watcher per dir), `--pattern`
    glob filter, prune state entries for vanished files, `--jobs`
-   pass-through.~~ **Done.** `.metascrub-watch.lock` (PID-stamped, steals
+   pass-through.~~ **Done.** `.metacls-watch.lock` (PID-stamped, steals
    a dead owner's lock); repeatable `--pattern GLOB`; `-j/--jobs N`
    (settled backlog scrubbed in one `clean_paths` call); vanished-file
    state entries pruned per scan.
@@ -143,15 +143,15 @@ Ordered batches, each landing as its own commit:
 6. ~~**More containers** — `.tar`/`.tar.gz` (stdlib), `.msg` (optional
    `extract-msg`), `.7z` (optional `py7zr`).~~ **Done.** `.tar` +
    `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; also normalises the
-   uid/gid/uname/mtime member headers), `.7z` (`metascrub[archive]`),
-   `.msg` (`metascrub[msg]`, read-only — `inspect` only).
+   uid/gid/uname/mtime member headers), `.7z` (`metacls[archive]`),
+   `.msg` (`metacls[msg]`, read-only — `inspect` only).
 7. ~~**Native drop apps**~~ **Done.**
-   - macOS: `platform/macos/build-app.sh` → `MetaScrub.app`, an
+   - macOS: `platform/macos/build-app.sh` → `MetaCLS.app`, an
      `osacompile` droplet (no Xcode); the Quick Action stays.
-   - Windows: `MetaScrub-drop.ps1` (WinForms drop window),
+   - Windows: `MetaCLS-drop.ps1` (WinForms drop window),
      `install-sendto.ps1` (*Send to* entry), a `winget` manifest template
      in `platform/windows/winget/`; the context-menu entry stays.
-   - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
+   - Linux: `metacls.desktop` + `metacls-drop.sh` (`.desktop`
      launcher / *Open With* handler, `zenity` picker),
      `install-desktop.sh`; the Nautilus script stays.
 8. ~~**Web/API parity** — `--recurse` / `--media` on the web form and the
@@ -162,7 +162,7 @@ Ordered batches, each landing as its own commit:
    present. `clean_file_list` now honours `cfg.filetypes` as an
    allow-list so the toggles actually gate. Screenshots refreshed.
 9. ~~**Ship pipeline** — `.github/workflows/docker.yml` builds and pushes
-   `ghcr.io/gorkemguler/metascrub` on a tag; document the nginx/Caddy
+   `ghcr.io/gorkemguler/metacls` on a tag; document the nginx/Caddy
    reverse-proxy recipe next to `--api-key`.~~ **Done.**
    `docker.yml` builds a multi-arch image and pushes `:<version>` /
    `:<major.minor>` / `:latest` (tags) and `:edge` (main) to GHCR;
@@ -176,8 +176,8 @@ release-day / infra work that needs the maintainer's accounts (actually
 publish to PyPI + GHCR + the winget/Homebrew channels, notarise the
 macOS app) or is deferred polish — see below.
 
-### `metascrub watch` — the FTP/SFTP drop-box daemon — **done**
-- `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
+### `metacls watch` — the FTP/SFTP drop-box daemon — **done**
+- `metacls watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
 - Polling loop with a settle window (no half-uploaded files), a JSON state
   file so restarts don't reprocess, re-drop detection, and a systemd
   template unit in `platform/linux/`.
@@ -185,11 +185,11 @@ macOS app) or is deferred polish — see below.
   from a remote drop dir and pushes the cleaned file back.
 
 ### Platform wrappers (the "right-click / plugin" story) — **done**
-- **macOS** — a drag-and-drop `MetaScrub.app` (`build-app.sh`,
+- **macOS** — a drag-and-drop `MetaCLS.app` (`build-app.sh`,
   `osacompile`, no Xcode) + the Finder Quick Action
   (`install-quick-action.sh`). *To do:* Developer-ID signing +
   notarisation, a Homebrew formula.
-- **Windows** — a WinForms drop window (`MetaScrub-drop.ps1`), a *Send
+- **Windows** — a WinForms drop window (`MetaCLS-drop.ps1`), a *Send
   to* entry (`install-sendto.ps1`), an HKCU right-click entry
   (`install-context-menu.ps1`), and a `winget` manifest template. *To
   do:* a real release artifact behind the winget manifest, an
@@ -199,15 +199,15 @@ macOS app) or is deferred polish — see below.
   `.deb` / `.rpm` / AUR, a Dolphin service menu.
 
 ### CI / DevSecOps integration — **done**
-- `metascrub clean --check` (exit 3 on metadata), a `.pre-commit-hooks.yaml`
-  (`id: metascrub`), and a composite **GitHub Action** (`action.yml`,
+- `metacls clean --check` (exit 3 on metadata), a `.pre-commit-hooks.yaml`
+  (`id: metacls`), and a composite **GitHub Action** (`action.yml`,
   `check` / `fix` modes). *To do:* publish the action to the Marketplace,
   a GitLab CI template, and a PR-comment reporter.
 
 ## Later — v1.0 (polish + scale)
 
 Shipped: `--jobs N` (thread-pool parallel scrub), `--quarantine DIR`,
-`.metascrub.toml` project config, `--policy publish|internal|minimal`, a
+`.metacls.toml` project config, `--policy publish|internal|minimal`, a
 collapsible/filterable/printable HTML report, and a
 `release.yml` (tag → build → PyPI Trusted Publishing + GitHub Release).
 
@@ -221,7 +221,7 @@ Still open:
 
 ## Someday — bigger bets
 
-- **Recursive containers** — done: `metascrub clean --recurse` descends
+- **Recursive containers** — done: `metacls clean --recurse` descends
   into `.zip` / `.tar*` / `.7z` archives and `.eml` emails
   (`engines/container.py`), scrubs each member, repacks, depth-limited.
   `.msg` (Outlook) is inspect-only. Still open: a writable `.msg` path,

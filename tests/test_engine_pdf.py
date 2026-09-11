@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pikepdf
 
-from metascrub.config import CleanConfig
-from metascrub.engines.pdf import PdfEngine
+from metacls.config import CleanConfig
+from metacls.engines.pdf import PdfEngine
 
 
 def test_probe_lists_docinfo_and_xmp(dirty_pdf):

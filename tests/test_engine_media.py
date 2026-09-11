@@ -7,9 +7,9 @@ pytest.importorskip("mutagen")
 import mutagen  # noqa: E402
 from mutagen.easyid3 import EasyID3  # noqa: E402
 
-from metascrub.config import CleanConfig  # noqa: E402
-from metascrub.engines import engine_for  # noqa: E402
-from metascrub.engines.media import MediaEngine  # noqa: E402
+from metacls.config import CleanConfig  # noqa: E402
+from metacls.engines import engine_for  # noqa: E402
+from metacls.engines.media import MediaEngine  # noqa: E402
 
 # MPEG-1 Layer III, 128 kbps, 44100 Hz, mono -> 417-byte frames.
 _FRAME = bytes.fromhex("fffb9040") + b"\x00" * (417 - 4)

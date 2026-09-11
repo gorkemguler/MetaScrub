@@ -4,7 +4,7 @@ name: Release
 #
 # Publishing uses PyPI Trusted Publishing (OIDC) — no API token. One-time
 # setup: on https://pypi.org/manage/account/publishing/ add a pending
-# publisher for project "metascrub", owner "gorkemguler", repo "MetaScrub",
+# publisher for project "metacls", owner "gorkemguler", repo "MetaCLS",
 # workflow "release.yml", environment "pypi".
 
 on:
@@ -25,7 +25,7 @@ jobs:
           python-version: "3.12"
       - run: pip install build
       - run: python -m build
-      - run: pip install dist/*.whl && metascrub --version
+      - run: pip install dist/*.whl && metacls --version
       - uses: actions/upload-artifact@v4
         with:
           name: dist

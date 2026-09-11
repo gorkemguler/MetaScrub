@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to MetaScrub. Dates are ISO. This project aims to
+All notable changes to MetaCLS. Dates are ISO. This project aims to
 follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
 
 ## [0.3.0] — 2026-09-11
@@ -12,7 +12,7 @@ publish workflows.
 ### Added
 - **Container publishing**: `.github/workflows/docker.yml` builds a
   multi-arch (amd64 + arm64) image and pushes it to
-  `ghcr.io/gorkemguler/metascrub` — `:<version>` + `:<major.minor>` +
+  `ghcr.io/gorkemguler/metacls` — `:<version>` + `:<major.minor>` +
   `:latest` on a `v*` tag, `:edge` on `main`. No secrets (GITHUB_TOKEN).
 - **`docs/reverse-proxy.md`**: ready nginx and Caddy configs for putting
   the loopback-bound web UI / API behind TLS + auth, linked from the
@@ -25,20 +25,20 @@ publish workflows.
   (exiftool, LibreOffice, mutagen, py7zr, extract-msg) are installed.
   Screenshots refreshed.
 - **Native drop apps** in `platform/`:
-  - macOS: `MetaScrub.app`, a drag-and-drop droplet built with
+  - macOS: `MetaCLS.app`, a drag-and-drop droplet built with
     `osacompile` (no Xcode) — `platform/macos/build-app.sh`.
-  - Windows: `MetaScrub-drop.ps1` (a WinForms drop window),
+  - Windows: `MetaCLS-drop.ps1` (a WinForms drop window),
     `install-sendto.ps1` (a *Send to* menu entry), and a `winget`
     manifest template under `platform/windows/winget/`.
-  - Linux: `metascrub.desktop` + `metascrub-drop.sh` (a `.desktop`
+  - Linux: `metacls.desktop` + `metacls-drop.sh` (a `.desktop`
     launcher / *Open With* handler with a `zenity` picker) —
     `platform/linux/install-desktop.sh`.
 - **More `--recurse` containers**: `.tar` and its compressed forms
   (`.tar.gz` / `.tgz` / `.tar.bz2` / `.tar.xz`, via stdlib `tarfile`) —
   members are scrubbed and the per-member `uid` / `gid` / `uname` /
   `gname` / `mtime` headers (the packer's own identity) are normalised
-  to zero. `.7z` via optional `py7zr` (`metascrub[archive]`). `.msg`
-  (Outlook) via optional `extract-msg` (`metascrub[msg]`) is **read-only**
+  to zero. `.7z` via optional `py7zr` (`metacls[archive]`). `.msg`
+  (Outlook) via optional `extract-msg` (`metacls[msg]`) is **read-only**
   — `inspect --recurse` lists what's inside; `clean` skips it (rewriting
   the CFB is out of scope).
 - **Matroska / WebM / AVI metadata** (`engines/ebml_riff.py`): exiftool
@@ -53,7 +53,7 @@ publish workflows.
   `--no-follow-symlinks` (don't scrub a symlinked file found in a walk —
   writing through it would escape the tree) on `clean` and `inspect`.
 - **`--progress`** on `clean` — a `rich` bar for large trees.
-- **`metascrub --debug`** (group-level) — re-raise on the first failing
+- **`metacls --debug`** (group-level) — re-raise on the first failing
   file instead of recording it as an `error` result.
 - **`inspect --media` / `inspect --recurse`** — mirror `clean`, so you
   can look inside an archive or at a video before scrubbing.
@@ -61,13 +61,13 @@ publish workflows.
 - `tool_versions()` (embedded in every report) now also reports
   `olefile`, `mutagen`, `pillow` and the LibreOffice path.
 - Repo: `.editorconfig`, `CODEOWNERS`, issue forms + a PR template; CI
-  smoke-tests the `metascrub` entry point.
-- **`metascrub watch` hardening**: a PID-stamped `.metascrub-watch.lock`
+  smoke-tests the `metacls` entry point.
+- **`metacls watch` hardening**: a PID-stamped `.metacls-watch.lock`
   keeps a second watcher off the same directory (a lock held by a dead
   process is stolen); `--pattern GLOB` (repeatable) filters what's picked
   up; `-j/--jobs N` scrubs a settled backlog through the thread pool in
   one pass; state entries for files that have since vanished are pruned
-  each scan so `.metascrub-watch.json` can't grow without bound.
+  each scan so `.metacls-watch.json` can't grow without bound.
 - **PDF XFA forms**: `--strip-form-values` now also blanks the
   `<xfa:data>` subtree of every `/AcroForm/XFA` packet (array form or a
   single `xdp:xdp` stream) — that's the data typed into an XFA form. The
@@ -111,29 +111,29 @@ publish workflows.
 - **Office**: opt-in `--strip-office-authors` — blanks tracked-change /
   comment author names + dates across Word / PowerPoint / Excel; the text
   is kept.
-- `metascrub diff <runA> <runB>` — compare two run reports; exit 1 when a
+- `metacls diff <runA> <runB>` — compare two run reports; exit 1 when a
   file regained metadata.
 - `--backup` — keep `<name>.orig` next to an `--in-place` scrub.
 - Golden-corpus test (`tests/test_corpus.py`), `ruff` + `mypy` config, a
   GitHub Actions CI matrix, and a `slow` pytest marker.
-- **REST API**: `--api-key` (env `METASCRUB_API_KEY`) on every `/v1` route
+- **REST API**: `--api-key` (env `METACLS_API_KEY`) on every `/v1` route
   except `/v1/health`; streaming uploads with `--max-upload-mb` /
   `--max-files` caps; a SQLite-backed job registry so status survives a
   restart (`--run-ttl-days` prunes old runs); `--log-json` access log.
-  `metascrub api` / `web` refuse a non-loopback bind without auth unless
+  `metacls api` / `web` refuse a non-loopback bind without auth unless
   `--insecure`.
 - **Docker**: non-root user, `HEALTHCHECK`.
 - `--jobs N` (parallel scrub), `--quarantine DIR` (dated recoverable
-  originals), `--policy publish|internal|minimal`, and a `.metascrub.toml`
+  originals), `--policy publish|internal|minimal`, and a `.metacls.toml`
   project config.
-- `metascrub watch <dir>` — scrub an FTP/SFTP drop folder on a poll loop.
+- `metacls watch <dir>` — scrub an FTP/SFTP drop folder on a poll loop.
 - **Audio/video**: `--media` scans `.mp3/.m4a/.flac/.ogg/.opus/.wav/.aiff`
-  (tags + cover art via `mutagen`, `metascrub[media]`) and
+  (tags + cover art via `mutagen`, `metacls[media]`) and
   `.mp4/.mov/.m4v/.mkv/.webm` (metadata atoms via exiftool, track kept).
   HEIC via `pillow-heif` in the Pillow fallback.
 - **Containers**: `--recurse` descends into `.zip` archives and `.eml`
   emails, scrubbing each member/attachment with its own engine (depth-limited).
-- `metascrub clean --check` (exit 3 on metadata), `.pre-commit-hooks.yaml`,
+- `metacls clean --check` (exit 3 on metadata), `.pre-commit-hooks.yaml`,
   `action.yml` GitHub Action, and right-click installers in `platform/`.
 
 ### Fixed

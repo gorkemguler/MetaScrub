@@ -1,6 +1,6 @@
-# Putting MetaScrub behind a reverse proxy
+# Putting MetaCLS behind a reverse proxy
 
-The `metascrub web` UI has **no authentication** and the `metascrub api`
+The `metacls web` UI has **no authentication** and the `metacls api`
 service only checks an API key. Both refuse to bind a non-loopback
 address without `--api-key` (API) unless you pass `--insecure`. The
 supported way to expose either one is: bind it to `127.0.0.1`, then put a
@@ -9,9 +9,9 @@ proxy in front that terminates TLS and authenticates the caller.
 Run the app on loopback:
 
 ```bash
-metascrub web --host 127.0.0.1 --port 8770 --output-dir /srv/metascrub
+metacls web --host 127.0.0.1 --port 8770 --output-dir /srv/metacls
 # or
-metascrub api --host 127.0.0.1 --port 8000 --output-dir /srv/metascrub \
+metacls api --host 127.0.0.1 --port 8000 --output-dir /srv/metacls \
   --api-key "$(openssl rand -hex 24)" --run-ttl-days 30
 ```
 
@@ -58,8 +58,8 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/scrub.example.com/privkey.pem;
 
     # web UI only — the API authenticates itself, drop this block for it.
-    auth_basic           "MetaScrub";
-    auth_basic_user_file /etc/nginx/metascrub.htpasswd;   # htpasswd -c ... alice
+    auth_basic           "MetaCLS";
+    auth_basic_user_file /etc/nginx/metacls.htpasswd;   # htpasswd -c ... alice
 
     client_max_body_size 210m;
 
@@ -78,7 +78,7 @@ server {
 
 `docker-compose.yml` publishes both services on `127.0.0.1` already. Add
 your proxy as another service on the same Docker network and point it at
-`metascrub:8770` / `metascrub-api:8000` instead of `127.0.0.1`.
+`metacls:8770` / `metacls-api:8000` instead of `127.0.0.1`.
 
 ## Checklist
 

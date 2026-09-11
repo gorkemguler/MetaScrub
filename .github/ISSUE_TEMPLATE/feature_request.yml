@@ -1,12 +1,12 @@
 name: Feature request
-description: A format, flag, or integration you'd like MetaScrub to support.
+description: A format, flag, or integration you'd like MetaCLS to support.
 labels: [enhancement]
 body:
   - type: textarea
     id: problem
     attributes:
       label: The problem
-      description: What are you trying to do that MetaScrub can't do today?
+      description: What are you trying to do that MetaCLS can't do today?
     validations:
       required: true
   - type: textarea

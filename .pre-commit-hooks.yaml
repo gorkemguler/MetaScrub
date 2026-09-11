@@ -1,7 +1,7 @@
-- id: metascrub
-  name: metascrub (no metadata in committed files)
+- id: metacls
+  name: metacls (no metadata in committed files)
   description: Fail the commit if a staged PDF/Office/image/SVG still carries metadata.
-  entry: metascrub clean --check --no-json-report --no-html-report
+  entry: metacls clean --check --no-json-report --no-html-report
   language: python
   pass_filenames: true
   types_or: [pdf, file]

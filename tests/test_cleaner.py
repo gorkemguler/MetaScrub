@@ -4,8 +4,8 @@ import os
 
 import pikepdf
 
-from metascrub.cleaner import clean_paths
-from metascrub.config import CleanConfig
+from metacls.cleaner import clean_paths
+from metacls.config import CleanConfig
 
 
 def test_clean_tree_mirrors_structure_and_leaves_originals(dirty_tree):
@@ -39,7 +39,7 @@ def test_in_place_overwrites_original(dirty_pdf):
     assert r.out_path == str(dirty_pdf)
     with pikepdf.open(str(dirty_pdf)) as pdf:
         assert "/Info" not in pdf.trailer
-    assert not any(p.endswith(".metascrub-tmp") for p in os.listdir(dirty_pdf.parent))
+    assert not any(p.endswith(".metacls-tmp") for p in os.listdir(dirty_pdf.parent))
 
 
 def test_backup_keeps_original_next_to_in_place_scrub(dirty_pdf):
@@ -85,10 +85,10 @@ def test_exclude_and_follow_symlinks_flow_through_config(dirty_tree, tmp_path):
 
 
 def test_tool_versions_reports_the_optional_libraries():
-    from metascrub.engines import tool_versions
+    from metacls.engines import tool_versions
 
     v = tool_versions()
-    assert v["metascrub"] and "pikepdf" in v
+    assert v["metacls"] and "pikepdf" in v
     # olefile is a core dep; mutagen/pillow are extras that are installed in dev
     assert "olefile" in v
 
@@ -119,8 +119,8 @@ def test_unsupported_extension_reported(tmp_path):
 
 def test_verify_populates_residual(monkeypatch, dirty_docx, tmp_path):
     # Force probe() to always "see" leftover metadata so the verify path is exercised.
-    from metascrub import cleaner
-    from metascrub.models import FieldChange
+    from metacls import cleaner
+    from metacls.models import FieldChange
 
     real = cleaner.engine_for
 

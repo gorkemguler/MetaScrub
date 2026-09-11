@@ -6,14 +6,14 @@ import subprocess
 
 import pytest
 
-from metascrub.config import CleanConfig
-from metascrub.engines.ebml_riff import (
+from metacls.config import CleanConfig
+from metacls.engines.ebml_riff import (
     probe_avi,
     probe_matroska,
     scrub_avi,
     scrub_matroska,
 )
-from metascrub.engines.media import MediaEngine
+from metacls.engines.media import MediaEngine
 
 _HAS_FFMPEG = shutil.which("ffmpeg") is not None
 

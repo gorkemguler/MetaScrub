@@ -4,8 +4,8 @@ from xml.etree import ElementTree as ET
 
 import pytest
 
-from metascrub.config import CleanConfig
-from metascrub.engines.svg import SvgEngine
+from metacls.config import CleanConfig
+from metacls.engines.svg import SvgEngine
 
 _DIRTY_SVG = """<?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->

@@ -5,29 +5,29 @@
 # authenticates users sits in front (reverse proxy with auth, a
 # Tailscale/WireGuard-only network, an SSO gateway). See the README.
 services:
-  metascrub:
+  metacls:
     build: .
-    image: metascrub:latest
+    image: metacls:latest
     ports:
       - "127.0.0.1:8770:8770"
     volumes:
-      - ./metascrub_cleaned:/data
+      - ./metacls_cleaned:/data
     restart: unless-stopped
 
   # Job-based REST API instead of the web UI. Start with:
-  #   METASCRUB_API_KEY=$(openssl rand -hex 24) docker compose --profile api up --build metascrub-api
-  metascrub-api:
+  #   METACLS_API_KEY=$(openssl rand -hex 24) docker compose --profile api up --build metacls-api
+  metacls-api:
     profiles: ["api"]
     build: .
-    image: metascrub:latest
+    image: metacls:latest
     environment:
       # Set this (see above). With no key the API refuses a non-loopback
       # bind; pass `--insecure` in `command` only if a proxy sits in front.
-      METASCRUB_API_KEY: ${METASCRUB_API_KEY:-}
+      METACLS_API_KEY: ${METACLS_API_KEY:-}
     command: ["api", "--host", "0.0.0.0", "--port", "8000", "--output-dir", "/data",
               "--run-ttl-days", "30"]
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      - ./metascrub_cleaned:/data
+      - ./metacls_cleaned:/data
     restart: unless-stopped

@@ -1,6 +1,6 @@
 <p align="center"><sub><a href="ROADMAP.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
 
-# MetaScrub yol haritası
+# MetaCLS yol haritası
 
 Proje nerede duruyor ve sırada ne var. Temaya göre gruplandı; her grup
 içinde kabaca öncelik sırasında. Buradaki hiçbir şey söz değil — çalışan
@@ -10,7 +10,7 @@ bir yapılacaklar listesi.
 
 ## v0.1'den bu yana eklenenler
 
-- **Şifreli PDF'ler** — `metascrub clean --password …` / `inspect --password`.
+- **Şifreli PDF'ler** — `metacls clean --password …` / `inspect --password`.
   Parola yoksa şifreli PDF temiz bir `skipped` (ham hata değil); yanlış
   parola net bir `error`; temizlenmiş kopya şifresiz yazılır ve sonuç
   bunu belirtir. *(L4'ü kapatır)*
@@ -47,7 +47,7 @@ bir yapılacaklar listesi.
   kayıtlarında (Word / PowerPoint / Excel) değişiklik-takibi ve yorum
   **yazar adları + tarihlerini** boşaltır; değişiklik ve yorum *metni*
   korunur ki kabul/ret hâlâ çalışsın. *(L5'in bir kısmı)*
-- **`metascrub diff <runA> <runB>`** — iki çalıştırma raporunu (ya da
+- **`metacls diff <runA> <runB>`** — iki çalıştırma raporunu (ya da
   dizinini) karşılaştırır: eklenen/silinen dosyalar ve — asıl mesele —
   iki çalıştırma arasında metadata *yeniden ortaya çıkan* dosyalar
   (birisi belgeyi tekrar kaydetmiş). Herhangi bir dosya metadata
@@ -62,8 +62,8 @@ bir yapılacaklar listesi.
   matrisi (py 3.10–3.13 × Linux/macOS/Windows), `slow` pytest işareti +
   session-kapsamlı eski-`.doc` fixture'ı (`pytest -q` ~60 sn → ~12 sn),
   `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`.
-- **API kimlik doğrulama + sınırlar** — `metascrub api --api-key` (env
-  `METASCRUB_API_KEY`) `/v1/health` dışında her `/v1` route'unda gerekli
+- **API kimlik doğrulama + sınırlar** — `metacls api --api-key` (env
+  `METACLS_API_KEY`) `/v1/health` dışında her `/v1` route'unda gerekli
   (`X-API-Key` ya da `Authorization: Bearer`). Yüklemeler doğrudan geçici
   bir dosyaya akıtılır (tüm grup asla bellekte değil), `--max-upload-mb` /
   `--max-files` sınırlarıyla → 413. Hem `web` hem `api`, kimlik doğrulama
@@ -75,9 +75,9 @@ bir yapılacaklar listesi.
   restart` olarak döner, `--run-ttl-days N` başlangıçta eski bitmiş
   işleri + çalıştırma dizinlerini siler. *(L10'un bir kısmı)*
 - **Konteyner** — imaj root olmayan bir kullanıcı (uid 1000) olarak
-  çalışır, `HEALTHCHECK`'i var, ve `metascrub api --log-json` istek
+  çalışır, `HEALTHCHECK`'i var, ve `metacls api --log-json` istek
   başına bir JSON erişim-log satırı basar. `docker-compose` API servisi
-  artık `METASCRUB_API_KEY` ve 30-günlük TTL alıyor.
+  artık `METACLS_API_KEY` ve 30-günlük TTL alıyor.
 
 ---
 
@@ -118,7 +118,7 @@ Sıralı batch'ler, her biri kendi commit'i:
    şeması korunuyor.
 3. ~~**`watch` sağlamlaştırma** — lockfile (dizin başına tek watcher),
    `--pattern` glob filtresi, kaybolan dosyalar için state budama,
-   `--jobs` geçişi.~~ **Bitti.** `.metascrub-watch.lock` (PID damgalı, ölü
+   `--jobs` geçişi.~~ **Bitti.** `.metacls-watch.lock` (PID damgalı, ölü
    sahibin kilidini çalar); tekrarlanabilir `--pattern GLOB`; `-j/--jobs N`
    (birikmiş iş tek `clean_paths` çağrısında); kaybolan dosya kayıtları
    her taramada budanır.
@@ -140,15 +140,15 @@ Sıralı batch'ler, her biri kendi commit'i:
 6. ~~**Daha fazla konteyner** — `.tar`/`.tar.gz` (stdlib), `.msg` (opsiyonel
    `extract-msg`), `.7z` (opsiyonel `py7zr`).~~ **Bitti.** `.tar` +
    `.tar.gz`/`.tgz`/`.tar.bz2`/`.tar.xz` (stdlib; uid/gid/uname/mtime üye
-   başlıklarını da normalize eder), `.7z` (`metascrub[archive]`), `.msg`
-   (`metascrub[msg]`, salt-okunur — yalnız `inspect`).
+   başlıklarını da normalize eder), `.7z` (`metacls[archive]`), `.msg`
+   (`metacls[msg]`, salt-okunur — yalnız `inspect`).
 7. ~~**Yerel drop uygulamaları**~~ **Bitti.**
-   - macOS: `platform/macos/build-app.sh` → `MetaScrub.app`, bir
+   - macOS: `platform/macos/build-app.sh` → `MetaCLS.app`, bir
      `osacompile` droplet'i (Xcode yok); Quick Action kalıyor.
-   - Windows: `MetaScrub-drop.ps1` (WinForms bırakma penceresi),
+   - Windows: `MetaCLS-drop.ps1` (WinForms bırakma penceresi),
      `install-sendto.ps1` (*Gönder* girdisi), `platform/windows/winget/`
      altında bir `winget` manifest şablonu; sağ-tık girdisi kalıyor.
-   - Linux: `metascrub.desktop` + `metascrub-drop.sh` (`.desktop`
+   - Linux: `metacls.desktop` + `metacls-drop.sh` (`.desktop`
      başlatıcı / *Birlikte Aç* işleyici, `zenity` seçici),
      `install-desktop.sh`; Nautilus betiği kalıyor.
 8. ~~**Web/API eşitliği** — web formunda ve API'de `--recurse` / `--media`;
@@ -159,7 +159,7 @@ Sıralı batch'ler, her biri kendi commit'i:
    yüklü olduğunu bildirir. `clean_file_list` artık `cfg.filetypes`'ı bir
    izin listesi olarak uyguluyor. Ekran görüntüleri yenilendi.
 9. ~~**Yayın hattı** — `.github/workflows/docker.yml` tag'de
-   `ghcr.io/gorkemguler/metascrub` build+push; `--api-key` yanında
+   `ghcr.io/gorkemguler/metacls` build+push; `--api-key` yanında
    nginx/Caddy reverse-proxy tarifi.~~ **Bitti.** `docker.yml` çok-mimari
    bir imaj derleyip GHCR'ye `:<sürüm>` / `:<major.minor>` / `:latest`
    (tag'ler) ve `:edge` (main) iter; `docs/reverse-proxy.md` nginx +
@@ -172,8 +172,8 @@ yayın-günü / altyapı işleri (PyPI + GHCR + winget/Homebrew kanallarına
 gerçekten yayınlamak, macOS uygulamasını noterletmek) ya da ertelenmiş
 cila — aşağıya bakın.
 
-### `metascrub watch` — FTP/SFTP bırakma-kutusu daemon'u — **tamam**
-- `metascrub watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
+### `metacls watch` — FTP/SFTP bırakma-kutusu daemon'u — **tamam**
+- `metacls watch <dir> [--to DIR] [--move-processed DIR] [--interval] [--settle] [--once]`
 - Settle penceresiyle poll döngüsü (yarım yüklenmiş dosya yok), yeniden
   başlatmanın yeniden işlememesi için JSON durum dosyası, yeniden-bırakma
   tespiti, ve `platform/linux/`'te systemd şablon unit'i.
@@ -181,10 +181,10 @@ cila — aşağıya bakın.
   dizininden çekip temizlenmiş dosyayı geri iten bir SFTP modu.
 
 ### Platform sarmalayıcıları ("sağ tık / eklenti" senaryosu) — **tamam**
-- **macOS** — sürükle-bırak `MetaScrub.app` (`build-app.sh`,
+- **macOS** — sürükle-bırak `MetaCLS.app` (`build-app.sh`,
   `osacompile`, Xcode yok) + Finder Quick Action. *Yapılacak:*
   Developer-ID imzası + noterleme, Homebrew formülü.
-- **Windows** — WinForms bırakma penceresi (`MetaScrub-drop.ps1`),
+- **Windows** — WinForms bırakma penceresi (`MetaCLS-drop.ps1`),
   *Gönder* girdisi (`install-sendto.ps1`), HKCU sağ-tık girdisi
   (`install-context-menu.ps1`), `winget` manifest şablonu. *Yapılacak:*
   winget manifestinin arkasında gerçek bir yayın artefaktı,
@@ -194,9 +194,9 @@ cila — aşağıya bakın.
   `.deb` / `.rpm` / AUR, Dolphin servis menüsü.
 
 ### CI / DevSecOps entegrasyonu
-- `metascrub clean --dry-run` çalıştırıp kirli belgelerde commit'i düşüren
+- `metacls clean --dry-run` çalıştırıp kirli belgelerde commit'i düşüren
   bir `pre-commit` hook'u.
-- Yayınlanmış bir **GitHub Action** (`gorkemguler/metascrub-action`) — PR'da
+- Yayınlanmış bir **GitHub Action** (`gorkemguler/metacls-action`) — PR'da
   çalışır, raporu yorum olarak yazar, isteğe bağlı temiz dosyaları
   otomatik commit eder.
 - Bir GitLab CI şablonu.
@@ -204,7 +204,7 @@ cila — aşağıya bakın.
 ## Sonra — v1.0 (cila + ölçek)
 
 Geldi: `--jobs N` (thread-pool paralel temizlik), `--quarantine DIR`,
-`.metascrub.toml` proje yapılandırması, `--policy publish|internal|minimal`,
+`.metacls.toml` proje yapılandırması, `--policy publish|internal|minimal`,
 açılır/filtrelenebilir/yazdırılabilir HTML rapor, ve bir `release.yml`
 (tag → build → PyPI Trusted Publishing + GitHub Release).
 
@@ -218,7 +218,7 @@ Hâlâ açık:
 
 ## Bir gün — daha büyük bahisler
 
-- **Özyinelemeli konteynerler** — tamam: `metascrub clean --recurse`
+- **Özyinelemeli konteynerler** — tamam: `metacls clean --recurse`
   `.zip` / `.tar*` / `.7z` arşivlerine ve `.eml` e-postalarına iner
   (`engines/container.py`), her üyeyi temizler, yeniden paketler, derinlik
   sınırlı. `.msg` (Outlook) yalnız-inceleme. Hâlâ açık: yazılabilir bir

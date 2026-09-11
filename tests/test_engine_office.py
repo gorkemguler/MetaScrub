@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import zipfile
 
-from metascrub.config import CleanConfig
-from metascrub.engines.office import OfficeEngine
+from metacls.config import CleanConfig
+from metacls.engines.office import OfficeEngine
 
 
 def _names(path) -> set[str]:

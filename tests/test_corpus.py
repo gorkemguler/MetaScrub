@@ -44,9 +44,9 @@ _GIF_1PX = bytes.fromhex(
     "3b"                      # trailer
 )
 
-from metascrub.cleaner import clean_paths
-from metascrub.config import CleanConfig
-from metascrub.engines import engine_for
+from metacls.cleaner import clean_paths
+from metacls.config import CleanConfig
+from metacls.engines import engine_for
 
 _HAS_EXIFTOOL = shutil.which("exiftool") is not None
 

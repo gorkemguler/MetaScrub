@@ -6,17 +6,17 @@ body:
     id: what-happened
     attributes:
       label: What happened
-      description: What you ran and what MetaScrub did versus what you expected.
+      description: What you ran and what MetaCLS did versus what you expected.
       placeholder: |
-        $ metascrub clean report.pdf --out cleaned/
+        $ metacls clean report.pdf --out cleaned/
         ...
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: MetaScrub version
-      description: "`metascrub --version`"
+      label: MetaCLS version
+      description: "`metacls --version`"
     validations:
       required: true
   - type: dropdown

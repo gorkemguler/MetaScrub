@@ -5,8 +5,8 @@ import os
 import pikepdf
 import pytest
 
-from metascrub.config import CleanConfig
-from metascrub.watch import Watcher, WatchLock, WatchLockError
+from metacls.config import CleanConfig
+from metacls.watch import Watcher, WatchLock, WatchLockError
 
 
 def _dirty_pdf(path):
@@ -90,7 +90,7 @@ def test_state_file_survives_new_watcher(tmp_path):
     w1.scan_once()
     w1.scan_once()
 
-    w2 = _watcher(tmp_path)              # fresh instance reads .metascrub-watch.json
+    w2 = _watcher(tmp_path)              # fresh instance reads .metacls-watch.json
     assert w2.scan_once() == 0           # doesn't re-scrub
 
 
@@ -135,14 +135,14 @@ def test_jobs_scrubs_a_backlog_in_one_pass(tmp_path):
 
 def test_lock_blocks_a_second_watcher_and_releases(tmp_path):
     with WatchLock(str(tmp_path)):
-        assert os.path.exists(tmp_path / ".metascrub-watch.lock")
+        assert os.path.exists(tmp_path / ".metacls-watch.lock")
         with pytest.raises(WatchLockError):
             WatchLock(str(tmp_path)).acquire()
-    assert not os.path.exists(tmp_path / ".metascrub-watch.lock")   # released on exit
+    assert not os.path.exists(tmp_path / ".metacls-watch.lock")   # released on exit
 
 
 def test_lock_steals_a_dead_owners_lockfile(tmp_path):
-    lock_path = tmp_path / ".metascrub-watch.lock"
+    lock_path = tmp_path / ".metacls-watch.lock"
     lock_path.write_text("999999\n")     # a PID that is not running
     with WatchLock(str(tmp_path)):
         assert lock_path.read_text().strip() == str(os.getpid())
@@ -150,7 +150,7 @@ def test_lock_steals_a_dead_owners_lockfile(tmp_path):
 
 def test_scan_ignores_the_lock_and_state_files(tmp_path):
     _dirty_pdf(tmp_path / "drop.pdf")
-    (tmp_path / ".metascrub-watch.lock").write_text("1\n")
+    (tmp_path / ".metacls-watch.lock").write_text("1\n")
     w = _watcher(tmp_path)
     w.scan_once()
     assert w.scan_once() == 1             # the .lock / .json are never treated as inputs

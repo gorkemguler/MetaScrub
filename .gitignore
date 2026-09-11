@@ -6,8 +6,8 @@ venv/
 build/
 dist/
 .env
-metascrub_cleaned/
-metascrub_output/
+metacls_cleaned/
+metacls_output/
 .pytest_cache/
 .DS_Store
 .claude/

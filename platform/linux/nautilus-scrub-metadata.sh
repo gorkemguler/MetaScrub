@@ -12,7 +12,7 @@ IFS=$'\n'
 ok=0 fail=0
 for f in $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS; do
     [ -f "$f" ] || continue
-    if metascrub clean "$f" --in-place --yes --no-json-report --no-html-report >/dev/null 2>&1; then
+    if metacls clean "$f" --in-place --yes --no-json-report --no-html-report >/dev/null 2>&1; then
         ok=$((ok + 1))
     else
         fail=$((fail + 1))
@@ -22,5 +22,5 @@ done
 if command -v notify-send >/dev/null; then
     msg="Scrubbed $ok file(s)"
     [ "$fail" -gt 0 ] && msg="$msg, $fail failed"
-    notify-send "MetaScrub" "$msg"
+    notify-send "MetaCLS" "$msg"
 fi

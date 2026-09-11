@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: GorkemGuler.MetaCLS
+PackageVersion: 0.3.0
+PackageLocale: en-US
+Publisher: Görkem Güler
+PublisherUrl: https://github.com/gorkemguler
+PackageName: MetaCLS
+PackageUrl: https://github.com/gorkemguler/MetaCLS
+License: MIT
+LicenseUrl: https://github.com/gorkemguler/MetaCLS/blob/main/LICENSE
+ShortDescription: Bulk metadata scrubbing for PDF, Office, image, audio and video files.
+Description: |-
+  MetaCLS strips identifying metadata (author, software, GPS, internal
+  paths, timestamps) from PDF, Office, OpenDocument, image, SVG, audio and
+  video files in bulk, verifies each cleaned file, and produces a
+  before/after report. CLI, a local web UI and a job-based REST API.
+Tags:
+  - metadata
+  - privacy
+  - pdf
+  - exif
+  - redaction
+  - security
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

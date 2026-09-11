@@ -1,5 +1,5 @@
 [project]
-name = "metascrub"
+name = "metacls"
 version = "0.3.0"
 description = "Bulk metadata scrubbing for PDF/Office/image files — the remediation companion to MetaScout."
 readme = "README.md"
@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Opt-in REST API service (`metascrub api`): a separate, job-based HTTP
+# Opt-in REST API service (`metacls api`): a separate, job-based HTTP
 # service (FastAPI + uvicorn) wrapping the same scan -> clean -> verify
 # pipeline as the CLI and local web UI, for programmatic/enterprise
 # integration — POST files, poll the job, pull the cleaned files + report
@@ -56,13 +56,13 @@ media = [
     "mutagen>=1.47",
 ]
 
-# Opt-in `.7z` recursion (`metascrub clean --recurse` into a 7-Zip
+# Opt-in `.7z` recursion (`metacls clean --recurse` into a 7-Zip
 # archive). `.zip` / `.eml` / `.tar` need nothing extra.
 archive = [
     "py7zr>=0.20",
 ]
 
-# Opt-in read-only `.msg` (Outlook) inspection — `metascrub inspect
+# Opt-in read-only `.msg` (Outlook) inspection — `metacls inspect
 # --recurse` lists what's inside; rewriting the CFB is out of scope.
 msg = [
     "extract-msg>=0.48",
@@ -81,13 +81,13 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gorkemguler/MetaScrub"
-Repository = "https://github.com/gorkemguler/MetaScrub"
-Changelog = "https://github.com/gorkemguler/MetaScrub/blob/main/CHANGELOG.md"
-Issues = "https://github.com/gorkemguler/MetaScrub/issues"
+Homepage = "https://github.com/gorkemguler/MetaCLS"
+Repository = "https://github.com/gorkemguler/MetaCLS"
+Changelog = "https://github.com/gorkemguler/MetaCLS/blob/main/CHANGELOG.md"
+Issues = "https://github.com/gorkemguler/MetaCLS/issues"
 
 [project.scripts]
-metascrub = "metascrub.cli:main"
+metacls = "metacls.cli:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -97,7 +97,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-metascrub = ["report/templates/*.jinja", "py.typed"]
+metacls = ["report/templates/*.jinja", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

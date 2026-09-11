@@ -7,8 +7,8 @@ __pycache__
 .pytest_cache
 .mypy_cache
 tests
-metascrub_cleaned
-metascrub_output
+metacls_cleaned
+metacls_output
 .env
 .env.*
 !.env.example

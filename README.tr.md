@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="MetaScrub" width="100%">
+  <img src="assets/banner.svg" alt="MetaCLS" width="100%">
 </p>
 
 <p align="center">
@@ -15,13 +15,13 @@
 </p>
 
 <p align="center">
-  <sub><a href="https://github.com/gorkemguler/MetaScout">MetaScout</a> ile birlikte çalışır: MetaScout sızıntıyı <i>bulur</i>, MetaScrub <i>giderir</i>.</sub>
+  <sub><a href="https://github.com/gorkemguler/MetaScout">MetaScout</a> ile birlikte çalışır: MetaScout sızıntıyı <i>bulur</i>, MetaCLS <i>giderir</i>.</sub>
 </p>
 
 <p align="center"><sub><a href="README.md">🇬🇧 English</a> · 🇹🇷 Türkçe</sub></p>
 
 <p align="center">
-  <img src="assets/screenshot-report.png" alt="MetaScrub öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
+  <img src="assets/screenshot-report.png" alt="MetaCLS öncesi/sonrası raporu — 3 dosya, 18 metadata alanı silindi, 0 artık" width="90%">
 </p>
 
 ---
@@ -30,7 +30,7 @@
 
 Bir kurum kendi sitesine karşı MetaScout çalıştırır ve internete açılmış bir yığın PDF/Office
 belgesinin yazar adı, iç dosya yolu, yazılım/OS parmak izi ve GPS koordinatı sızdırdığını
-görür. Şimdi birilerinin bu dosyaları **gerçekten temizlemesi** gerekir. İşte MetaScrub bu.
+görür. Şimdi birilerinin bu dosyaları **gerçekten temizlemesi** gerekir. İşte MetaCLS bu.
 
 Bir klasöre yönlendirin (ya da web arayüzüne dosya sürükleyin, ya da API'ye POST edin) ve:
 
@@ -51,11 +51,11 @@ imza) asla değiştirilmez.
 | **PDF** | [pikepdf](https://github.com/pikepdf/pikepdf) (QPDF) | `/Info` sözlüğü (Author, Title, Producer, Creator, CreationDate, …), XMP metadata paketi, `/PieceInfo` ve diğer uygulamaya özel veriler, sayfa düzeyi metadata, annotation yazar + zaman damgaları (`/T` `/M` `/CreationDate`), ve gömülü dosya eklerinin açıklama + zaman damgaları. Dosya **tamamen yeniden yazılır**, böylece eski xref bölümlerinde kalan değerler çıktıdan kurtarılamaz. Şifreli PDF'ler `--password` ister. `--strip-form-values` ile: AcroForm alan değerleri ve XFA `<xfa:data>` paketi de. |
 | **Office** `.docx .xlsx .pptx` (+ makro içeren `.docm .xlsm .pptm` ve şablonlar `.dotx .dotm .xltx .xltm .potx .potm`) | stdlib `zipfile` | `docProps/core.xml` (creator, lastModifiedBy, revizyon, zaman damgaları), `docProps/app.xml` (Company, Manager, Template yolu), `docProps/custom.xml`, gömülü küçük resim, ve `settings.xml`'deki Word revizyon-kayıt-kimliği parmak izleri (`w:rsids`). Dangling ilişki ve content-type override'ları temizlenir; dosya bazlı zip zaman damgaları normalize edilir. `vbaProject.bin` **korunur** (makroyu bozmak, içinde bir isim saklanma ihtimalinden kötüdür) ve rapor dosyanın kısmen temizlendiğini bildirir. |
 | **OpenDocument** `.odt .ods .odp` | stdlib `zipfile` | `meta.xml` — initial-creator, creator, generator, editing-cycles/duration, zaman damgaları, belge istatistikleri, kullanıcı tanımlı alanlar — ayrıca `Thumbnails/` önizleme görseli (ilk sayfanın render edilmiş anlık görüntüsü) ve `META-INF/manifest.xml` içindeki girdisi. |
-| **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları — yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler — **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaScrub LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
+| **Eski Office** `.doc .xls .ppt` | `olefile` (saf Python) | `\x05SummaryInformation` / `\x05DocumentSummaryInformation` property akışları — yazar, son kaydeden, şirket, yönetici, şablon, başlık, zaman damgaları, özel özellikler — **yerinde** yamalanır: aynı boyut, aynı biçim, aynı yapı. `--in-place` çalışır. Bir konteyner ayrıştırılamazsa MetaCLS LibreOffice (`soffice`) ile `.docx/.xlsx/.pptx`'e yeniden render'a düşer. |
 | **SVG** `.svg` | stdlib `xml` | `<metadata>` (RDF/Dublin-Core yazar/başlık/lisans), `sodipodi:` / `inkscape:` / Adobe-Illustrator element ve öznitelikleri, ve editör yorumları (`<!-- Created with … -->`). Çizimin kendisine dokunulmaz. |
 | **Görseller** `.jpg .jpeg .png .gif .tif .tiff .heic .heif .webp` | [ExifTool](https://exiftool.org) | Tüm EXIF / IPTC / XMP / GPS / MakerNotes, PNG/WebP metin blokları ve JPEG/GIF yorum bloğu. ICC renk profili ve EXIF yönlendirmesi varsayılan olarak korunur (`--no-keep-color-profile` / `--no-keep-orientation` ile onlar da silinir). exiftool yoksa HEIC `pillow-heif` ile de çalışır. |
-| **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / saf Python | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi — `pip install 'metascrub[media]'`. MP4 ailesi video: exiftool metadata atom'larını temizler (`ItemList`, `Keys`, `UserData`, XMP — sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool bunlara yazamaz): tüm EBML `Tags` bloğu ve `Info` başlığı / tarihleri / muxer-ve-writer uygulama adları yerinde boşaltılır — aynı uzunlukta `Void` / `JUNK` dolgusuyla üzerine yazılır, böylece dosya uzunluğu değişmez ve `--in-place` çalışır; track verisine dokunulmaz. Varsayılan taranmaz — **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). Oynatmayı kontrol edin. |
-| **Konteynerler** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (opsiyonel) | **`--recurse`** ile: bir arşivin desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. `.tar*` ayrıca üye başına uid/gid/kullanıcı-adı/mtime başlıklarını normalize eder (paketleyenin kimlik sızıntısı). `.7z` için `pip install 'metascrub[archive]'` gerekir. `.msg` (Outlook) **salt-okunur** — `metascrub inspect --recurse` içindekileri listeler (`metascrub[msg]` gerekir); temizlemek için `.eml`'e aktarın. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
+| **Ses / video** `.mp3 .m4a .flac .ogg .opus .wav .aiff` / `.mp4 .mov .m4v .3gp .mkv .webm .avi` | `mutagen` / ExifTool / saf Python | Ses: tüm etiketler (ID3 / Vorbis / iTunes) ve gömülü kapak resmi — `pip install 'metacls[media]'`. MP4 ailesi video: exiftool metadata atom'larını temizler (`ItemList`, `Keys`, `UserData`, XMP — sanatçı, telefondan `Make`/`Model`, GPS, `CreationDate`). **Matroska / WebM / AVI** (exiftool bunlara yazamaz): tüm EBML `Tags` bloğu ve `Info` başlığı / tarihleri / muxer-ve-writer uygulama adları yerinde boşaltılır — aynı uzunlukta `Void` / `JUNK` dolgusuyla üzerine yazılır, böylece dosya uzunluğu değişmez ve `--in-place` çalışır; track verisine dokunulmaz. Varsayılan taranmaz — **`--media`** verin (ya da uzantıları `--filetypes`'a ekleyin). Oynatmayı kontrol edin. |
+| **Konteynerler** `.zip .eml .tar .tar.gz .tgz .tar.bz2 .tar.xz .7z .msg` | stdlib `zipfile` / `tarfile` / `email`; `py7zr` / `extract-msg` (opsiyonel) | **`--recurse`** ile: bir arşivin desteklenen her üyesi ve bir e-postanın her eki kendi motoruyla temizlenir, arşiv/mesaj yeniden paketlenir. `.tar*` ayrıca üye başına uid/gid/kullanıcı-adı/mtime başlıklarını normalize eder (paketleyenin kimlik sızıntısı). `.7z` için `pip install 'metacls[archive]'` gerekir. `.msg` (Outlook) **salt-okunur** — `metacls inspect --recurse` içindekileri listeler (`metacls[msg]` gerekir); temizlemek için `.eml`'e aktarın. Temizlenemeyen üyeler dokunulmadan geçer. İç içe konteynerler izlenir (derinlik sınırlı). |
 
 `--keep Title` (tekrarlanabilir) belirtilen bir alanı agresif temizlikten muaf tutar.
 `--backup`, `--in-place` temizlikte `<ad>.orig` bırakır.
@@ -69,12 +69,12 @@ görünümleri, artı bir XFA formunun `<xfa:data>` paketi (XFA şablonu ve şem
 ## Kurulum
 
 ```bash
-pip install metascrub                     # çekirdek: PDF + Office temizliği
-pip install 'metascrub[api]'              # + REST API servisi
-pip install 'metascrub[media]'            # + ses etiketi temizliği (mutagen)
-pip install 'metascrub[archive]'          # + .7z özyinelemesi (py7zr)
-pip install 'metascrub[msg]'              # + salt-okunur .msg incelemesi (extract-msg)
-pip install 'metascrub[image-fallback]'   # + Pillow (exiftool yoksa zayıf görsel yedeği)
+pip install metacls                     # çekirdek: PDF + Office temizliği
+pip install 'metacls[api]'              # + REST API servisi
+pip install 'metacls[media]'            # + ses etiketi temizliği (mutagen)
+pip install 'metacls[archive]'          # + .7z özyinelemesi (py7zr)
+pip install 'metacls[msg]'              # + salt-okunur .msg incelemesi (extract-msg)
+pip install 'metacls[image-fallback]'   # + Pillow (exiftool yoksa zayıf görsel yedeği)
 ```
 
 Görsel temizliği için **exiftool** binary'si `PATH`'te olmalı:
@@ -94,14 +94,14 @@ ayrıştıramadığı eski bir konteyner için yedek olarak kullanılır.
 ## CLI
 
 <p align="center">
-  <img src="assets/screenshot-cli.svg" alt="terminalde metascrub inspect ve metascrub clean" width="90%">
+  <img src="assets/screenshot-cli.svg" alt="terminalde metacls inspect ve metacls clean" width="90%">
 </p>
 
 ### Inspect — dosyalarda ne var, göster (salt-okunur)
 
 ```bash
-metascrub inspect ./yayinlanan-belgeler
-metascrub inspect sizinti.pdf rapor.docx --json
+metacls inspect ./yayinlanan-belgeler
+metacls inspect sizinti.pdf rapor.docx --json
 ```
 
 Temizlemeden önce, MetaScout'un işaretlediği dosyalarda tam olarak ne olduğunu görmek için bunu çalıştırın.
@@ -109,21 +109,21 @@ Temizlemeden önce, MetaScout'un işaretlediği dosyalarda tam olarak ne olduğu
 ### Clean (temizle)
 
 ```bash
-# varsayılan: orijinaller dokunulmaz, temizlenmiş kopyalar ./metascrub_cleaned/ altına
+# varsayılan: orijinaller dokunulmaz, temizlenmiş kopyalar ./metacls_cleaned/ altına
 # girdi ağacını yansıtarak yazılır + report.json + report.html
-metascrub clean ./yayinlanan-belgeler
+metacls clean ./yayinlanan-belgeler
 
 # bunun yerine orijinallerin üzerine yaz (önce sorar; -y ile atlanır)
-metascrub clean ./yayinlanan-belgeler --in-place
+metacls clean ./yayinlanan-belgeler --in-place
 
 # yalnızca önizleme, hiçbir şey değiştirme
-metascrub clean ./yayinlanan-belgeler --dry-run
+metacls clean ./yayinlanan-belgeler --dry-run
 
 # belge başlıklarını koru, Türkçe rapor
-metascrub clean ./yayinlanan-belgeler --keep Title --report-lang tr
+metacls clean ./yayinlanan-belgeler --keep Title --report-lang tr
 
 # sadece bazı dosyalar
-metascrub clean a.pdf b.docx c.jpg --out ./temiz
+metacls clean a.pdf b.docx c.jpg --out ./temiz
 ```
 
 Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`, `--dry-run`,
@@ -135,13 +135,13 @@ Faydalı bayraklar: `--filetypes`, `--no-recursive`, `--out DIR`, `--keep FIELD`
 `--policy publish|internal|minimal` (adlandırılmış presetler),
 `--exclude GLOB` (tekrarlanabilir — gezerken dosya/dizin atla),
 `--no-follow-symlinks` (sembolik bağlı dosyayı temizleme), `--progress` (ilerleme çubuğu), ve
-grup düzeyinde `metascrub --debug …` (ilk hatalı dosyada hatayı kaydetmek yerine yeniden fırlat).
+grup düzeyinde `metacls --debug …` (ilk hatalı dosyada hatayı kaydetmek yerine yeniden fırlat).
 
-`metascrub inspect` da `--media` ve `--recurse` alır; bir arşive ya da videoya işaret edip
+`metacls inspect` da `--media` ve `--recurse` alır; bir arşive ya da videoya işaret edip
 temizlemeden önce içindekileri görebilirsin.
 
 **Proje yapılandırması:** çalışma dizininde ya da bir üstünde (git köküne kadar) bir
-`.metascrub.toml` komut başına varsayılanları belirler — CLI bayrakları ve env değişkenleri
+`.metacls.toml` komut başına varsayılanları belirler — CLI bayrakları ve env değişkenleri
 yine kazanır.
 
 ```toml
@@ -157,9 +157,9 @@ dosya doğrulamada hâlâ metadata taşıyordu · `3` (`--check`) metadata bulun
 ### Diff — bir dizini zaman içinde izle
 
 ```bash
-metascrub clean ./yayin --out ./tarama-ocak     # ayda bir, tarihli dizinlere
-metascrub clean ./yayin --out ./tarama-subat
-metascrub diff ./tarama-ocak ./tarama-subat     # ne değişti?
+metacls clean ./yayin --out ./tarama-ocak     # ayda bir, tarihli dizinlere
+metacls clean ./yayin --out ./tarama-subat
+metacls diff ./tarama-ocak ./tarama-subat     # ne değişti?
 ```
 
 İki çalıştırma arasında eklenen/silinen dosyaları ve — asıl faydalı kısım — metadata'sı
@@ -169,25 +169,25 @@ Bir şey metadata geri kazandıysa çıkış kodu `1` — bir cron işine koyun.
 ### Watch — bir bırakma klasörünü temiz tut
 
 ```bash
-metascrub watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
-metascrub watch ./inbox --once                       # tek geçiş, cron için
-metascrub watch ./inbox --pattern 'invoice-*.pdf' -j 4   # filtre + paralel birikim
+metacls watch /srv/ftp/incoming --move-processed /srv/ftp/scrubbed --interval 10 --settle 5
+metacls watch ./inbox --once                       # tek geçiş, cron için
+metacls watch ./inbox --pattern 'invoice-*.pdf' -j 4   # filtre + paralel birikim
 ```
 
 Bir FTP/SFTP iniş bölgesi için poll döngüsü: bir dosyaya ancak `--settle` saniye boyunca
 değişmeyi bıraktıktan sonra dokunulur (yarım kalmış yükleme asla temizlenmez), durum
-`<dir>/.metascrub-watch.json`'da tutulur (yeniden başlatma her şeyi yeniden işlemez), ve
-daha yeni bir zaman damgasıyla tekrar bırakılan dosya yeniden işlenir. `.metascrub-watch.lock`
+`<dir>/.metacls-watch.json`'da tutulur (yeniden başlatma her şeyi yeniden işlemez), ve
+daha yeni bir zaman damgasıyla tekrar bırakılan dosya yeniden işlenir. `.metacls-watch.lock`
 dosyası aynı dizine ikinci bir watcher'ı sokmaz (ölü bir sürecin bıraktığı kilit çalınır).
 `--pattern GLOB` (tekrarlanabilir) neyin alınacağını daraltır; `-j/--jobs N` birikmiş işi
 paralel temizler; artık var olmayan dosyaların durum kayıtları her geçişte budanır. Varsayılan
 yerinde temizler; `--to DIR` yerine temizlenmiş kopya yazar. systemd şablon unit'i
-[`platform/linux/`](platform/linux/metascrub-watch@.service)'de.
+[`platform/linux/`](platform/linux/metacls-watch@.service)'de.
 
 ## Web arayüzü
 
 ```bash
-metascrub web           # http://127.0.0.1:8770/ açılır
+metacls web           # http://127.0.0.1:8770/ açılır
 ```
 
 Dosyaları sayfaya sürükleyin, temizlenmiş halde geri alın — tek tek ya da zip olarak — dosya
@@ -195,7 +195,7 @@ bazında öncesi/sonrası görünümü ve tam raporla birlikte. Önceki çalış
 altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok** — ağa açmayın.
 
 <p align="center">
-  <img src="assets/screenshot-web.png" alt="MetaScrub yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
+  <img src="assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü — sürükle-bırak dosya alanı" width="90%">
 </p>
 
 ## REST API
@@ -203,8 +203,8 @@ altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok** — a
 Linux sunucusu, FTP bırakma kutusu, ya da temizlenmesi için dosya devreden bir CI hattı için:
 
 ```bash
-pip install 'metascrub[api]'
-metascrub api           # http://127.0.0.1:8000/  ·  interaktif dokümanlar /docs
+pip install 'metacls[api]'
+metacls api           # http://127.0.0.1:8000/  ·  interaktif dokümanlar /docs
 ```
 
 ```bash
@@ -227,7 +227,7 @@ curl -sSL -o temiz.zip http://127.0.0.1:8000/v1/clean/<job_id>/download
 boyutlandırılır. Yüklemeler `--max-upload-mb` / `--max-files` sınırlarıyla diske akıtılır.
 `GET /v1/formats` ve `GET /v1/health`, API anahtarı ayarlı olsa bile açıktır.
 
-**Kimlik doğrulama:** `metascrub api --api-key ANAHTAR` (ya da `METASCRUB_API_KEY`) bu
+**Kimlik doğrulama:** `metacls api --api-key ANAHTAR` (ya da `METACLS_API_KEY`) bu
 anahtarı `/v1/health` ve `/v1/formats` dışında her `/v1` route'unda ister — `X-API-Key:
 ANAHTAR` ya da `Authorization: Bearer ANAHTAR` olarak gönderin. Hem `api` hem `web`, kimlik
 doğrulama yokken **loopback-dışı bir host'a bağlanmayı reddeder** (`0.0.0.0`, bir LAN IP'si);
@@ -239,25 +239,25 @@ desteklenen yol `127.0.0.1`'e bağlayıp önüne bir ters proxy koymaktır —
 Yayınlanmış imajı çekin (her sürümde amd64 + arm64 için derlenir):
 
 ```bash
-docker pull ghcr.io/gorkemguler/metascrub:latest
+docker pull ghcr.io/gorkemguler/metacls:latest
 ```
 
 ```bash
 # web arayüzü
-docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metascrub_cleaned:/data" \
-  ghcr.io/gorkemguler/metascrub:latest
+docker run --rm -p 127.0.0.1:8770:8770 -v "$(pwd)/metacls_cleaned:/data" \
+  ghcr.io/gorkemguler/metacls:latest
 
 # REST API
-docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metascrub_cleaned:/data" \
-  ghcr.io/gorkemguler/metascrub:latest api --host 0.0.0.0 --port 8000 --output-dir /data
+docker run --rm -p 127.0.0.1:8000:8000 -v "$(pwd)/metacls_cleaned:/data" \
+  ghcr.io/gorkemguler/metacls:latest api --host 0.0.0.0 --port 8000 --output-dir /data
 
 # tek seferlik: bağlanmış bir klasörü temizle
-docker run --rm -v "$(pwd)/belgeler:/work" ghcr.io/gorkemguler/metascrub:latest \
+docker run --rm -v "$(pwd)/belgeler:/work" ghcr.io/gorkemguler/metacls:latest \
   clean /work --out /work/cleaned
 ```
 
-Ya da yerelde derleyin: `docker build -t metascrub .`. `docker compose up --build` web
-arayüzünü, `docker compose --profile api up metascrub-api` API'yi çalıştırır. Açmadan önce
+Ya da yerelde derleyin: `docker build -t metacls .`. `docker compose up --build` web
+arayüzünü, `docker compose --profile api up metacls-api` API'yi çalıştırır. Açmadan önce
 önüne proxy koyun — [docs/reverse-proxy.md](docs/reverse-proxy.md).
 
 ## Ne kadar kapsamlı?
@@ -277,18 +277,18 @@ arayüzünü, `docker compose --profile api up metascrub-api` API'yi çalıştı
 ### Sınırlamalar
 
 - İçerik tasarım gereği kapsam dışı: belge gövdesindeki metin, görünür/taranmış imza, bir
-  görselin içine gömülü metin — MetaScrub bunlara dokunmaz. (MetaScout'un `--scan-content`'i
+  görselin içine gömülü metin — MetaCLS bunlara dokunmaz. (MetaScout'un `--scan-content`'i
   bunları bulur; kaldırılması manuel bir düzenlemedir.)
 - Eski `.doc / .xls / .ppt` temizlenmez (önce dönüştürün).
 - Sertifikalı bir sanitizasyon aracı değildir. Kritik işlerde çıktıyı kendiniz doğrulayın —
-  `metascrub inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
+  `metacls inspect` ile ya da MetaScout ile ikinci bir geçiş tam da bunun içindir.
 
 ## Masaüstü entegrasyonu
 
 Hepsi **[`platform/`](platform/)** altında, her biri için tek kurulum komutu — hepsi
 yerinde temizler:
 
-- **macOS** — sürükle-bırak `MetaScrub.app` (`osacompile` ile, Xcode yok) ve bir Finder
+- **macOS** — sürükle-bırak `MetaCLS.app` (`osacompile` ile, Xcode yok) ve bir Finder
   **Quick Action**.
 - **Windows** — bir WinForms **bırakma penceresi**, bir **Gönder** menüsü girdisi, bir
   Explorer **sağ tık** girdisi ve bir `winget` manifesti (şablon).
@@ -297,19 +297,19 @@ yerinde temizler:
 
 ## CI / hook'lar
 
-`metascrub clean --check`, `--dry-run` demektir ve bir dosya hâlâ metadata taşıyorsa **3**
+`metacls clean --check`, `--dry-run` demektir ve bir dosya hâlâ metadata taşıyorsa **3**
 ile çıkar (temizse 0, hatada 1) — pre-commit ve CI için bir kapı.
 
 ```yaml
 # .pre-commit-config.yaml
-- repo: https://github.com/gorkemguler/MetaScrub
+- repo: https://github.com/gorkemguler/MetaCLS
   rev: main
-  hooks: [{ id: metascrub }]
+  hooks: [{ id: metacls }]
 ```
 
 ```yaml
 # .github/workflows/no-metadata.yml
-- uses: gorkemguler/MetaScrub@main
+- uses: gorkemguler/MetaCLS@main
   with:
     paths: docs/ public/
     mode: check        # ya da yerinde temizleyip commit'lemek için "fix"
@@ -318,7 +318,7 @@ ile çıkar (temizse 0, hatada 1) — pre-commit ve CI için bir kapı.
 ## Yol haritası
 
 Nelerin geldiği, bilinen sınırlamalar ve backlog için **[ROADMAP.tr.md](ROADMAP.tr.md)**
-(inotify watch, SFTP modu, `--jobs`, `--quarantine`, `.metascrub.toml`, politika profilleri,
+(inotify watch, SFTP modu, `--jobs`, `--quarantine`, `.metacls.toml`, politika profilleri,
 ses/video, PyPI, özyinelemeli konteyner temizliği).
 
 ## Lisans

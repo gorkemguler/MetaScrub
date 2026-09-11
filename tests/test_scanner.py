@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-from metascrub.config import DEFAULT_FILETYPES
-from metascrub.scanner import iter_files
+from metacls.config import DEFAULT_FILETYPES
+from metacls.scanner import iter_files
 
 
 def test_walks_recursively_and_filters_by_extension(dirty_tree):

@@ -10,7 +10,7 @@ pytest.importorskip("fastapi")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from metascrub.api import create_app  # noqa: E402
+from metacls.api import create_app  # noqa: E402
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def test_formats_endpoint(client):
     assert "pdf" in body["extensions"] and "mkv" in body["extensions"]
     assert "pdf" in body["engines"] and "media" in body["engines"]
     assert set(body["optional"]) >= {"exiftool", "py7zr", "mutagen"}
-    assert body["tool_versions"]["metascrub"]
+    assert body["tool_versions"]["metacls"]
 
 
 def test_formats_open_without_api_key(tmp_path):

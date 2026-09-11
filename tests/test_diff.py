@@ -4,12 +4,12 @@ import json
 
 from click.testing import CliRunner
 
-from metascrub.cli import main
-from metascrub.diff import diff_reports
+from metacls.cli import main
+from metacls.diff import diff_reports
 
 
 def _report(files):
-    return {"tool": "metascrub", "files": files}
+    return {"tool": "metacls", "files": files}
 
 
 def _f(path, removed=(), residual=()):

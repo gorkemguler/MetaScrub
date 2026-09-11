@@ -1,6 +1,6 @@
-# Contributing to MetaScrub
+# Contributing to MetaCLS
 
-Thanks for helping. MetaScrub is small and has no heavy dependencies on
+Thanks for helping. MetaCLS is small and has no heavy dependencies on
 purpose — please keep it that way.
 
 ## Setup
@@ -16,7 +16,7 @@ mypy src
 
 ## Ground rules
 
-- **Metadata, not content.** MetaScrub removes *who / when / with what* —
+- **Metadata, not content.** MetaCLS removes *who / when / with what* —
   not the document's body, a comment's text, or pixels. Anything that
   crosses that line is opt-in behind an explicit flag (`--strip-form-values`,
   `--strip-office-authors`) and must be documented as such.
@@ -24,7 +24,7 @@ mypy src
   `dst`. In-place is handled by `cleaner.py` (temp file + `os.replace`).
 - **Every engine change needs a golden-corpus entry or a targeted test**
   proving `probe()` sees the metadata before and `[]` after.
-- New format? Add an engine under `src/metascrub/engines/`, register it in
+- New format? Add an engine under `src/metacls/engines/`, register it in
   `engines/__init__.py`, add its extensions to `config.DEFAULT_FILETYPES`,
   and a `tests/test_corpus.py` case.
 - Keep the dependency list short. A new runtime dependency needs a reason

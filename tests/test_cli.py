@@ -4,7 +4,7 @@ import json
 
 from click.testing import CliRunner
 
-from metascrub.cli import main
+from metacls.cli import main
 
 
 def test_inspect_shows_metadata(dirty_pdf):
@@ -46,7 +46,7 @@ def test_clean_in_place_needs_confirmation(dirty_pdf):
 
 def test_policy_publish_enables_opt_ins(monkeypatch, dirty_pdf, tmp_path):
     seen = {}
-    from metascrub import cli as climod
+    from metacls import cli as climod
 
     real = climod.clean_paths
 
@@ -62,11 +62,11 @@ def test_policy_publish_enables_opt_ins(monkeypatch, dirty_pdf, tmp_path):
 
 def test_policy_internal_keeps_title(monkeypatch, dirty_pdf, tmp_path):
     seen = {}
-    from metascrub import cli as climod
+    from metacls import cli as climod
 
     def spy(roots, cfg, **kw):
         seen["cfg"] = cfg
-        from metascrub.cleaner import clean_paths as real
+        from metacls.cleaner import clean_paths as real
         return real(roots, cfg, **kw)
 
     monkeypatch.setattr(climod, "clean_paths", spy)
@@ -76,14 +76,14 @@ def test_policy_internal_keeps_title(monkeypatch, dirty_pdf, tmp_path):
 
 
 def test_project_config_toml_sets_defaults(dirty_pdf, tmp_path, monkeypatch):
-    (tmp_path / ".metascrub.toml").write_text("[clean]\njobs = 7\nstrip-pdf-id = true\n")
+    (tmp_path / ".metacls.toml").write_text("[clean]\njobs = 7\nstrip-pdf-id = true\n")
     monkeypatch.chdir(tmp_path)
     seen = {}
-    from metascrub import cli as climod
+    from metacls import cli as climod
 
     def spy(roots, cfg, **kw):
         seen["cfg"] = cfg
-        from metascrub.cleaner import clean_paths as real
+        from metacls.cleaner import clean_paths as real
         return real(roots, cfg, **kw)
 
     monkeypatch.setattr(climod, "clean_paths", spy)
@@ -128,7 +128,7 @@ def test_clean_progress_bar_runs(dirty_tree, tmp_path):
 
 
 def test_debug_flag_reraises_instead_of_error_result(monkeypatch, dirty_pdf, tmp_path):
-    from metascrub import cleaner
+    from metacls import cleaner
 
     real = cleaner.engine_for
 
@@ -166,7 +166,7 @@ def test_inspect_recurse_looks_inside_zip(dirty_pdf, tmp_path):
 
 
 def test_clean_exit_2_when_residual(monkeypatch, dirty_pdf, tmp_path):
-    from metascrub import cleaner
+    from metacls import cleaner
 
     real = cleaner.engine_for
     monkeypatch.setattr(cleaner, "engine_for", lambda ext: _Leftover(real(ext)))
@@ -184,7 +184,7 @@ class _Leftover:
         self.name = e.name
 
     def probe(self, p, cfg=None):
-        from metascrub.models import FieldChange
+        from metacls.models import FieldChange
 
         return [FieldChange("XMP", "leftover", "x")]
 

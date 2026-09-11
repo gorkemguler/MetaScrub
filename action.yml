@@ -1,4 +1,4 @@
-name: MetaScrub
+name: MetaCLS
 description: Fail the build if tracked PDF/Office/image/SVG files carry metadata, or scrub them.
 branding:
   icon: eye-off
@@ -14,11 +14,11 @@ inputs:
     required: false
     default: check
   args:
-    description: Extra flags passed to `metascrub clean` (e.g. --strip-office-authors).
+    description: Extra flags passed to `metacls clean` (e.g. --strip-office-authors).
     required: false
     default: ""
   version:
-    description: MetaScrub version spec for pip (e.g. "==0.2.0").
+    description: MetaCLS version spec for pip (e.g. "==0.2.0").
     required: false
     default: ""
 
@@ -27,11 +27,11 @@ runs:
   steps:
     - shell: bash
       run: |
-        python -m pip install --quiet "metascrub${{ inputs.version }}"
+        python -m pip install --quiet "metacls${{ inputs.version }}"
         if [ "${{ inputs.mode }}" = "fix" ]; then
-          metascrub clean ${{ inputs.paths }} --in-place --yes \
+          metacls clean ${{ inputs.paths }} --in-place --yes \
             --no-json-report --no-html-report ${{ inputs.args }}
         else
-          metascrub clean ${{ inputs.paths }} --check \
+          metacls clean ${{ inputs.paths }} --check \
             --no-json-report --no-html-report ${{ inputs.args }}
         fi

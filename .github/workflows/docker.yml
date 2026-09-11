@@ -3,12 +3,12 @@ name: Docker
 # Builds the container image and pushes it to the GitHub Container
 # Registry (GHCR):
 #
-#   * push a tag v*        -> ghcr.io/<owner>/metascrub:<version>, :<major.minor>, :latest
-#   * push to main         -> ghcr.io/<owner>/metascrub:edge
+#   * push a tag v*        -> ghcr.io/<owner>/metacls:<version>, :<major.minor>, :latest
+#   * push to main         -> ghcr.io/<owner>/metacls:edge
 #   * manual (dispatch)    -> :edge
 #
 # No secrets needed — GITHUB_TOKEN with packages:write is enough. Pull:
-#   docker pull ghcr.io/gorkemguler/metascrub:latest
+#   docker pull ghcr.io/gorkemguler/metacls:latest
 
 on:
   push:
@@ -34,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/metascrub
+          images: ghcr.io/${{ github.repository_owner }}/metacls
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

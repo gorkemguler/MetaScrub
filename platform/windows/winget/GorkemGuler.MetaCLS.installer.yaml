@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+PackageIdentifier: GorkemGuler.MetaCLS
+PackageVersion: 0.3.0
+InstallerType: portable
+Commands:
+  - metacls
+ReleaseDate: 2026-01-01
+Installers:
+  - Architecture: x64
+    # TEMPLATE — replace with the real release asset URL and its SHA256.
+    InstallerUrl: https://github.com/gorkemguler/MetaCLS/releases/download/v0.3.0/metacls-0.3.0-windows-x64.zip
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    NestedInstallerType: portable
+    NestedInstallerFiles:
+      - RelativeFilePath: metacls.exe
+        PortableCommandAlias: metacls
+ManifestType: installer
+ManifestVersion: 1.6.0

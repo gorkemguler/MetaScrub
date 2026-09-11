@@ -11,9 +11,9 @@ import pytest
 # reuse the corpus builders (tests/ is on sys.path under pytest)
 from test_corpus import _CASES, _HAS_EXIFTOOL, _pdf
 
-from metascrub.cleaner import clean_paths
-from metascrub.config import CleanConfig
-from metascrub.engines import engine_for
+from metacls.cleaner import clean_paths
+from metacls.config import CleanConfig
+from metacls.engines import engine_for
 
 
 @pytest.mark.parametrize("ext", [e for e in sorted(_CASES) if e != "doc"])

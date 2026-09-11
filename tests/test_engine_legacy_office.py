@@ -3,10 +3,10 @@ from __future__ import annotations
 import olefile
 import pytest
 
-from metascrub.config import CleanConfig
-from metascrub.engines import engine_for
-from metascrub.engines.legacy_office import LegacyOfficeEngine
-from metascrub.engines.office import OfficeEngine
+from metacls.config import CleanConfig
+from metacls.engines import engine_for
+from metacls.engines.legacy_office import LegacyOfficeEngine
+from metacls.engines.office import OfficeEngine
 
 
 def test_dispatch_routes_legacy_extensions():
@@ -46,7 +46,7 @@ def test_in_place_now_supported_for_legacy(legacy_doc):
 
 @pytest.mark.slow
 def test_libreoffice_fallback_when_ole_patch_fails(monkeypatch, legacy_doc, tmp_path):
-    import metascrub.engines.legacy_office as mod
+    import metacls.engines.legacy_office as mod
 
     def boom(*_a, **_k):
         raise ValueError("simulated bad container")
@@ -64,7 +64,7 @@ def test_libreoffice_fallback_when_ole_patch_fails(monkeypatch, legacy_doc, tmp_
 
 
 def test_unsupported_when_patch_fails_and_no_soffice(monkeypatch, tmp_path):
-    import metascrub.engines.legacy_office as mod
+    import metacls.engines.legacy_office as mod
 
     monkeypatch.setattr(mod, "scrub_ole2", lambda *_a, **_k: (_ for _ in ()).throw(ValueError("bad")))
     monkeypatch.setattr(mod, "soffice_path", lambda: None)

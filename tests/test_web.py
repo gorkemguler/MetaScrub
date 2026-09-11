@@ -5,7 +5,7 @@ import zipfile
 
 import pytest
 
-from metascrub.web import create_app
+from metacls.web import create_app
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def client(tmp_path):
 def test_index_renders(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert b"MetaScrub" in r.data
+    assert b"MetaCLS" in r.data
 
 
 def test_clean_upload_flow(client, dirty_pdf, dirty_docx):

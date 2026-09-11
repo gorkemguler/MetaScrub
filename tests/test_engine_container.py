@@ -9,9 +9,9 @@ import zipfile
 import pikepdf
 import pytest
 
-from metascrub.config import CleanConfig
-from metascrub.engines import engine_for
-from metascrub.engines.container import ContainerEngine
+from metacls.config import CleanConfig
+from metacls.engines import engine_for
+from metacls.engines.container import ContainerEngine
 
 _HAS_PY7ZR = __import__("importlib").util.find_spec("py7zr") is not None
 _HAS_EXTRACT_MSG = __import__("importlib").util.find_spec("extract_msg") is not None
@@ -138,7 +138,7 @@ def test_7z_members_scrubbed(tmp_path):
 
 
 def test_7z_without_py7zr_is_skipped(tmp_path, monkeypatch):
-    from metascrub.engines import container as cmod
+    from metacls.engines import container as cmod
 
     monkeypatch.setattr(cmod, "_have_py7zr", lambda: False)
     f = tmp_path / "x.7z"

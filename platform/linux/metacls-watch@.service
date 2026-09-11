@@ -1,0 +1,31 @@
+# systemd template unit for `metacls watch`.
+#
+#   sudo cp metacls-watch@.service /etc/systemd/system/
+#   sudo systemctl enable --now 'metacls-watch@srv-ftp-incoming'
+#
+# The instance name after @ is a systemd-escaped path; the example above
+# watches /srv/ftp/incoming. Adjust User=, the venv path, and the flags.
+
+[Unit]
+Description=MetaCLS — keep %I scrubbed
+After=network.target
+
+[Service]
+Type=simple
+User=metacls
+Group=metacls
+# Point this at wherever metacls is installed (a venv, pipx, or system).
+ExecStart=/opt/metacls/.venv/bin/metacls watch /%I \
+    --move-processed /%I/../scrubbed \
+    --interval 10 --settle 5
+Restart=on-failure
+RestartSec=5
+# Hardening — the watcher only needs to read/write the drop dir.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/%I /%I/../scrubbed
+
+[Install]
+WantedBy=multi-user.target

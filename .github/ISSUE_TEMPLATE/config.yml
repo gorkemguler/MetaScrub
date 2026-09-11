@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security issue
-    url: https://github.com/gorkemguler/MetaScrub/security/policy
+    url: https://github.com/gorkemguler/MetaCLS/security/policy
     about: Please report vulnerabilities privately — see SECURITY.md, not a public issue.
