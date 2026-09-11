@@ -37,6 +37,38 @@ def _noop(_m: str) -> None:
     pass
 
 
+def _pid_alive(pid: int) -> bool:
+    """True if `pid` is (or might still be) a running process — a liveness
+    probe used to decide whether to steal a stale lock file.
+
+    POSIX: the standard `os.kill(pid, 0)` idiom. **Not** used on Windows —
+    there, signal `0` is `CTRL_C_EVENT`, so `os.kill(pid, 0)` doesn't
+    check liveness, it *sends a real console control event*
+    (`GenerateConsoleCtrlEvent`) to whatever process group `pid` happens
+    to name. Windows instead gets a pure query via `OpenProcess`, which
+    signals nothing. Inconclusive results are treated as "alive" — this
+    only decides whether it's *safe* to steal the lock.
+    """
+    if os.name == "nt":
+        import ctypes
+
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = ctypes.windll.kernel32.OpenProcess(  # type: ignore[attr-defined]
+            PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+        )
+        if not handle:
+            return False
+        ctypes.windll.kernel32.CloseHandle(handle)  # type: ignore[attr-defined]
+        return True
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except OSError:
+        return True  # exists but we can't signal it, or some other error
+    return True
+
+
 class WatchLockError(RuntimeError):
     """Raised when another live `metascrub watch` already owns the directory."""
 
@@ -80,15 +112,7 @@ class WatchLock:
             return True
         if pid <= 0:
             return True
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return True
-        except PermissionError:
-            return False
-        except OSError:
-            return False
-        return False
+        return not _pid_alive(pid)
 
     def release(self) -> None:
         if not self._held:
