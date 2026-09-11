@@ -308,6 +308,10 @@ All in **[`platform/`](https://github.com/gorkemguler/MetaCLS/tree/main/platform
 - **Linux**: a `.desktop` launcher / *Open With* handler (with a `zenity` picker), a
   Nautilus/Nemo/Caja **script**, and a `systemd` **watch** unit.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/desktop-apps.svg" alt="Illustration of the MetaCLS native drop apps for macOS, Windows and Linux" width="90%">
+</p>
+
 ## CI / hooks
 
 `metacls clean --check` implies `--dry-run` and exits **3** if any file still carries

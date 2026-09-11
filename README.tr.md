@@ -301,6 +301,10 @@ yerinde temizler:
 - **Linux**: bir `.desktop` başlatıcı / *Birlikte Aç* işleyici (`zenity` seçici ile), bir
   Nautilus/Nemo/Caja **betiği** ve bir `systemd` **watch** unit'i.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/desktop-apps.svg" alt="macOS, Windows ve Linux için MetaCLS masaüstü uygulamalarının illüstrasyonu" width="90%">
+</p>
+
 ## CI / hook'lar
 
 `metacls clean --check`, `--dry-run` demektir ve bir dosya hâlâ metadata taşıyorsa **3**
