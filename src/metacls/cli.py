@@ -87,7 +87,7 @@ def _load_project_config() -> dict:
               help="Re-raise on the first failing file instead of recording it as an error.")
 @click.pass_context
 def main(ctx: click.Context, debug: bool) -> None:
-    """MetaCLS — strip metadata from PDF, Office and image files in bulk."""
+    """MetaCLS: strip metadata from PDF, Office and image files in bulk."""
     load_dotenv(find_dotenv(usecwd=True))
     ctx.default_map = _load_project_config()
     ctx.ensure_object(dict)["debug"] = debug
@@ -134,8 +134,8 @@ def main(ctx: click.Context, debug: bool) -> None:
 @click.option("--strip-pdf-id", is_flag=True, default=False,
               help="Give each scrubbed PDF a fresh random /ID so copies can't be correlated by it.")
 @click.option("--strip-form-values", is_flag=True, default=False,
-              help="Also blank PDF form values (AcroForm /V, /DV and the XFA <xfa:data> packet) "
-                   "— user-entered data, not just metadata.")
+              help="Also blank PDF form values (AcroForm /V, /DV and the XFA <xfa:data> packet): "
+                   "user-entered data, not just metadata.")
 @click.option("--strip-office-authors", is_flag=True, default=False,
               help="Also blank Office tracked-change / comment author names and dates (text is kept).")
 @click.option("--json-report/--no-json-report", default=True, show_default=True)
@@ -266,13 +266,13 @@ def clean(ctx, paths, filetypes, media, recurse, recursive, excludes, follow_sym
     if not dry_run and report.files_with_residual:
         console.print(
             f"\n[bold yellow]{len(report.files_with_residual)} file(s) still carry metadata "
-            "after cleaning — verify manually.[/bold yellow]"
+            "after cleaning: verify manually.[/bold yellow]"
         )
         sys.exit(2)
 
 
 def _print_table(report, base_dir) -> None:
-    table = Table(title="MetaCLS — scrub results")
+    table = Table(title="MetaCLS: scrub results")
     table.add_column("File", overflow="fold")
     table.add_column("Type")
     table.add_column("Engine")
@@ -293,7 +293,7 @@ def _print_table(report, base_dir) -> None:
     counts = report.counts
     summary = ", ".join(f"{k}: {v}" for k, v in sorted(counts.items()))
     verb = "would be removed" if report.dry_run else "removed"
-    console.print(f"[dim]{len(report.results)} file(s) — {summary} — "
+    console.print(f"[dim]{len(report.results)} file(s), {summary}, "
                   f"{report.fields_removed} metadata field(s) {verb}[/dim]")
 
 
@@ -313,14 +313,14 @@ def _print_table(report, base_dir) -> None:
 @click.option("--follow-symlinks/--no-follow-symlinks", default=True, show_default=True)
 @click.option("--password", "pdf_password", default=None, help="Password for encrypted PDFs.")
 @click.option("--strip-form-values", is_flag=True, default=False,
-              help="Also list PDF form-field values (shown only with this flag — they can be bulky).")
+              help="Also list PDF form-field values (shown only with this flag; they can be bulky).")
 @click.option("--strip-office-authors", is_flag=True, default=False,
               help="Also list Office tracked-change / comment author names.")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Emit JSON instead of tables.")
 @click.pass_context
 def inspect(ctx, paths, filetypes, recursive, media, recurse, excludes, follow_symlinks,
             pdf_password, strip_form_values, strip_office_authors, as_json):
-    """Show the metadata each file in PATHS currently carries. Read-only —
+    """Show the metadata each file in PATHS currently carries. Read-only:
     writes nothing. Use this on the files MetaScout flagged to see exactly
     what's in them before scrubbing.
     """
@@ -385,8 +385,8 @@ def inspect(ctx, paths, filetypes, recursive, media, recurse, excludes, follow_s
 def diff(run_a, run_b, as_json):
     """Compare two `metacls clean` runs (report.json files or run dirs).
 
-    Shows files added/removed between the two, and — the useful bit for
-    monitoring a directory over time — files where metadata *reappeared*
+    Shows files added/removed between the two, and (the useful bit for
+    monitoring a directory over time) files where metadata *reappeared*
     (someone re-saved the document in an editor). Exit code 1 if any file
     regained metadata.
     """
@@ -447,7 +447,7 @@ def diff(run_a, run_b, as_json):
 def watch(ctx, directory, filetypes, recursive, to_dir, move_processed, patterns, jobs, interval,
           settle, once, keep_fields, strip_pdf_id, strip_form_values, strip_office_authors,
           backup, verify):
-    """Keep DIRECTORY scrubbed — a poll loop for an FTP/SFTP drop folder.
+    """Keep DIRECTORY scrubbed: a poll loop for an FTP/SFTP drop folder.
 
     A file is only touched once it has stopped changing for --settle
     seconds, so a partial upload is safe. State is kept in
@@ -475,7 +475,7 @@ def watch(ctx, directory, filetypes, recursive, to_dir, move_processed, patterns
                 n = w.scan_once()
                 console.print(f"[dim]scrubbed {n} file(s)[/dim]")
                 return
-            console.print(f"[bold]MetaCLS watch[/bold] on [bold]{w.dir}[/bold] — Ctrl-C to stop\n")
+            console.print(f"[bold]MetaCLS watch[/bold] on [bold]{w.dir}[/bold], Ctrl-C to stop\n")
             w.run_forever()
     except WatchLockError as exc:
         console.print(f"[red]{exc}[/red]")
@@ -515,13 +515,13 @@ def web(host, port, output_dir, open_browser, insecure):
     _banner()
     _loopback_guard(host, protected=False, insecure=insecure, what="the web UI")
     console.print(f"[bold]MetaCLS web UI[/bold] on [bold]http://{host}:{port}/[/bold]")
-    console.print("[dim]No authentication — keep it on 127.0.0.1 or behind a proxy.[/dim]\n")
+    console.print("[dim]No authentication, keep it on 127.0.0.1 or behind a proxy.[/dim]\n")
     run_server(host=host, port=port, output_dir=output_dir, open_browser=open_browser)
 
 
 @main.command()
 @click.option("--host", default="127.0.0.1", show_default=True,
-              help="Use 0.0.0.0 to accept connections from other machines — read the README first.")
+              help="Use 0.0.0.0 to accept connections from other machines; read the README first.")
 @click.option("--port", default=8000, show_default=True)
 @click.option("--output-dir", default="./metacls_cleaned", show_default=True,
               envvar="METACLS_OUTPUT_DIR", type=click.Path())
@@ -551,7 +551,7 @@ def api(host, port, output_dir, max_workers, max_pending, api_key, max_upload_mb
     _banner()
     _loopback_guard(host, protected=bool(api_key), insecure=insecure, what="the API")
     auth = "API key required" if api_key else "NO authentication"
-    console.print(f"[bold]MetaCLS API[/bold] on [bold]http://{host}:{port}/[/bold]  (docs: /docs) — {auth}")
+    console.print(f"[bold]MetaCLS API[/bold] on [bold]http://{host}:{port}/[/bold]  (docs: /docs), {auth}")
     app = create_app(output_dir=output_dir, max_workers=max_workers, max_pending=max_pending,
                      api_key=api_key, max_upload_mb=max_upload_mb, max_files=max_files,
                      run_ttl_days=run_ttl_days, log_json=log_json)

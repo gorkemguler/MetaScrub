@@ -195,7 +195,7 @@ bazında öncesi/sonrası görünümü ve tam raporla birlikte. Önceki çalış
 altında listelenir. Yerel, tek kullanıcılık, **kimlik doğrulama yok**. Ağa açmayın.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü, sürükle-bırak dosya alanı" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS yerel web arayüzü: sürükle-bırak dosya alanı ve FTP'den çekme formu" width="90%">
 </p>
 
 Sayfada ikinci bir form daha var: **Ya da FTP'den çek**. Bir sunucu adresi, uzak

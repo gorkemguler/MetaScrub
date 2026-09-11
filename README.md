@@ -194,7 +194,7 @@ per-file before/after view and the full report. Past runs are listed under **His
 Local, single-user, **no authentication**. Don't expose it to a network.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI, drag-and-drop file drop zone" width="90%">
+  <img src="https://raw.githubusercontent.com/gorkemguler/MetaCLS/main/assets/screenshot-web.png" alt="MetaCLS local web UI: drag-and-drop file drop zone and the FTP pull form" width="90%">
 </p>
 
 The page also has a second form: **Or pull from FTP**. Point it at a host, remote

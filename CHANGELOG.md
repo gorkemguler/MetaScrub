@@ -26,6 +26,13 @@ follow [Semantic Versioning](https://semver.org/) once it hits 1.0.
   motif, and a colour-coded results log (green ok / red FAIL), matching
   `assets/desktop-apps.svg` instead of each platform's plain default
   widget styling.
+- `assets/screenshot-web.png` updated to show the FTP form ("Or pull
+  from FTP") alongside the upload form; the old screenshot predated
+  that feature and only showed the drop zone.
+
+### Fixed
+- A handful of stray em-dashes in the web UI, the HTML report, and CLI
+  `--help`/output text, left over from before the wider prose sweep.
 
 ## [0.4.0] - 2026-09-11
 

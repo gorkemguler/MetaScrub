@@ -77,7 +77,7 @@ def _require_done(store: JobStore, job_id: str) -> Job:
     job = _require(store, job_id)
     if job.status != "done":
         raise HTTPException(409, {"job_id": job.job_id, "status": job.status, "error": job.error,
-                                  "message": "Not ready — poll GET /v1/clean/{job_id} until status is 'done'."})
+                                  "message": "Not ready, poll GET /v1/clean/{job_id} until status is 'done'."})
     return job
 
 
@@ -121,7 +121,7 @@ def create_app(*, output_dir: str = "./metacls_cleaned", max_workers: int = 2,
         title="MetaCLS API",
         version=__version__,
         description="Job-based bulk metadata scrubbing for PDF/Office/image files. "
-                    "Set an API key before exposing this — see the README.",
+                    "Set an API key before exposing this: see the README.",
         lifespan=lifespan,
     )
 
@@ -160,7 +160,7 @@ def create_app(*, output_dir: str = "./metacls_cleaned", max_workers: int = 2,
         keep_color_profile: bool = Form(True),
         recurse: bool = Form(False, description="Descend into .zip/.tar/.7z/.eml members."),
         media: bool = Form(False, description="Also scrub uploaded audio/video files."),
-        in_place: bool = Form(False, description="Ignored — the API always returns cleaned copies."),
+        in_place: bool = Form(False, description="Ignored: the API always returns cleaned copies."),
         report_lang: str = Form("en"),
     ) -> JobCreated:
         uploads = [f for f in files if f.filename]
